@@ -1,0 +1,74 @@
+#caja-ppal{
+    width: 100%;
+    height: 100%;
+    overflow:scroll;
+    background: url('../../assets/images/cielo_azul.jpg');
+    background-repeat: no-repeat;
+    background-position: center center;
+    z-index: auto;
+    background-size: cover;
+}
+
+#estacion{
+    color: white;
+    letter-spacing: 2px;
+    line-height: 30px;
+    font-size: 30px;
+    text-align: center;
+    margin: 5px 1px 5px 1px;
+}
+
+#caja{
+    width:100%;
+    height: 100%;
+    color: White;
+    font-family: Arial;
+    font-size: 16px;
+    font-weight: bolder;
+    text-align: left;
+    padding: 5px 10px 5px 0px;
+    margin: 5px 5px 5px 5px;
+}
+
+#fechayhora{
+    letter-spacing: 2px;
+    line-height: 30px;
+    color: white;
+    font-family: "Arial Narrow" ;
+    text-align: center;
+    font-size: 18px; 
+}
+
+#lluvia{
+    margin: 0px 5px 15px 5px;
+    justify-content: center;
+    letter-spacing: 1px;
+    line-height: 25px;
+    color: white;
+    font-family: "Arial" ;
+    font-size: 22px;
+    text-align: center;
+    margin:0px auto 10px auto;
+    padding: 20px 8px 15px 7px;
+    width: 80px;
+    height: 80px;
+    border-radius: 20px 20px 20px 20px;
+    -moz-border-radius: 20px 20px 20px 20px;
+    -webkit-border-radius: 20px 20px 20px 20px;
+    border: 0px solid #000000;
+}
+
+.centrar{
+    text-align: center;
+}
+
+#central {
+    display: flex;
+    height: 80px;
+    align-items: center;
+    padding-left: 20px;
+    color: white;
+    font-family: "Arial" ;
+    font-size: 20px;
+    text-align: center;
+ }

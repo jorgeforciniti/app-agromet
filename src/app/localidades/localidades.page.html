@@ -1,0 +1,25 @@
+<app-header titulo="Localidades"></app-header>
+
+<ion-content padding="padding">
+    <ion-list>
+        <ion-radio-group>
+            <ion-item
+                *ngFor="let mensaje of mensajes"
+                (click)="onClick( mensaje )"  
+            >
+                <ion-radio
+                    slot="start"
+                    value="{{mensaje.Identificacion}}"
+                    color="success"
+                ></ion-radio>
+
+                <ion-label>
+                    <p style="font-weight: bold;">{{mensaje.nombre}}</p>
+                    <p>
+                        <small>Latitud: {{mensaje.lat}} - Longitud: {{mensaje.lon}} - Altura: {{mensaje.alt}} msnm</small>
+                    </p>
+                </ion-label>
+            </ion-item>
+        </ion-radio-group>
+    </ion-list>
+</ion-content>

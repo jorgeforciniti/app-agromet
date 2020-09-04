@@ -1,0 +1,39 @@
+<app-header titulo="Eventos"></app-header>
+<ion-content [fullscreen]="true">
+  <div id="caja-ppal">
+      <div id="caja" >
+
+        <ion-grid>  
+          <ion-row *ngFor="let item of mensajes">
+            <ion-row>
+              <ion-col size="12" size-lg (click)="abrirNoticia(item)">
+                <h2>{{item.titulo}}</h2>
+              </ion-col>
+            </ion-row>
+            <ion-row>
+              <ion-col size="12" size-lg>
+                {{item.fecha}}
+              </ion-col>
+            </ion-row>
+            <ion-row>
+              <ion-col size="12" size-lg (click)="abrirNoticia(item)">
+                  <ion-img *ngIf="item.imagen"
+                    [src]="item.imagen"></ion-img>
+              </ion-col>
+            </ion-row>
+            <ion-row>
+              <ion-col size="12" size-lg>
+                  <h6>{{item.texto}}</h6>
+              </ion-col>
+            </ion-row>
+            <hr/>
+          </ion-row>
+        </ion-grid>
+              
+          
+
+
+      </div>
+      </div>
+
+  </ion-content>

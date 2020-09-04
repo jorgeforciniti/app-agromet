@@ -1,0 +1,7 @@
+{
+  "name": "agromet",
+  "integrations": {
+    "cordova": {}
+  },
+  "type": "angular"
+}

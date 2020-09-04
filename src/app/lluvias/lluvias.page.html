@@ -1,0 +1,63 @@
+<app-header titulo="Lluvias"></app-header>
+<ion-content [fullscreen]="true">
+  <div id="caja-ppal">
+
+    <div id="caja" >
+        <div id="fechayhora">
+            <span>{{ this.diaSemana }}, {{ this.dia }} de {{ this.nombreMes }} de {{ this.anio}}</span>
+        </div>
+        <div id="fechayhora">
+            <span>{{ this.hora }} hs</span>
+        </div>
+
+        <div id="estacion">
+            {{ this.dato.nombre }}
+        </div>
+
+        <ion-grid>  
+            <ion-row>
+                <ion-col size="3" size-lg>
+                    <div id="lluvia" 
+                    [style.background]=" this.dato.RR_dia > 50 ? 'red' : this.dato.RR_dia > 20 ? 'orange' : this.dato.RR_dia > 10 ? 'yellow' :  'green'"
+                    [style.color]="this.dato.RR_dia > 50 ? 'white' : this.dato.RR_dia > 10 ? 'black' :  'white'">
+                        <div id="circulo">
+                          <span> {{ this.dato.RR_dia.toFixed(1) }}<br>mm</span>
+                        </div>
+                    </div>
+                </ion-col>
+                <ion-col size="9" size-lg>
+                    <span> 
+                      lluvias <br>
+                      de hoy: {{ this.dato.RR_dia.toFixed(1) }} mm <br>
+                      de ayer: {{ this.rrAyer.toFixed(1) }} mm <br>
+                      del mes: {{ this.dato.rr_mes.toFixed(1) }} mm <br>
+                    </span>
+              </ion-col>
+            </ion-row>
+            <ion-row>
+              <ion-col size="12" size-lg class="centrar">
+                  <ion-button (click)="onClickAhora()" >
+                      Mapa lluvia últimas 24 horas
+                  </ion-button>
+              </ion-col>
+          </ion-row>
+          <br>
+          <div class="flex">
+            <div class="flex-item">
+              <div style="display: block; background: rgba(255,255,255,0.5);">
+                <canvas baseChart
+                [datasets]="barChartData"
+                [labels]="barChartLabels"
+                [options]="barChartOptions"
+                [legend]="barChartLegend"
+                [colors]="barChartColors"
+                [chartType]="barChartType">
+              </canvas>
+              </div>
+            </div>
+          </div>
+          </ion-grid>
+
+    </div>
+  </div>
+</ion-content>

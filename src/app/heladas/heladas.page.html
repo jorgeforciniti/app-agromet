@@ -1,0 +1,120 @@
+<app-header titulo="Heladas"></app-header>
+<ion-content [fullscreen]="true">
+  <div id="caja-ppal">
+
+      <div id="caja" >
+          <div id="fechayhora">
+              <span>{{ this.diaSemana }}, {{ this.dia }} de {{ this.nombreMes }} de {{ this.anio}}</span>
+          </div>
+          <div id="fechayhora">
+              <span>{{ this.hora }} hs</span>
+          </div>
+
+          <div id="estacion">
+              {{ this.dato.nombre }}
+          </div>
+
+          <ion-grid>  
+              <ion-row>
+                  <ion-col size="12" size-lg>
+                    <div id="central" *ngIf="this.tMin <= 0">
+                        <span> Helada meteorológica: {{ this.tMin.toFixed(1) }}ºC </span>
+                    </div>
+                    <div id="central" *ngIf="this.tMin > 0">
+                        <span> Hoy no hubo heladas en esta localidad </span>
+                    </div>
+                </ion-col>
+            </ion-row>
+              <ion-row>
+                <ion-col size="12" size-lg class="centrar">
+                    <ion-button (click)="onClickHoy()" >
+                        Mapa de heladas
+                    </ion-button>
+                </ion-col>
+            </ion-row>
+            <br>
+            <div class="flex">
+                <div class="flex-item">
+                  <div style="display: block; background: rgba(255,255,255,0.5);">
+                       <ion-list>
+                              
+                                <ion-radio-group value=0 (ionChange)="traerHeladas($event.detail.value)" id="tipo_contacto">
+                                  <ion-row>
+                                    <ion-col size="4" size-lg class="centrar">
+                                        <ion-item>
+                                            <ion-label style = "font-size: 12px">Hoy</ion-label>
+                                            <ion-radio slot="start" value=0></ion-radio>
+                                        </ion-item>
+                                    </ion-col>
+                                    <ion-col size="4" size-lg class="centrar">
+                                        <ion-item>
+                                            <ion-label style = "font-size: 12px">Mes</ion-label>
+                                            <ion-radio slot="start" value=1></ion-radio>
+                                        </ion-item>
+                                    </ion-col>
+                                    <ion-col size="4" size-lg class="centrar">
+                                        <ion-item>
+                                            <ion-label style = "font-size: 12px">Año</ion-label>
+                                            <ion-radio slot="start" value=2></ion-radio>
+                                        </ion-item>
+                                    </ion-col>
+                                  </ion-row>
+                                </ion-radio-group>
+                       </ion-list>                        
+                        <table id="bordes" style="margin: 0 auto; font-size: 10px;" cellspacing="10" cellpadding="0" *ngIf="this.tMinMin <= 0">
+                            <tr>
+                                <th style='width: 30%;'>Nombre</th>
+                                <th style='width: 7%;'>ºC</th>
+                                <th style='width: 10%;'>hs<br>máx.</th>
+                                <th style='width: 10%;'>hs<br>Total</th>
+                                <th style='width: 8%;'>Días</th>
+                                <th style='width: 10%;'>FPH</th>
+                                <th style='width: 10%;'>FUH</th>
+                                <th style='width: 7%;'>Reg.</th>
+                            </tr>
+                            <tr *ngFor="let item of mensajes">
+                                <td *ngIf="item.fph != null"
+                                [style.background]=" item.temperatura <= -6  ? 'red' : item.temperatura <= -4 ? 'rgb(255, 153, 0)' : item.temperatura <= -2 ? 'rgb(255, 204, 153)' :  'rgb(255, 255, 153)'"
+                                [style.color]="item.temperatura <= -4 ? 'white' : 'black'">
+                                {{item.nombre}}
+                                </td>
+                                <td *ngIf="item.fph != null" 
+                                style = "text-align: right;"
+                                [style.background]=" item.temperatura <= -6  ? 'red' : item.temperatura <= -4 ? 'rgb(255, 153, 0)' : item.temperatura <= -2 ? 'rgb(255, 204, 153)' :  'rgb(255, 255, 153)'"
+                                [style.color]="item.temperatura <= -4 ? 'white' : 'black'">
+                                {{item.temperatura.toFixed(1)}}
+                                </td>
+                                <td *ngIf="item.fph != null" style = "text-align: right;"
+                                [style.background]=" item.temperatura <= -6  ? 'red' : item.temperatura <= -4 ? 'rgb(255, 153, 0)' : item.temperatura <= -2 ? 'rgb(255, 204, 153)' :  'rgb(255, 255, 153)'"
+                                [style.color]="item.temperatura <= -4 ? 'white' : 'black'">
+                                {{item.duracion}}</td>
+                                <td *ngIf="item.fph != null" style = "text-align: right;"
+                                [style.background]=" item.temperatura <= -6  ? 'red' : item.temperatura <= -4 ? 'rgb(255, 153, 0)' : item.temperatura <= -2 ? 'rgb(255, 204, 153)' :  'rgb(255, 255, 153)'"
+                                [style.color]="item.temperatura <= -4 ? 'white' : 'black'">
+                                {{item.duracion_t}}</td>
+                                <td *ngIf="item.fph != null" style = "text-align: right;"
+                                [style.background]=" item.temperatura <= -6  ? 'red' : item.temperatura <= -4 ? 'rgb(255, 153, 0)' : item.temperatura <= -2 ? 'rgb(255, 204, 153)' :  'rgb(255, 255, 153)'"
+                                [style.color]="item.temperatura <= -4 ? 'white' : 'black'">
+                                {{item.dias}}</td>
+                                <td *ngIf="item.fph != null" style = "padding-left: 1px; text-align: right;"
+                                [style.background]=" item.temperatura <= -6  ? 'red' : item.temperatura <= -4 ? 'rgb(255, 153, 0)' : item.temperatura <= -2 ? 'rgb(255, 204, 153)' :  'rgb(255, 255, 153)'"
+                                [style.color]="item.temperatura <= -4 ? 'white' : 'black'">
+                                {{item.fph}}</td>
+                                <td *ngIf="item.fph != null" style = "padding-left: 1px; text-align: right;"
+                                [style.background]=" item.temperatura <= -6  ? 'red' : item.temperatura <= -4 ? 'rgb(255, 153, 0)' : item.temperatura <= -2 ? 'rgb(255, 204, 153)' :  'rgb(255, 255, 153)'"
+                                [style.color]="item.temperatura <= -4 ? 'white' : 'black'">
+                                {{item.fuh}}</td>
+                                <td *ngIf="item.fph != null" style = "text-align: right;"
+                                [style.background]=" item.temperatura <= -6  ? 'red' : item.temperatura <= -4 ? 'rgb(255, 153, 0)' : item.temperatura <= -2 ? 'rgb(255, 204, 153)' :  'rgb(255, 255, 153)'"
+                                [style.color]="item.temperatura <= -4 ? 'white' : 'black'">
+                                {{item.registros}}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+          </ion-grid>
+
+      </div>
+  </div>
+</ion-content>
