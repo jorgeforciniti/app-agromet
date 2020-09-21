@@ -4,6 +4,12 @@
       <div id="caja" >
 
         <ion-grid>  
+          <ion-row>
+            <ion-col size="12">
+              <iframe src="https://calendar.google.com/calendar/embed?height=600&amp;wkst=1&amp;bgcolor=%23ffffff&amp;ctz=America%2FArgentina%2FBuenos_Aires&amp;src=dGp0YWE4aW1pbWVxcTE3bmQzNXI0aTkxMW9AZ3JvdXAuY2FsZW5kYXIuZ29vZ2xlLmNvbQ&amp;color=%23F09300&amp;showTitle=0&amp;mode=AGENDA" style="border:solid 1px #777" width="100%" height="300" frameborder="0" scrolling="no"></iframe>
+              <!-- <iframe src="https://calendar.google.com/calendar/embed?height=600&amp;wkst=1&amp;bgcolor=%23ffffff&amp;ctz=America%2FArgentina%2FBuenos_Aires&amp;src=dGp0YWE4aW1pbWVxcTE3bmQzNXI0aTkxMW9AZ3JvdXAuY2FsZW5kYXIuZ29vZ2xlLmNvbQ&amp;color=%23F09300&amp;showTitle=0&amp;mode=AGENDA" style="border:solid 1px #777" width="400" height="400" frameborder="0" scrolling="no"></iframe> -->
+            </ion-col>
+          </ion-row>
           <ion-row *ngFor="let item of mensajes">
             <ion-row>
               <ion-col size="12" size-lg (click)="abrirNoticia(item)">

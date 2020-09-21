@@ -19,7 +19,10 @@ export class LluviasPage implements DoCheck{
   hora: string;
   diaSemana: string;
   mensajes: any[] = [];
+  mensajes2: any[] = [];
+  mensajes3: any[] = [];
   rrAyer = 0;
+  mesesCorto = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
 
   private auxRR: any[] = [];
   private auxD: any[] = [];
@@ -94,20 +97,55 @@ export class LluviasPage implements DoCheck{
 
     this.datosLluvias.getRRMes()
     .subscribe( (posts: any[]) => {
-      this.mensajes = posts;
-      let i: number;
-      for (i = 0; i < this.mensajes.length; i++){
-        this.auxRR.push(Number(this.mensajes[i].lluvia));
-        this.auxD.push(this.mensajes[i].dia);
-      }
-      this.rrAyer = Number(this.mensajes[this.mensajes.length - 2].lluvia);
-      this.barChartData = [{ data: this.auxRR, label: 'Lluvia'}];
-      this.barChartLabels = this.auxD;
+      this.mensajes = posts[0];
+      this.mensajes2 = posts[1];
+      this.mensajes3 = posts[2];
+      this.traerRR('1');
       loading.dismiss();
     });
   }
 
   onClickAhora(){
      this.router.navigate(['tabs/mapa-rr']);
+  }
+
+  traerRR(tipoR){
+    let i: number;
+    this.auxRR = [];
+    this.auxD = [];
+    if (tipoR === '1'){
+      for (i = 0; i < this.mensajes.length; i++){
+        if (Number(this.mensajes[i].lluvia) < 500 && this.mensajes[i].lluvia != null){
+          this.auxRR.push(Number(this.mensajes[i].lluvia).toFixed(1));
+        }else{
+          this.auxRR.push(null);
+        }
+        this.auxD.push(this.mensajes[i].hora);
+      }
+      this.barChartData = [{ data: this.auxRR, label: 'Lluvia'}];
+      this.barChartLabels = this.auxD;
+    }else if (tipoR === '2'){
+      for (i = 0; i < this.mensajes2.length; i++){
+        if (Number(this.mensajes[i].lluvia) < 1000 && this.mensajes[i].lluvia != null){
+          this.auxRR.push(Number(this.mensajes2[i].lluvia).toFixed(1));
+        }else{
+          this.auxRR.push(null);
+        }
+        this.auxD.push(this.mensajes2[i].dia.substr(8, 2) + '-' + this.mensajes2[i].dia.substr(5, 2));
+      }
+      this.barChartData = [{ data: this.auxRR, label: 'Lluvia'}];
+      this.barChartLabels = this.auxD;
+    }else{
+      for (i = 0; i < this.mensajes3.length; i++){
+        if (Number(this.mensajes[i].lluvia) < 1000 && this.mensajes[i].lluvia != null){
+          this.auxRR.push(Number(this.mensajes3[i].lluvia).toFixed(1));
+        }else{
+          this.auxRR.push(null);
+        }
+        this.auxD.push( this.mesesCorto[parseInt(this.mensajes3[i].mes, 10) - 1] );
+      }
+      this.barChartData = [{ data: this.auxRR, label: 'Lluvia'}];
+      this.barChartLabels = this.auxD;
+    }
   }
 }

@@ -36,10 +36,9 @@
             <div class="flex">
                 <div class="flex-item">
                   <div style="display: block; background: rgba(255,255,255,0.5);">
-                       <ion-list>
-                              
-                                <ion-radio-group value=0 (ionChange)="traerHeladas($event.detail.value)" id="tipo_contacto">
-                                  <ion-row>
+                        <ion-list>
+                            <ion-radio-group value=0 (ionChange)="traerHeladas($event.detail.value)" id="tipo_contacto">
+                                <ion-row>
                                     <ion-col size="4" size-lg class="centrar">
                                         <ion-item>
                                             <ion-label style = "font-size: 12px">Hoy</ion-label>
@@ -59,8 +58,8 @@
                                         </ion-item>
                                     </ion-col>
                                   </ion-row>
-                                </ion-radio-group>
-                       </ion-list>                        
+                            </ion-radio-group>
+                        </ion-list>                        
                         <table id="bordes" style="margin: 0 auto; font-size: 10px;" cellspacing="10" cellpadding="0" *ngIf="this.tMinMin <= 0">
                             <tr>
                                 <th style='width: 30%;'>Nombre</th>

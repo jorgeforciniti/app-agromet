@@ -50,7 +50,7 @@ export class EventosPage implements OnInit {
           const nombreMes = meses[parseInt(mes, 10) - 1];
           this.mensajes[i].fecha = diaSemana + ', ' + dia + ' de ' + nombreMes + ' de ' + anio;
           if (this.mensajes[i].imagen){
-            this.mensajes[i].imagen = 'https://agromet.eeaoc.gob.ar/comunicaciones/' + this.mensajes[i].imagen;
+            this.mensajes[i].imagen = this.mensajes[i].imagen;
           }
         }
         loading.dismiss();

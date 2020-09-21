@@ -45,7 +45,31 @@
           <div class="flex">
             <div class="flex-item">
               <div style="display: block; background: rgba(255,255,255,0.5);">
-                <canvas baseChart
+                <ion-list>
+                  <ion-radio-group value=1 (ionChange)="traerRR($event.detail.value)" id="tipo_contacto">
+                      <ion-row>
+                          <ion-col size="4" size-lg class="centrar">
+                              <ion-item>
+                                  <ion-label style = "font-size: 10px">Hoy</ion-label>
+                                  <ion-radio slot="start" value=1></ion-radio>
+                              </ion-item>
+                          </ion-col>
+                          <ion-col size="4" size-lg class="centrar">
+                              <ion-item>
+                                  <ion-label style = "font-size: 10px">30 días</ion-label>
+                                  <ion-radio slot="start" value=2></ion-radio>
+                              </ion-item>
+                          </ion-col>
+                          <ion-col size="4" size-lg class="centrar">
+                              <ion-item>
+                                  <ion-label style = "font-size: 10px">Año</ion-label>
+                                  <ion-radio slot="start" value=3></ion-radio>
+                              </ion-item>
+                          </ion-col>
+                        </ion-row>
+                  </ion-radio-group>
+              </ion-list>
+                <canvas baseChart width="400" height="350"
                 [datasets]="barChartData"
                 [labels]="barChartLabels"
                 [options]="barChartOptions"

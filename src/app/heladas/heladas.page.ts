@@ -18,10 +18,6 @@ export class HeladasPage implements DoCheck {
   mensajes: any[] = [];
    tMin = 0;
    tMinMin = 0;
-  // *************************************************
-  tipoT: string;
-
-  // **************************************************
 
   constructor( private datosTemperaturas: EstacionesService, private router: Router, public loadingCtrl: LoadingController) {
     this.cargarDatos();
@@ -65,7 +61,6 @@ export class HeladasPage implements DoCheck {
     await loading.present();
 
     if (heladas === 0){
-      this.tipoT = 'de hoy';
       this.datosTemperaturas.getHelDia()
       .subscribe( (posts: any[]) => {
         this.mensajes = posts;
@@ -88,7 +83,6 @@ export class HeladasPage implements DoCheck {
         loading.dismiss();
       });
     }else if (heladas === 1){
-      this.tipoT = 'del mes';
       this.datosTemperaturas.getHelMes()
       .subscribe( (posts: any[]) => {
         this.mensajes = posts;
@@ -109,7 +103,6 @@ export class HeladasPage implements DoCheck {
         loading.dismiss();
       });
     }else{
-      this.tipoT = 'del año';
       this.datosTemperaturas.getHelAnio()
       .subscribe( (posts: any[]) => {
         this.mensajes = posts;

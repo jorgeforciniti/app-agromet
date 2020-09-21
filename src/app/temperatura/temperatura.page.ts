@@ -20,14 +20,19 @@ export class TemperaturaPage implements DoCheck{
   hora: string;
   diaSemana: string;
   mensajes: any[] = [];
+  mensajes2: any[] = [];
+  mensajes3: any[] = [];
   tMax = 0;
   tMin = 0;
+  mesesCorto = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
   // *************************************************
 
   private auxT: any[] = [];
+  private auxM: any[] = [];
   private auxH: any[] = [];
   public lineChartData: ChartDataSets[] = [
-    { data: [0, 0, 0, 0, 0, 0, 0], label: 'Series A' }
+    { data: [0, 0, 0, 0, 0, 0, 0], label: 'Máximas', fill: false },
+    { data: [0, 0, 0, 0, 0, 0, 0], label: 'Mínimas', fill: false }
   ];
   public lineChartLabels: Label[] = [];
 
@@ -50,6 +55,14 @@ export class TemperaturaPage implements DoCheck{
       backgroundColor: 'rgba(255,0,0,0.0)',
       borderColor: 'rgba(255,0,0,0.6)',
       pointBackgroundColor: 'rgba(255,0,0,1)',
+      pointBorderColor: '#fff',
+      pointHoverBackgroundColor: '#fff',
+      pointHoverBorderColor: 'rgba(0,0,0,0.8)'
+    },
+    { // red
+      backgroundColor: 'rgba(0,0,255,0.0)',
+      borderColor: 'rgba(0,0,255,0.6)',
+      pointBackgroundColor: 'rgba(0,0,255,1)',
       pointBorderColor: '#fff',
       pointHoverBackgroundColor: '#fff',
       pointHoverBorderColor: 'rgba(0,0,0,0.8)'
@@ -89,8 +102,6 @@ export class TemperaturaPage implements DoCheck{
   }
 
   async traerTemp24hs(){
-    this.auxT = [];
-    this.auxH = [];
     const loading = await this.loadingCtrl.create({
       spinner: 'bubbles',
       translucent: true,
@@ -102,13 +113,32 @@ export class TemperaturaPage implements DoCheck{
 
     this.datosTemperaturas.getTemperatura24()
     .subscribe( (posts: any[]) => {
-      this.mensajes = posts;
-      let i: number;
+      this.mensajes = posts[0];
+      this.mensajes2 = posts[1];
+      this.mensajes3 = posts[2];
+      this.traerTemp('1');
+      loading.dismiss();
+    });
+  }
+
+  onClickAhora(){
+    this.router.navigate(['tabs/mapat']);
+  }
+  onClickHoy(){
+    this.router.navigate(['tabs/mapathoy']);
+  }
+
+  traerTemp(tipoT){
+    let i: number;
+    this.auxT = [];
+    this.auxM = [];
+    this.auxH = [];
+    if (tipoT === '1'){
       for (i = 0; i < this.mensajes.length; i++){
         if (Number(this.mensajes[i].temperatura) > -20 &&
           Number(this.mensajes[i].temperatura) < 60 &&
           this.mensajes[i].temperatura != null){
-          this.auxT.push(Number(this.mensajes[i].temperatura));
+          this.auxT.push(Number(this.mensajes[i].temperatura).toFixed(1));
         }else{
           this.auxT.push(null);
         }
@@ -117,15 +147,47 @@ export class TemperaturaPage implements DoCheck{
       this.lineChartData = [{ data: this.auxT, label: 'Temperatura'}];
       this.lineChartLabels = this.auxH;
       this.tMax = Math.max.apply(null, this.auxT);
-      this.tMin = Math.min.apply(null, this.auxT);
-      loading.dismiss();
-  });
-  }
-
-  onClickAhora(){
-    this.router.navigate(['tabs/mapat']);
-  }
-  onClickHoy(){
-    this.router.navigate(['tabs/mapathoy']);
+    }else if (tipoT === '2'){
+      for (i = 0; i < this.mensajes2.length; i++){
+        if (Number(this.mensajes2[i].t_max) > -20 &&
+          Number(this.mensajes2[i].t_max) < 60 &&
+          this.mensajes2[i].t_max != null){
+          this.auxT.push(Number(this.mensajes2[i].t_max).toFixed(1));
+        }else{
+          this.auxT.push(null);
+        }
+        if (Number(this.mensajes2[i].t_min) > -20 &&
+          Number(this.mensajes2[i].t_min) < 60 &&
+          this.mensajes2[i].t_min != null){
+          this.auxM.push(Number(this.mensajes2[i].t_min).toFixed(1));
+        }else{
+          this.auxM.push(null);
+        }
+        this.auxH.push(this.mensajes2[i].fecha.substr(8, 2) + '-' + this.mensajes2[i].fecha.substr(5, 2));
+      }
+      this.lineChartData = [{ data: this.auxT, label: 'Máximas'}, { data: this.auxM, label: 'Mínimas'}];
+      this.lineChartLabels = this.auxH;
+    }else{
+      for (i = 0; i < this.mensajes3.length; i++){
+        if (Number(this.mensajes3[i].t_max) > -20 &&
+          Number(this.mensajes3[i].t_max) < 60 &&
+          this.mensajes3[i].t_max != null){
+          this.auxT.push(Number(this.mensajes3[i].t_max).toFixed(1));
+        }else{
+          this.auxT.push(null);
+        }
+        if (Number(this.mensajes3[i].t_min) > -20 &&
+          Number(this.mensajes3[i].t_min) < 60 &&
+          this.mensajes3[i].t_min != null){
+          this.auxM.push(Number(this.mensajes3[i].t_min).toFixed(1));
+        }else{
+          this.auxM.push(null);
+        }
+        
+        this.auxH.push( this.mesesCorto[parseInt(this.mensajes3[i].mes, 10) - 1] );
+      }
+      this.lineChartData = [{ data: this.auxT, label: 'Máx. media'}, { data: this.auxM, label: 'Mín. Media'}];
+      this.lineChartLabels = this.auxH;
+    }
   }
 }
