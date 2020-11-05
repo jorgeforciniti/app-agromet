@@ -1,79 +1,176 @@
-#caja-ppal{
-    width: 100%;
-    height: 100%;
-    background: url('../../assets/images/cielo_azul.jpg');
-    background-repeat: no-repeat;
-    background-position: center center;
-    z-index: auto;
-    overflow:scroll;
-    background-size: cover;
+@font-face {
+  font-family: helveticaNR;
+  src: url('../../assets/fonts/helvetica-neue-lt-std-55-roman.otf');
+  }
+@font-face {
+  font-family: helveticaNBC;
+  src: url('../../assets/fonts/HelveticaNeueLTStd-BdCn.otf');
+      }
+
+.contenido{
+  --padding-top: 10px;
+  --padding-start: 10px;
+  --padding-end: 10px
+}
+      
+.estacion1{
+  color: lightgray;
+  font-size: 16px;
+  font-family: helveticaNBC;
+  text-align: right;
+  padding-top: 15px;
+  padding-right: 5px;
+  text-transform: uppercase;
 }
 
-#estacion{
-    color: white;
-    letter-spacing: 2px;
-    line-height: 30px;
-    font-size: 30px;
-    text-align: center;
-    margin: 5px 1px 5px 1px;
+.estacion2{
+  padding-top: 15px;
+}
+.diasemana{
+  color: lightgray;
+  letter-spacing: 2px;
+  font-size: 18px;
+  font-family: helveticaNR;
+  text-align: left;
+  padding-top: 5px;
+  padding-right: 10px;
+  text-transform: uppercase;
 }
 
-#caja{
-    width:100%;
-    height: 100%;
-    color: green;
-    font-family: Arial;
-    font-size: 16px;
-    font-weight: bolder;
-    text-align: left;
-    padding: 5px 10px 5px 0px;
-    margin: 5px 5px 5px 5px;
+.he1{
+  color: rgb( 128, 227, 211);
+  letter-spacing: 0px;
+  text-align: left;
+  padding: 0px;
+  padding-top: 3px;
+  font-family: helveticaNR ;
+  font-size: 55px;
+}
+.he2{
+  color: rgb( 128, 227, 211);
+  letter-spacing: 0px;
+  text-align: left;
+  padding: 0px;
+  font-family: helveticaNR ;
+  font-size: 24px;
+}
+
+.fecha{
+  color: lightgray;
+  letter-spacing: 0px;
+  font-size: 14px;
+  font-family: helveticaNR;
+  text-align: left;
+  padding-top: 5px;
+  padding-right: 10px;
+  text-transform: uppercase;
+}
+
+.fila{
+  display: flex;
+  align-items: center;
+  color: lightgray;
+  padding: 0px;
+  margin: 0px;
+}
+      
+      
+hr {
+  background-color: rgb( 128, 227, 211) !important;
+  height: 2px;
+  display: block !important;
+  font-size: 2em !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  margin: 0px !important;
+}
+
+.cuerpo{
+  display: flex;
+  align-items: center;
+  color: lightgray;
+  font-family: helveticaNR ;
+  font-size: 18px;
+  justify-content: left;
+  padding-left: 5px;
+}
+
+span{
+  color: rgb( 128, 227, 211) !important;
+  font-family: helveticaNBC ;
+  font-size: 16px;
+  padding: 5px;
+  margin: 0px;
 }
 
 #fechayhora{
-    letter-spacing: 2px;
-    line-height: 30px;
-    color: white;
-    font-family: "Arial Narrow" ;
-    text-align: center;
-    font-size: 18px; 
+  color: lightgray;
+  letter-spacing: 0px;
+  line-height: 30px;
+  font-size: 26px;
+  font-family: helveticaNR;
+  text-align: center;
+  padding-top: 15px;
+  padding-right: 5px;
+  text-transform: uppercase;
 }
 
-.centrar{
-    text-align: center;
+ion-label{
+  font-family: helveticaNBC !important;
+  font-size: 15px;
+  color: rgb( 128, 227, 211) !important;
+  background-color: transparent;
+  padding: 0px 0px 0px 5px;
+  margin:  0px 0px 0px 0px;
 }
 
-#central {
-    display: flex;
-    height: 80px;
-    align-items: center;
-    padding-left: 20px;
-    color: white;
-    font-family: "Arial" ;
-    font-size: 20px;
-    text-align: center;
- }
+ion-radio{
+  --color: rgb( 128, 227, 211) !important;
+  --color-checked: rgb( 128, 227, 211) !important;
+  padding: 0px 0px 0px 0px;
+  margin: 0px 0px 0px 0px;
+  background-color: transparent !important;
+}
 
- #bordes {
-    color: black;
-    border-collapse: collapse;
-    border: solid 1px #000000;
-    font-size: 14px;
-  }
+ion-list{
+  padding: 0px 0px 0px 0px;
+  margin: 0px 0px 0px 0px;
+  background-color: transparent !important;
+}
 
-  td{
-    border-color:#666666;
-    border-style:dashed;
-    border-width:1px;
-    padding-right: 2px;
-  }
-  th{
-    border-color:#666666;
-    border-style:dashed;
-    border-width:1px;
-    text-align: center;
-  }
+.mapa{
+  display: flex; 
+  align-items: center; 
+}
 
-  ion-radio{
-    margin: 10px 10px 10px 10px
-  }
+.radios{
+  color: lightgray;
+  letter-spacing: 2px;
+  font-size: 18px;
+  font-family: helveticaNR;
+  text-align: left;
+  padding-top: 5px;
+  padding-right: 10px;
+}
+
+td.numeros{
+  color: lightgray;
+  text-align: right;
+}
+
+td.letras{
+  color: lightgray;
+  text-align: left;
+}
+
+tr{
+  color: lightgray;
+}
+
+.tabla{
+  margin: auto;
+  background-color: rgba(255,255,255,0.5); 
+  letter-spacing: 0px;
+  font-size: 12px;
+  font-family: helveticaNR;
+}

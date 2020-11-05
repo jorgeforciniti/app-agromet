@@ -53,6 +53,12 @@ export class LluviasPage implements DoCheck{
 
   // **************************************************
 
+ imagen: string;
+  ubicacion: string;
+  mapas: string;
+
+  // **************************************************
+
   constructor( private datosLluvias: EstacionesService, private router: Router, public loadingCtrl: LoadingController) {
     this.cargarDatos();
   }
@@ -62,6 +68,7 @@ export class LluviasPage implements DoCheck{
       this.cargarDatos();
       this.traerRRMes();
       localStorage.setItem('lluvia', '0');
+      this.cargarImagen();
     }
   }
 
@@ -113,6 +120,13 @@ export class LluviasPage implements DoCheck{
     let i: number;
     this.auxRR = [];
     this.auxD = [];
+    const hoy = new Date();
+    const mm = hoy.getMonth();
+
+    this.dato.rr_mes = Number(this.mensajes3[ mm ].lluvia);
+
+
+
     if (tipoR === '1'){
       for (i = 0; i < this.mensajes.length; i++){
         if (Number(this.mensajes[i].lluvia) < 500 && this.mensajes[i].lluvia != null){
@@ -147,5 +161,18 @@ export class LluviasPage implements DoCheck{
       this.barChartData = [{ data: this.auxRR, label: 'Lluvia'}];
       this.barChartLabels = this.auxD;
     }
+  }
+  cargarImagen(){
+    if (this.dato.RR_dia < 0.5){
+      this.imagen = '../../assets/fondos/inicio-soleado.jpg';
+    }else if (this.dato.RR_dia < 3) {
+      this.imagen = '../../assets/fondos/lluvias2.jpg';
+    }else if (this.dato.RR_dia < 10) {
+      this.imagen = '../../assets/fondos/lluvias1.jpg';
+    }else{
+      this.imagen = '../../assets/fondos/lluvias3.jpg';
+    }
+    this.ubicacion = '../../assets/wheater-icons/ubicacion.png';
+    this.mapas = '../../assets/tab-icons/btnMapas.png';
   }
 }

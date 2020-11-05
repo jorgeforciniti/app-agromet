@@ -1,30 +1,45 @@
-<ion-tabs>
+  <ion-tabs class="tab-completo">
+    <ion-tab-bar
+      slot="bottom"
+      class="tab-bar"
+    >
+      <ion-tab-button tab="home">
+        <ion-img [src]="home"></ion-img>
 
-  <ion-tab-bar slot="bottom" color="primary">
-    <ion-tab-button tab="home">
-      <ion-icon name="home"></ion-icon>
-      <ion-label>Inicio</ion-label>
-    </ion-tab-button>
+        <ion-label>Inicio</ion-label>
+      </ion-tab-button>
 
-    <ion-tab-button tab="temperatura">
-      <ion-icon name="thermometer"></ion-icon>
-      <ion-label>Temperaturas</ion-label>
-    </ion-tab-button>
+      <ion-tab-button tab="temperatura">
+        <ion-img [src]="temperaturas"></ion-img>
 
-    <ion-tab-button tab="lluvias">
-      <ion-icon name="rainy"></ion-icon>
-      <ion-label>Lluvias</ion-label>
-    </ion-tab-button>
+        <ion-label>Temperaturas</ion-label>
+      </ion-tab-button>
 
-    <ion-tab-button tab="heladas">
-      <ion-icon name="snow-outline"></ion-icon>
-      <ion-label>Heladas</ion-label>
-    </ion-tab-button>
+      <ion-tab-button tab="lluvias">
+        <ion-img [src]="lluvias"></ion-img>
 
-    <ion-tab-button tab="eventos">
-      <ion-icon name="calendar-outline"></ion-icon>
-      <ion-label>Eventos</ion-label>
-    </ion-tab-button>
-  </ion-tab-bar>
+        <ion-label>Lluvias</ion-label>
+      </ion-tab-button>
 
-</ion-tabs>
+      <ion-tab-button tab="heladas">
+        <ion-img [src]="heladas"></ion-img>
+
+        <ion-label>Heladas</ion-label>
+      </ion-tab-button>
+
+      <ion-tab-button tab="eventos">
+        <ion-img [src]="eventos"></ion-img>
+
+        <ion-label>Eventos</ion-label>
+      </ion-tab-button>
+    </ion-tab-bar>
+    <ion-row >
+      <ion-col size="3">
+
+      </ion-col>
+      <ion-col size="6">
+        <ion-img [src]="logo"></ion-img>
+      </ion-col>
+    </ion-row>
+
+  </ion-tabs>

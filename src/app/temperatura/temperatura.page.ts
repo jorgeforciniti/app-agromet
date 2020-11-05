@@ -25,15 +25,21 @@ export class TemperaturaPage implements DoCheck{
   tMax = 0;
   tMin = 0;
   mesesCorto = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+
+  // *************************************************
+  imagen: string;
+  ubicacion: string;
+  mapas: string;
+
   // *************************************************
 
   private auxT: any[] = [];
   private auxM: any[] = [];
   private auxH: any[] = [];
   public lineChartData: ChartDataSets[] = [
-    { data: [0, 0, 0, 0, 0, 0, 0], label: 'Máximas', fill: false },
-    { data: [0, 0, 0, 0, 0, 0, 0], label: 'Mínimas', fill: false }
-  ];
+    { data: [0, 0, 0, 0, 0, 0, 0], label: 'Máximas', fill: false, lineTension: 0 },
+    { data: [0, 0, 0, 0, 0, 0, 0], label: 'Mínimas', fill: false, lineTension: 0 }
+ ];
   public lineChartLabels: Label[] = [];
 
   public lineChartOptions: (ChartOptions) = {
@@ -52,18 +58,18 @@ export class TemperaturaPage implements DoCheck{
 
   public lineChartColors: Color[] = [
     { // red
-      backgroundColor: 'rgba(255,0,0,0.0)',
-      borderColor: 'rgba(255,0,0,0.6)',
-      pointBackgroundColor: 'rgba(255,0,0,1)',
-      pointBorderColor: '#fff',
-      pointHoverBackgroundColor: '#fff',
-      pointHoverBorderColor: 'rgba(0,0,0,0.8)'
-    },
+      backgroundColor: 'rgba(156,0,0,0.0)',
+      borderColor: 'rgba(156,0,0,0.6)',
+      pointBackgroundColor: 'rgba(156,0,0,1)',
+      pointBorderColor: 'rgba(64,0,0,0.8)',
+      pointHoverBackgroundColor: 'rgba(255,0,0,0.8)',
+      pointHoverBorderColor: 'rgba(255,0,0,0.8)'
+},
     { // red
       backgroundColor: 'rgba(0,0,255,0.0)',
       borderColor: 'rgba(0,0,255,0.6)',
       pointBackgroundColor: 'rgba(0,0,255,1)',
-      pointBorderColor: '#fff',
+      pointBorderColor: 'rgba(0,0,128,1)',
       pointHoverBackgroundColor: '#fff',
       pointHoverBorderColor: 'rgba(0,0,0,0.8)'
     }
@@ -82,6 +88,7 @@ export class TemperaturaPage implements DoCheck{
       this.cargarDatos();
       this.traerTemp24hs();
       localStorage.setItem('temperatura', '0');
+      this.cargarImagen();
     }
   }
 
@@ -144,9 +151,10 @@ export class TemperaturaPage implements DoCheck{
         }
         this.auxH.push(this.mensajes[i].hora);
       }
-      this.lineChartData = [{ data: this.auxT, label: 'Temperatura'}];
+      this.lineChartData = [{ data: this.auxT, label: 'Temperatura', fill: false, lineTension: 0}];
       this.lineChartLabels = this.auxH;
       this.tMax = Math.max.apply(null, this.auxT);
+      this.tMin = Math.min.apply(null, this.auxT);
     }else if (tipoT === '2'){
       for (i = 0; i < this.mensajes2.length; i++){
         if (Number(this.mensajes2[i].t_max) > -20 &&
@@ -165,7 +173,8 @@ export class TemperaturaPage implements DoCheck{
         }
         this.auxH.push(this.mensajes2[i].fecha.substr(8, 2) + '-' + this.mensajes2[i].fecha.substr(5, 2));
       }
-      this.lineChartData = [{ data: this.auxT, label: 'Máximas'}, { data: this.auxM, label: 'Mínimas'}];
+      this.lineChartData = [{ data: this.auxT, label: 'Máximas', fill: false, lineTension: 0}, 
+      { data: this.auxM, label: 'Mínimas', fill: false, lineTension: 0}];
       this.lineChartLabels = this.auxH;
     }else{
       for (i = 0; i < this.mensajes3.length; i++){
@@ -183,11 +192,22 @@ export class TemperaturaPage implements DoCheck{
         }else{
           this.auxM.push(null);
         }
-        
+
         this.auxH.push( this.mesesCorto[parseInt(this.mensajes3[i].mes, 10) - 1] );
       }
-      this.lineChartData = [{ data: this.auxT, label: 'Máx. media'}, { data: this.auxM, label: 'Mín. Media'}];
+      this.lineChartData = [{ data: this.auxT, label: 'Máx. media', fill: false, lineTension: 0}, 
+      { data: this.auxM, label: 'Mín. Media', fill: false, lineTension: 0}];
       this.lineChartLabels = this.auxH;
     }
+  }
+
+  cargarImagen(){
+    if(this.dato.temp_af<30){
+      this.imagen = '../../assets/fondos/temperaturas2.jpg';
+    }else{
+      this.imagen = '../../assets/fondos/temperaturas1.jpg';
+    }
+    this.ubicacion = '../../assets/wheater-icons/ubicacion.png';
+    this.mapas = '../../assets/tab-icons/btnMapas.png';
   }
 }

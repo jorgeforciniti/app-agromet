@@ -18,6 +18,9 @@ export class HeladasPage implements DoCheck {
   mensajes: any[] = [];
    tMin = 0;
    tMinMin = 0;
+  imagen: string;
+  ubicacion: string;
+  mapas: string;
 
   constructor( private datosTemperaturas: EstacionesService, private router: Router, public loadingCtrl: LoadingController) {
     this.cargarDatos();
@@ -28,6 +31,7 @@ export class HeladasPage implements DoCheck {
       this.cargarDatos();
       this.traerHeladas(0);
       localStorage.setItem('helada', '0');
+      this.cargarImagen();
     }
   }
 
@@ -127,5 +131,14 @@ export class HeladasPage implements DoCheck {
 
   onClickHoy(){
     this.router.navigate(['tabs/mapaheladas']);
+  }
+  cargarImagen(){
+    if (this.tMinMin <= 0){
+      this.imagen = '../../assets/fondos/heladas.jpg';
+    }else{
+      this.imagen = '../../assets/fondos/inicio-soleado.jpg';
+    }
+    this.ubicacion = '../../assets/wheater-icons/ubicacion.png';
+    this.mapas = '../../assets/tab-icons/btnMapas.png';
   }
 }

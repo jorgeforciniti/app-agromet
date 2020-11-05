@@ -18,10 +18,14 @@ export class MapathoyPage implements OnInit {
   private color: string;
   private temp: number;
   tipoT: string;
+  dato: any;
+  imagen: string;
+  mapas: string;
   constructor(private datosTemperaturas: EstacionesService, private router: Router, public loadingCtrl: LoadingController) { }
 
   ngOnInit() {
     this.traeTemperaturas(true);
+    this.cargarImagen();
   }
 
   async traeTemperaturas(maximas){
@@ -181,5 +185,8 @@ export class MapathoyPage implements OnInit {
         .addTo(mapa);
     });
   }
-
+  cargarImagen(){
+    this.imagen = '../../assets/fondos/mapa-temperatura.jpg';
+    this.mapas = '../../assets/tab-icons/btnMapas.png';
+  }
 }

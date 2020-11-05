@@ -1,181 +1,107 @@
-#caja-ppal{
-    width: 100%;
-    height: 100%;
-    background: url('../../assets/images/cielo_azul.jpg');
-    background-repeat: no-repeat;
-    background-position: center center;
-    z-index: auto;
-    overflow:scroll;
-    background-size: cover;
+@font-face {
+    font-family: helveticaNR;
+    src: url('../../assets/fonts/helvetica-neue-lt-std-55-roman.otf');
+    }
+    @font-face {
+        font-family: helveticaNBC;
+        src: url('../../assets/fonts/HelveticaNeueLTStd-BdCn.otf');
+        }
+
+.contenido{
+    --padding-top: 10px;
+    --padding-start: 10px;
+    --padding-end: 10px;
 }
 
-#estacion{
-    color: white;
-    letter-spacing: 2px;
-    line-height: 30px;
-    font-size: 30px;
-    text-align: center;
-    margin: 5px 1px 5px 1px;
-}
-
-#caja{
-    width:100%;
-    height: 100%;
-    color: green;
-    font-family: Arial;
+.estacion1{
+    color: lightgray;
     font-size: 16px;
-    font-weight: bolder;
-    text-align: left;
-    padding: 10px 10px 10px 10px;
-    margin: 5px 5px 5px 5px;
+    font-family: helveticaNBC;
+    text-align: right;
+    padding-top: 15px;
+    padding-right: 5px;
+    text-transform: uppercase;
 }
 
-#fechayhora{
+.estacion2{
+    padding-top: 15px;
+}
+.diasemana{
+    color: lightgray;
     letter-spacing: 2px;
-    line-height: 30px;
-    color: white;
-    font-family: "Arial Narrow" ;
-    text-align: center;
-    font-size: 16px; 
-}
-
-#temperatura{
-    margin: 0px 0px 0px 0px;
-    justify-content: center;
-    padding: 15px 0px 0px 0px;
-    line-height: 25px;
-    color: white;
-    font-family: "Arial" ;
-    font-size: 45px;
-    text-align: center;
-}
-#humedad{
-    background-color: #3880ff;
-    margin: 1px 1px 5px 1px;
-    padding: 10px 10px 10px 10px;
-    letter-spacing: 1px;
-    line-height: 25px;
-    color: black;
-    font-size: 20px;
-    text-align: center;
-    border-radius: 50px 50px 50px 50px;
-    -moz-border-radius: 50px 50px 50px 50px;
-    -webkit-border-radius: 50px 50px 50px 50px;
-    border: 0px solid #000000;
-}
-
-#lluvia{
-    letter-spacing: 1px;
-    line-height: 20px;
-}
-
-#presion{
-    background-color: #3880ff;
-    padding: 10px 10px 10px 10px;
-    letter-spacing: 1px;
-    line-height: 25px;
-    height: 75px;
-    color: black;
-    font-size: 20px;
-    text-align: center;
-    border-radius: 50px 50px 50px 50px;
-    -moz-border-radius: 50px 50px 50px 50px;
-    -webkit-border-radius: 50px 50px 50px 50px;
-    border: 0px solid #000000;
- }
-
-#viento{
-    background-color: #3880ff;
-    margin: 1px 0px 5px 0px;
-    padding: 10px 10px 10px 5px;
-    width: 100%;
-    letter-spacing: 1px;
-    line-height: 25px;
-    color: black;
     font-size: 18px;
+    font-family: helveticaNR;
     text-align: left;
-    border-radius: 50px 50px 50px 50px;
-    -moz-border-radius: 50px 50px 50px 50px;
-    -webkit-border-radius: 50px 50px 50px 50px;
-    border: 0px solid #000000;
+    padding-top: 5px;
+    padding-right: 10px;
+    text-transform: uppercase;
 }
 
-#circulo{
-    margin:0px auto 10px auto;
-    background: rgba(255, 255, 255, .7);
-    padding: 10px 18px 15px 17px;
-    width: 80px;
-    height: 80px;
-    border-radius: 50px 50px 50px 50px;
-    -moz-border-radius: 50px 50px 50px 50px;
-    -webkit-border-radius: 50px 50px 50px 50px;
-    border: 0px solid #000000;
+.tem{
+    color: rgb( 128, 227, 211);
+    letter-spacing: 1px;
+    text-align: left;
+    padding-top: 3px;
+    padding-right: 10px;
+    font-family: helveticaNR ;
+    font-size: 68px;
 }
 
-#circulito-h{
-    background: rgba(255, 255, 255, .7);
-    padding: 6px 6px 1px 6px;
-    width: 45px;
-    height: 45px;
-    border-radius: 50px 50px 50px 50px;
-    -moz-border-radius: 50px 50px 50px 50px;
-    -webkit-border-radius: 50px 50px 50px 50px;
-    border: 0px solid #000000;
+.fecha{
+    color: lightgray;
+    letter-spacing: 0px;
+    font-size: 16px;
+    font-family: helveticaNR;
+    text-align: left;
+    padding-top: 5px;
+    padding-right: 10px;
+    text-transform: uppercase;
 }
 
-#circulito-l{
-    background: rgba(255, 255, 255, .7);
-    padding: 0px 6px 1px 6px;
-    width: 45px;
-    height: 45px;
-    border-radius: 50px 50px 50px 50px;
-    -moz-border-radius: 50px 50px 50px 50px;
-    -webkit-border-radius: 50px 50px 50px 50px;
-    border: 0px solid #000000;
+.fila{
+    display: flex;
+    align-items: center;
+    color: lightgray;
+    padding: 0px;
+    margin: 0px;
 }
 
-#circulito-p{
-    background: rgba(255, 255, 255, .7);
-    padding: 0px 3px 5px 3px;
-    width: 45px;
-    height: 45px;
-    border-radius: 50px 50px 50px 50px;
-    -moz-border-radius: 50px 50px 50px 50px;
-    -webkit-border-radius: 50px 50px 50px 50px;
-    border: 0px solid #000000;
+.cuerpo1{
+    padding: 0px;
+    margin: 0px;
+    text-transform: uppercase;
+    justify-content: left;
+    padding-left: 5px;
 }
 
-#circulito-v{
-    background: rgba(255, 255, 255, .7);
-    padding: 0px 6px 5px 0px;
-    width: 50px;
-    height: 50px;
-    border-radius: 50px 50px 50px 50px;
-    -moz-border-radius: 50px 50px 50px 50px;
-    -webkit-border-radius: 50px 50px 50px 50px;
-    border: 0px solid #000000;
+.cuerpo2{
+    padding: 0px;
+    margin: 0px;
+    letter-spacing: 0px;
+    font-size: 17px;
+    font-family: helveticaNR;
+    text-align: right;
+    padding-right: 10px;
 }
 
-#gLluvias{
-    padding-top: 0px;
-    width: 50px;
-    height: 50px;
-}
+hr {
+    background-color: rgb( 128, 227, 211) !important;
+    height: 2px;
+    display: block !important;
+    font-size: 2em !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    margin: 0px !important;
+  }
 
-#imgPresion{
-    padding-top: 7px;
-    width: 40px;
-    height: 40px;
-    filter: invert(0.4) sepia(1) hue-rotate(180deg) saturate(1000%);
-}
-
-span{
-    color: whitesmoke;
-    display: inline;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-    text-shadow: 0.05em 0.05em darkslategrey;
-}
-
-p{
+  #fechayhora{
+    color: lightgray;
+    letter-spacing: 0px;
+    line-height: 30px;
+    font-size: 26px;
+    font-family: helveticaNR;
     text-align: center;
+    padding-top: 15px;
+    padding-right: 5px;
+    text-transform: uppercase;
 }

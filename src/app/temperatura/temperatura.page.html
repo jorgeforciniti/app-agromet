@@ -1,85 +1,120 @@
-<app-header titulo="Temperaturas"></app-header>
-<ion-content [fullscreen]="true">
-  <div id="caja-ppal">
+<ion-content [fullscreen]="true" class="contenido" style="--background: url({{imagen}})">
+    <app-header titulo="Temperaturas"></app-header>
 
-      <div id="caja" >
-          <div id="fechayhora">
-              <span>{{ this.diaSemana }}, {{ this.dia }} de {{ this.nombreMes }} de {{ this.anio}}</span>
-          </div>
-          <div id="fechayhora">
-              <span>{{ this.hora }} hs</span>
-          </div>
+    <!-- Estacion -->
+    <ion-row class="fila">
+        <ion-col size="2.5">
+            <hr>
+        </ion-col>
+        <ion-col size="8.5" class="estacion1">
+            {{ this.dato.nombre }}
+        </ion-col>
+        <ion-col size="1" class="estacion2">
+            <img src="{{ubicacion}}">
+        </ion-col>
+    </ion-row>
 
-          <div id="estacion">
-              {{ this.dato.nombre }}
-          </div>
-
-          <ion-grid>  
-              <ion-row>
-                  <ion-col size="3" size-lg>
-                      <div id="temperatura" 
-                      [style.background]=" this.dato.temp_af > 39 ? 'red' : this.dato.temp_af > 34 ? 'orange' : this.dato.temp_af > 29 ? 'yellow' : this.dato.temp_af > 0 ? 'green' : 'blue'"
-                      [style.color]="this.dato.temp_af > 39 ? 'white' : this.dato.temp_af > 29 ? 'black' :  'white'">
-                      {{ this.dato.temp_af.toFixed(1) }}<br>ºC
-                      </div>
-                  </ion-col>
-                  <ion-col size="9" size-lg>
-                    <div id="central">
-                          <span> {{ this.tMin.toFixed(1) }}ºC / {{ this.tMax.toFixed(1) }}ºC</span>
-                    </div>
-                </ion-col>
-              </ion-row>
-              <ion-row>
-                <ion-col size="6" size-lg class="centrar">
-                    <ion-button (click)="onClickAhora()" >
-                        Mapa ahora
-                    </ion-button>
-                </ion-col>
-                <ion-col size="6" size-lg class="centrar">
-                    <ion-button (click)="onClickHoy()" >
-                        Mapa hoy
-                    </ion-button>
+    <ion-row>
+        <ion-col size="12" style="height: 10px;">
+        </ion-col>
+    </ion-row>  
+    <!-- día -->
+    <ion-row>
+        <ion-col size="6" class="diasemana">
+            {{ this.diaSemana }}
+        </ion-col>
+        <ion-col size="6" class="diasemana">
+            <hr>
+        </ion-col>
+    </ion-row>
+        
+    <!-- Temperatura -->
+    <ion-row>
+        <ion-col size="6" class="tem">
+            <ion-row>
+                <ion-col size="12" class="tem">
+                    {{ this.dato.temp_af.toFixed(0) }}º
                 </ion-col>
             </ion-row>
-            <br>
-            <div class="flex">
-                <div class="flex-item">
-                  <div style="display: block; background: rgba(255,255,255,0.5);">
-                    <ion-list>
-                        <ion-radio-group value=1 (ionChange)="traerTemp($event.detail.value)" id="tipo_contacto">
-                            <ion-row>
-                                <ion-col size="4" size-lg class="centrar">
-                                    <ion-item>
-                                        <ion-label style = "font-size: 10px">Hoy</ion-label>
-                                        <ion-radio slot="start" value=1></ion-radio>
-                                    </ion-item>
-                                </ion-col>
-                                <ion-col size="4" size-lg class="centrar">
-                                    <ion-item>
-                                        <ion-label style = "font-size: 10px">30 días</ion-label>
-                                        <ion-radio slot="start" value=2></ion-radio>
-                                    </ion-item>
-                                </ion-col>
-                                <ion-col size="4" size-lg class="centrar">
-                                    <ion-item>
-                                        <ion-label style = "font-size: 10px">Año</ion-label>
-                                        <ion-radio slot="start" value=3></ion-radio>
-                                    </ion-item>
-                                </ion-col>
-                              </ion-row>
-                        </ion-radio-group>
-                    </ion-list>                        
-                  <canvas baseChart width="400" height="350"
-                              [datasets]="lineChartData"
-                              [labels]="lineChartLabels"
-                              [options]="lineChartOptions"
-                              [colors]="lineChartColors"
-                              [legend]="lineChartLegend"
-                              [chartType]="lineChartType"></canvas>
-                  </div>
-                </div>
+            <ion-row>
+                <ion-col size="12" class="fecha">
+                    {{ this.dia }} de {{ this.nombreMes }} {{ this.anio}}
+                </ion-col>
+            </ion-row>
+        </ion-col>
+
+        <!-- espacio -->
+        <ion-col size="0.5">
+        </ion-col>
+
+        <ion-col size="5.5">
+            <ion-row>
+                <ion-col size="12" class="cuerpo">
+                    {{ this.tMax.toFixed(1) }}ºC / {{ this.tMin.toFixed(1) }}ºC
+                </ion-col>
+            </ion-row>
+            <ion-row>
+                <ion-col size="12" class="mapa">
+                    <img src="{{mapas}}">
+                    <span (click)="onClickAhora()" >
+                        Mapa ahora
+                    </span>
+                </ion-col>
+            </ion-row>
+            <ion-row>
+                <ion-col size="12" class="mapa">
+                    <img src="{{mapas}}">
+                    <span (click)="onClickHoy()" >
+                        Mapa hoy
+                    </span>
+                </ion-col>
+            </ion-row>
+        </ion-col>
+    </ion-row>
+
+    <!-- Gráfico -->
+
+    <ion-grid>  
+        <div class="flex">
+            <div class="flex-item">
+                <ion-list>
+                    <ion-radio-group value=1 (ionChange)="traerTemp($event.detail.value)">
+                        <ion-row>
+                            <ion-col size="4">
+                                <ion-item color="none" lines="none">
+                                    <ion-label>Hoy</ion-label>
+                                    <ion-radio slot="start" value=1></ion-radio>
+                                </ion-item>
+                            </ion-col>
+                            <ion-col size="4">
+                                <ion-item color="none" lines="none">
+                                    <ion-label>30 días</ion-label>
+                                    <ion-radio slot="start" value=2></ion-radio>
+                                </ion-item>
+                            </ion-col>
+                            <ion-col size="4">
+                                <ion-item color="none" lines="none">
+                                    <ion-label>Año</ion-label>
+                                    <ion-radio slot="start" value=3></ion-radio>
+                                </ion-item>
+                            </ion-col>
+                          </ion-row>
+                    </ion-radio-group>
+                </ion-list>                        
+              </div>
             </div>
-          </ion-grid>
-      </div>
+        <div style="display: block; background: rgba(255,255,255,0.6);">
+            <canvas baseChart width="400" height="300"
+        [datasets]="lineChartData"
+        [labels]="lineChartLabels"
+        [options]="lineChartOptions"
+        [colors]="lineChartColors"
+        [legend]="lineChartLegend"
+        [chartType]="lineChartType"></canvas>
+    </div>
+  </ion-grid>
+  <div id="fechayhora">
+       {{ this.hora }} hs
   </div>
+
 </ion-content>

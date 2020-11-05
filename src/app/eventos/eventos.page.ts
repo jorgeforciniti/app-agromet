@@ -12,6 +12,7 @@ import { InAppBrowser } from '@ionic-native/in-app-browser/ngx';
 export class EventosPage implements OnInit {
 
   mensajes: any[] = [];
+  imagen: string;
 
   constructor(
     private datosNoticias: EstacionesService,
@@ -21,6 +22,7 @@ export class EventosPage implements OnInit {
 
   ngOnInit() {
     this.traerNoticias();
+    this.imagen = '../../assets/fondos/eventos.jpg';
   }
 
   async traerNoticias(){
@@ -62,4 +64,5 @@ export class EventosPage implements OnInit {
       const browser = this.iab.create(item.link, '_system');
     }
   }
+
 }

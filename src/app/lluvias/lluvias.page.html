@@ -1,87 +1,143 @@
-<app-header titulo="Lluvias"></app-header>
-<ion-content [fullscreen]="true">
-  <div id="caja-ppal">
+<ion-content [fullscreen]="true" class="contenido" style="--background: url({{imagen}})">
+  <app-header titulo="Lluvias"></app-header>
 
-    <div id="caja" >
-        <div id="fechayhora">
-            <span>{{ this.diaSemana }}, {{ this.dia }} de {{ this.nombreMes }} de {{ this.anio}}</span>
-        </div>
-        <div id="fechayhora">
-            <span>{{ this.hora }} hs</span>
-        </div>
+  <!-- Estacion -->
+  <ion-row class="fila">
 
-        <div id="estacion">
-            {{ this.dato.nombre }}
-        </div>
+      <ion-col size="2.5">
+          <hr>
+      </ion-col>
 
-        <ion-grid>  
-            <ion-row>
-                <ion-col size="3" size-lg>
-                    <div id="lluvia" 
-                    [style.background]=" this.dato.RR_dia > 50 ? 'red' : this.dato.RR_dia > 20 ? 'orange' : this.dato.RR_dia > 10 ? 'yellow' :  'green'"
-                    [style.color]="this.dato.RR_dia > 50 ? 'white' : this.dato.RR_dia > 10 ? 'black' :  'white'">
-                        <div id="circulo">
-                          <span> {{ this.dato.RR_dia.toFixed(1) }}<br>mm</span>
-                        </div>
-                    </div>
+      <ion-col size="8.5" class="estacion1">
+          {{ this.dato.nombre }}
+      </ion-col>
+      <ion-col size="1" class="estacion2">
+          <img src="{{ubicacion}}">
+      </ion-col>
+  </ion-row>
+
+  <ion-row>
+      <ion-col size="12" style="height: 10px;">
+      </ion-col>
+  </ion-row>  
+  <!-- día -->
+  <ion-row>
+      <ion-col size="7" class="diasemana">
+          {{ this.diaSemana }}
+      </ion-col>
+      <ion-col size="5" class="diasemana">
+          <hr>
+      </ion-col>
+    </ion-row>
+
+        <!-- Lluvia -->
+        <ion-row>
+          <ion-col size="6.7" class="tem">
+              <ion-row style="display: flex; align-items: baseline;">
+                
+                <ion-col size="9" class="rr" *ngIf=" (this.dato.RR_dia > 50); else texto">
+                  {{ this.dato.RR_dia.toFixed(0) }}
                 </ion-col>
-                <ion-col size="9" size-lg>
-                    <span> 
-                      lluvias <br>
-                      de hoy: {{ this.dato.RR_dia.toFixed(1) }} mm <br>
-                      de ayer: {{ this.rrAyer.toFixed(1) }} mm <br>
-                      del mes: {{ this.dato.rr_mes.toFixed(1) }} mm <br>
-                    </span>
+                <ng-template #texto>
+                  <ion-col size="9" class="rr">
+                     {{ this.dato.RR_dia.toFixed(1) }}
+                  </ion-col>
+                </ng-template>
+                
+                <ion-col size="3" class="rr1">
+                  mm
+                </ion-col>
+              </ion-row>
+              <ion-row>
+                  <ion-col size="12" class="fecha">
+                      {{ this.dia }} de {{ this.nombreMes }} {{ this.anio}}
+                  </ion-col>
+              </ion-row>
+          </ion-col>
+  
+          <!-- espacio -->
+          <ion-col size="0.6">
+          </ion-col>
+  
+          <ion-col size="4.7">
+            <ion-row>
+              <ion-col size="4" class="cuerpo">
+                Hoy
+              </ion-col>
+              <ion-col size="8" class="cuerpo">
+                {{ this.dato.RR_dia.toFixed(1) }} mm <br>
               </ion-col>
             </ion-row>
             <ion-row>
-              <ion-col size="12" size-lg class="centrar">
-                  <ion-button (click)="onClickAhora()" >
-                      Mapa lluvia últimas 24 horas
-                  </ion-button>
+              <ion-col size="4" class="cuerpo">
+                Ayer
               </ion-col>
-          </ion-row>
-          <br>
+              <ion-col size="8" class="cuerpo">
+               {{ this.rrAyer.toFixed(1) }} mm <br>
+              </ion-col>
+            </ion-row>
+            <ion-row>
+              <ion-col size="4" class="cuerpo">
+                Mes
+              </ion-col>
+              <ion-col size="8" class="cuerpo">
+                {{ this.dato.rr_mes.toFixed(1) }} mm <br>
+              </ion-col>
+            </ion-row>
+            <ion-row>
+              <ion-col size="12" class="mapa">
+                <img src="{{mapas}}">
+                  <span (click)="onClickAhora()" >
+                    Mapa últimas 24 horas
+                  </span>
+              </ion-col>
+            </ion-row>
+          </ion-col>
+        </ion-row>
+  
+ 
+      <!-- -->
+       <ion-grid style="--padding: 0px; --margin: 0px;">  
           <div class="flex">
             <div class="flex-item">
-              <div style="display: block; background: rgba(255,255,255,0.5);">
                 <ion-list>
-                  <ion-radio-group value=1 (ionChange)="traerRR($event.detail.value)" id="tipo_contacto">
+                  <ion-radio-group value=1 (ionChange)="traerRR($event.detail.value)">
                       <ion-row>
                           <ion-col size="4" size-lg class="centrar">
-                              <ion-item>
-                                  <ion-label style = "font-size: 10px">Hoy</ion-label>
+                              <ion-item color="none" lines="none">
+                                  <ion-label>Hoy</ion-label>
                                   <ion-radio slot="start" value=1></ion-radio>
                               </ion-item>
                           </ion-col>
                           <ion-col size="4" size-lg class="centrar">
-                              <ion-item>
-                                  <ion-label style = "font-size: 10px">30 días</ion-label>
+                              <ion-item color="none" lines="none">
+                                  <ion-label>30 días</ion-label>
                                   <ion-radio slot="start" value=2></ion-radio>
                               </ion-item>
                           </ion-col>
                           <ion-col size="4" size-lg class="centrar">
-                              <ion-item>
-                                  <ion-label style = "font-size: 10px">Año</ion-label>
+                              <ion-item color="none" lines="none">
+                                  <ion-label>Año</ion-label>
                                   <ion-radio slot="start" value=3></ion-radio>
                               </ion-item>
                           </ion-col>
                         </ion-row>
                   </ion-radio-group>
               </ion-list>
-                <canvas baseChart width="400" height="350"
-                [datasets]="barChartData"
-                [labels]="barChartLabels"
-                [options]="barChartOptions"
-                [legend]="barChartLegend"
-                [colors]="barChartColors"
-                [chartType]="barChartType">
-              </canvas>
               </div>
             </div>
-          </div>
+            <div style="display: block; background: rgba(255,255,255,0.5);">
+              <canvas baseChart width="400" height="300"
+            [datasets]="barChartData"
+            [labels]="barChartLabels"
+            [options]="barChartOptions"
+            [legend]="barChartLegend"
+            [colors]="barChartColors"
+            [chartType]="barChartType">
+          </canvas>
+      </div>
           </ion-grid>
-
-    </div>
-  </div>
+          <div id="fechayhora">
+            {{ this.hora }} hs
+        </div>
 </ion-content>

@@ -18,11 +18,14 @@ export class MapatPage implements OnInit, AfterViewInit {
   private Mes: string;
   private anio: string;
   private hora: string;
+  imagen: string;
+  mapas: string;
 
   constructor(private estacionesService: EstacionesService, private router: Router) { }
 
   ngOnInit() {
     this.mensajes = JSON.parse(localStorage.getItem('estaciones'));
+    this.cargarImagen();
   }
 
   ngAfterViewInit(){
@@ -150,5 +153,9 @@ export class MapatPage implements OnInit, AfterViewInit {
         .setLngLat(marker.geometry.coordinates)
         .addTo(map);
     });
+  }
+  cargarImagen(){
+    this.imagen = '../../assets/fondos/mapa-temperatura.jpg';
+    this.mapas = '../../assets/tab-icons/btnMapas.png';
   }
 }

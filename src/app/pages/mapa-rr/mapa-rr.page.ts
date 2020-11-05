@@ -17,11 +17,14 @@ export class MapaRRPage implements OnInit {
   private prueba: any;
   private color: string;
   private rr: number;
+  imagen: string;
+  mapas: string;
 
   constructor(private datosTemperaturas: EstacionesService, private router: Router, public loadingCtrl: LoadingController) { }
 
   ngOnInit() {
     this.traeLluvias();
+    this.cargarImagen();
   }
 
   async traeLluvias(){
@@ -159,5 +162,8 @@ export class MapaRRPage implements OnInit {
         .addTo(mapa);
     });
   }
-
+  cargarImagen(){
+    this.imagen = '../../assets/fondos/mapa-rr.jpg';
+    this.mapas = '../../assets/tab-icons/btnMapas.png';
+  }
 }

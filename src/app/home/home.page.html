@@ -1,117 +1,171 @@
-<app-header titulo="Inicio"></app-header>
-<ion-content [fullscreen]="true">
-    <div id="caja-ppal">
-
-        <ion-button 
+<ion-content [fullscreen]="true" class="contenido" style="--background: url({{imagen}})">
+    <ion-button 
             (click)="onClick()"
             size="default"
             expand="full"
-            color="primary"
-            shape="round"
-            >Seleccionar localidad
+            color="light"
+            strong=true
+        >
+        <ion-icon name="location-outline"></ion-icon>
+        Seleccionar localidad
         </ion-button>
 
-        <div id="caja" >
-            <div id="fechayhora">
-                <span>{{ this.diaSemana }}, {{ this.dia }} de {{ this.nombreMes }} de {{ this.anio}}</span>
-            </div>
+            <!-- Estacion -->
+            <ion-row class="fila">
+
+                <ion-col size="11" class="estacion1">
+                    {{ this.dato.nombre }}
+                </ion-col>
+                <ion-col size="1" class="estacion2">
+                    <img src="{{ubicacion}}">
+                </ion-col>
+            </ion-row>
+            
+            <!-- día -->
+            <ion-row>
+                <ion-col size="12" class="diasemana">
+                {{ this.diaSemana }}
+                </ion-col>
+            </ion-row>
+            
+            <!-- Temperatura -->
+            <ion-row>
+                <ion-col size="12" class="tem">
+                    {{ this.dato.temp_af.toFixed(0) }}º
+                </ion-col>
+            </ion-row>
+
+            <!-- fecha -->
+            <ion-row>
+                <ion-col size="12" class="fecha">
+                    {{ this.dia }} de {{ this.nombreMes }} {{ this.anio}}
+                </ion-col>
+            </ion-row>
+
+            <ion-row>
+                <ion-col size="12">
+                    <hr>
+                </ion-col>
+            </ion-row>
+
+            <ion-row class="fila">
+                <!-- Humedad -->
+                <ion-col size="1.8" class="cuerpo1">
+                    <img src="../../assets/wheater-icons/humedad.png">
+                </ion-col>
+                <ion-col size="3.9" class="cuerpo2">
+                    {{ this.dato.hum_af }} %
+                </ion-col>
+
+                <!-- espacio -->
+                <ion-col size="0.6">
+                </ion-col>
+             
+                <!-- Lluvia -->
+                <ion-col size="1.8" class="cuerpo1">
+                    <img src="../../assets/wheater-icons/precipitaciones.png">
+                </ion-col>
+                <ion-col size="3.9" class="cuerpo2">
+                    {{ this.dato.RR_dia }} mm
+                </ion-col>
+            </ion-row>
+
+            <!-- Línea -->
+            <ion-row>
+                <ion-col size="5.7">
+                    <hr>
+                </ion-col>
+                <ion-col size="0.6">
+                </ion-col>
+                <ion-col size="5.7">
+                    <hr>
+                </ion-col>
+            </ion-row>
+
+            <ion-row class="fila">
+                <!-- Viento -->
+                <ion-col size="1.8" class="cuerpo1">
+                    <img src="../../assets/wheater-icons/viento.png">
+                </ion-col>
+                <ion-col size="3.9" class="cuerpo2">
+                    {{ this.dato.viento_medio }} km/h
+                </ion-col>
+
+                <!-- espacio -->
+                <ion-col size="0.6">
+                </ion-col>
+             
+                <!-- Dirección -->
+                <ion-col size="1.8" class="cuerpo1">
+                    <img src="../../assets/wheater-icons/norte.png">
+                </ion-col>
+                <ion-col size="3.9" class="cuerpo2">
+                    {{ this.dato.direc }}
+                </ion-col>
+            </ion-row>
+
+            <!-- Línea -->
+            <ion-row>
+                <ion-col size="5.7">
+                    <hr>
+                </ion-col>
+                <ion-col size="0.6">
+                </ion-col>
+                <ion-col size="5.7">
+                    <hr>
+                </ion-col>
+            </ion-row>
+
+            <ion-row class="fila">
+                <!-- Presión -->
+                <ion-col size="1.8" class="cuerpo1">
+                    <img src="../../assets/wheater-icons/presion.png">
+                </ion-col>
+                <ion-col size="3.9" class="cuerpo2" *ngIf=" (this.dato.presion <2000); else noPresion">
+                    {{ this.dato.presion }} hPa
+                </ion-col>
+                <ng-template #noPresion>
+                        <ion-col size="3.9" class="cuerpo2">
+                        ---- hPa
+                    </ion-col>
+                </ng-template>
+
+                <!-- espacio -->
+                <ion-col size="0.6">
+                </ion-col>
+             
+                <!-- Aplicación -->
+                <ion-col size="1.8" class="cuerpo1" *ngIf=" (this.dato.temp_af >= 30 || this.dato.hum_af <= 55 || this.dato.rr_15 > 0 || this.dato.viento_max > 10); else noAplicar">
+                    <img src="../../assets/wheater-icons/no-aplicaciones.png">
+                </ion-col>
+                <ng-template #noAplicar>
+                    <ion-col size="1.8">
+                        <img src="../../assets/wheater-icons/aplicaciones.png">
+                    </ion-col>
+                </ng-template>
+                <ion-col size="3.9" class="cuerpo2">
+                    <p *ngIf=" (this.dato.temp_af >= 30 || this.dato.hum_af <= 55 || this.dato.rr_15 > 0 || this.dato.viento_max > 10); else noSePuedeAplicar">
+                        No aplicar agroquímicos
+                    </p>
+                    <ng-template #noSePuedeAplicar>
+                        Favorable para aplicar
+                    </ng-template>
+                </ion-col>
+            </ion-row>
+
+            <!-- Línea -->
+            <ion-row>
+                <ion-col size="5.7">
+                    <hr>
+                </ion-col>
+                <ion-col size="0.6">
+                </ion-col>
+                <ion-col size="5.7">
+                    <hr>
+                </ion-col>
+            </ion-row>
+
             <div id="fechayhora">
                 <span>{{ this.hora }} hs</span>
             </div>
-
-            <div id="estacion">
-                {{ this.dato.nombre }}
-            </div>
-
-            <ion-grid>  
-                <ion-row>
-                    <ion-col size="7" size-lg>
-                        <div id="temperatura" 
-                        [style.color]=" this.dato.temp_af >= 40 ? 'red' : this.dato.temp_af >= 35 ? 'orange' : this.dato.temp_af >= 30 ? 'yellow' : this.dato.temp_af > 0 ? 'green' : 'blue'">
-                            <div id="circulo">
-                                <ion-icon name="thermometer-outline" ></ion-icon>
-                            </div>
-                             <strong style = "color: whitesmoke">{{ this.dato.temp_af.toFixed(1) }}ºC</strong>
-                        </div>
-                    </ion-col>
-
-                    <ion-col size="5" size-lg>
-                        <ion-row id="humedad">
-                            <ion-col size="4" size-lg>
-                                <div id="circulito-h">
-                                    <ion-icon *ngIf="this.dato.hum_af > 90" name="water" color='primary' style="font-size: 30px;"></ion-icon>
-                                    <ion-icon *ngIf="this.dato.hum_af <= 90" [color]="this.dato.hum_af > 50 ? 'primary' : 'danger'" name="water-outline" style="font-size: 30px;"></ion-icon>
-                                </div>
-                            </ion-col>
-                            <ion-col size="8" size-lg>
-                                <span> {{ this.dato.hum_af }} %</span>
-                            </ion-col>
-                        </ion-row>
-                        <ion-row id="humedad">
-                            <ion-col size="4" size-lg>
-                                <div id="circulito-l">
-                                    <img *ngIf="this.dato.RR_dia > 10" src="../../assets/images/tormenta.png" id="gLluvias">
-                                    <img *ngIf="this.dato.RR_dia <= 10" src="../../assets/images/lluvia.png" id="gLluvias">                                    
-                                </div>
-                            </ion-col>
-                            <ion-col size="8" size-lg>
-                                <span> {{ this.dato.RR_dia }} mm</span>
-                            </ion-col>
-                        </ion-row>
-                    </ion-col>
-                </ion-row>
-                <ion-row>
-                    <ion-col size="6" size-lg id="viento">
-                        <ion-row>
-                            <ion-col size="4" size-lg>
-                                <div id="circulito-v">
-                                    <img src="../../assets/images/viento.png" id="gLluvias">
-                                </div>
-                            </ion-col>
-                            <ion-col size="8" size-lg>
-                                <span> {{ this.dato.viento_medio }} km/h</span>
-                            </ion-col>
-                        </ion-row>
-                    </ion-col>
-                    <ion-col size="6" size-lg id="viento">
-                        <ion-row>
-                            <ion-col size="4" size-lg >
-                                <div id="circulito-v">
-                                    <img src="../../assets/images/veleta.png" id="gLluvias">
-                                </div>
-                            </ion-col>
-                            <ion-col size="8" size-lg>
-                                <span>{{ this.dato.direc }}</span>
-                            </ion-col>
-                        </ion-row>
-                    </ion-col>
-                </ion-row>
-                <ion-row *ngIf= "(this.dato.presion > 100 && this.dato.presion < 2000)">
-                    <ion-col size="6" size-lg id="presion">
-                        <ion-row>
-                            <ion-col size="4" size-lg >
-                                <div id="circulito-p">
-                                    <img src="../../assets/images/barometro.png" id="imgPresion">
-                                </div>
-                            </ion-col>
-                            <ion-col size="8" size-lg>
-                                <span> {{ this.dato.presion }} hPa</span>
-                            </ion-col>
-                        </ion-row>
-                    </ion-col>
-                </ion-row>
-                <ion-row>
-                    <ion-col size="12" size-lg>
-                        <span *ngIf=" (this.dato.temp_af >= 30 || this.dato.hum_af <= 55 || this.dato.rr_15 > 0 || this.dato.viento_max > 10); else noSePuedeAplicar">
-                            <p style="color: red;">Desfavorable para aplicar agroquímicos</p>
-                        </span>
-                        <ng-template #noSePuedeAplicar>
-                            <p style="color: green;">Favorable para aplicar agroquímicos</p>
-                          </ng-template>
-                    </ion-col>
-                </ion-row>
-
-            </ion-grid>
-        </div>
-    </div>
 </ion-content>

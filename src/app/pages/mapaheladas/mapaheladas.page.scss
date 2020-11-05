@@ -1,3 +1,12 @@
+@font-face {
+    font-family: helveticaNR;
+    src: url('../../../assets/fonts/helvetica-neue-lt-std-55-roman.otf');
+    }
+@font-face {
+    font-family: helveticaNBC;
+    src: url('../../../assets/fonts/HelveticaNeueLTStd-BdCn.otf');
+    }
+
 #mapa{
     width: 100% !important;
     height: 92% !important;
@@ -12,16 +21,17 @@
     cursor: pointer;
 }
 
-#caja-ppal{
-    width: 100%;
-    height: 100%;
-    background: url('../../../assets/images/cielo_azul.jpg');
-    background-repeat: no-repeat;
-    background-position: center center;
-    z-index: auto;
-    background-size: cover;
+span{
+    color: rgb( 128, 227, 211) !important;
+    font-family: helveticaNBC ;
+    font-size: 18px;
+    padding-top: 0px;
+    padding-left: 10px;
+    margin: 0px;
 }
-
-.centrar{
+.mapas{
+    padding-top: 0px;
+    margin-top: 0px;
+    height: 42px;
     text-align: center;
 }

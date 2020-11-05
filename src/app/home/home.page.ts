@@ -17,6 +17,8 @@ export class HomePage implements DoCheck{
   hora: string;
   diaSemana: string;
   mensajes: any[] = [];
+  imagen: string;
+  ubicacion: string;
 
   constructor( private router: Router ) {
     this.cargarDatos();
@@ -24,6 +26,7 @@ export class HomePage implements DoCheck{
 
   ngDoCheck() {
     this.cargarDatos();
+    this.cargarImagen();
   }
 
   cargarDatos(){
@@ -50,5 +53,20 @@ export class HomePage implements DoCheck{
   onClick(){
     this.cargarDatos();
     this.router.navigate(['/localidades']);
+  }
+  cargarImagen(){
+    if(this.dato.temp_af<30){
+      if(this.dato.temp_af<0){
+        this.imagen = '../../assets/fondos/inicio-heladas.jpg';
+      }else{
+        this.imagen = '../../assets/fondos/inicio-soleado.jpg';
+      }
+    }else{
+      this.imagen = '../../assets/fondos/inicio-temperatura-alta.jpg';
+    }
+    if(this.dato.RR_dia > 1){
+      this.imagen = '../../assets/fondos/inicio-rr.jpg';
+    }
+    this.ubicacion = '../../assets/wheater-icons/ubicacion.png';
   }
 }

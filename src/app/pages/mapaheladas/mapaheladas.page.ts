@@ -18,10 +18,13 @@ export class MapaheladasPage implements OnInit {
       private color: string;
       private temp: number;
       tipoT: string;
+  imagen: string;
+  mapas: string;
       constructor(private datosTemperaturas: EstacionesService, private router: Router, public loadingCtrl: LoadingController) { }
 
       ngOnInit() {
         this.traeHeladas(0);
+        this.cargarImagen();
       }
 
       async traeHeladas(heladas){
@@ -203,5 +206,8 @@ export class MapaheladasPage implements OnInit {
             .addTo(mapa);
         });
       }
-
+      cargarImagen(){
+        this.imagen = '../../assets/fondos/inicio-heladas.jpg';
+        this.mapas = '../../assets/tab-icons/btnMapas.png';
+      }
     }

@@ -1,33 +1,26 @@
-<ion-content [fullscreen]="true">
-  <div id="caja-ppal">
-    <app-header titulo="Mapa de heladas {{ tipoT }}"></app-header>
+<ion-content [fullscreen]="true" class="contenido" style="--background: url({{imagen}})">
+  <app-header titulo="Mapa de heladas {{ tipoT }}"></app-header>
 
-    <ion-row>
-      <ion-col
-        size="4"
-        size-lg="size-lg"
-        class="centrar"
-      >
-        <ion-button (click)="traeHeladas(0)">día </ion-button>
-      </ion-col>
 
-      <ion-col
-        size="4"
-        size-lg="size-lg"
-        class="centrar"
-      >
-        <ion-button (click)="traeHeladas(1)">Més</ion-button>
-      </ion-col>
-
-      <ion-col
-        size="4"
-        size-lg="size-lg"
-        class="centrar"
-      >
-        <ion-button (click)="traeHeladas(2)">Año</ion-button>
-      </ion-col>
-    </ion-row>
-
+  <ion-row>
+    <ion-col size="4" class="mapita">
+      <img src="{{mapas}}">
+      <span (click)="traeHeladas(0)" >
+          día
+      </span>
+  </ion-col>
+  <ion-col size="4" class="mapita">
+    <img src="{{mapas}}">
+    <span (click)="traeHeladas(1)" >
+      Mes
+    </span>
+  </ion-col>
+  <ion-col size="4" class="mapita">
+    <img src="{{mapas}}">
+    <span (click)="traeHeladas(2)" >
+        Año
+    </span>
+  </ion-col>
+</ion-row>
     <div id="mapa"></div>
-  </div>
 </ion-content>

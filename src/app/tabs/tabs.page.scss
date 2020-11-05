@@ -1,1 +1,30 @@
+ion-tab-bar.tab-bar {
+    --background: rgba(100,100,100,0.1);
+    font-family: Helvetica;
+    --color: rgb( 00, 246, 237)
 
+}
+
+ion-tab-button{
+    --padding-start: 0px;
+    --padding-end: 0px;
+}
+
+.tab-completo{
+    width: 100%;
+    height: 100%;
+    background: rgb(0, 0, 0, 1);
+}
+
+ion-tab-button {
+    padding: 0px;
+    margin: 0px;
+}
+
+ion-img {
+  width: auto !important;
+  height: auto !important;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+}
