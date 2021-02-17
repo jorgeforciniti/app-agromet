@@ -5,7 +5,10 @@ import { HttpClient } from '@angular/common/http';
   providedIn: 'root'
 })
 
+
 export class EstacionesService {
+
+  dato: any;
 
   constructor( private http: HttpClient ) { }
 
@@ -44,6 +47,10 @@ export class EstacionesService {
   }
   getNoticias() {
     return this.http.get('https://agromet.eeaoc.gob.ar/android/io_noticias.php');
+  }
+  getPronostico() {
+    this.dato = JSON.parse(localStorage.getItem('datos'));
+    return this.http.get('https://api.openweathermap.org/data/2.5/onecall?lat='+ this.dato.lat +'&lon='+ this.dato.lon +'&lang=es&units=metric&appid=ea2faa440ccc747a20a042317dadac3f&exclude=minutely');
   }
 }
 

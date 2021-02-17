@@ -47,6 +47,13 @@
     font-size: 68px;
 }
 
+.ico{
+    text-align: right;
+    padding-top: 0px;
+    padding-bottom: 0px;
+    padding-right: 10px;
+}
+
 .fecha{
     color: lightgray;
     letter-spacing: 0px;
@@ -94,6 +101,16 @@ hr {
     margin: 0px !important;
   }
 
+.finita hr {
+    background-color: rgb( 128, 227, 211) !important;
+    height: 1px;
+    display: block !important;
+    font-size: 2em !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    margin: 0px !important;
+  }
+
   #fechayhora{
     color: lightgray;
     letter-spacing: 0px;
@@ -104,4 +121,66 @@ hr {
     padding-top: 15px;
     padding-right: 5px;
     text-transform: uppercase;
+}
+
+.pronostico{
+    color: lightgray;
+    letter-spacing: 0px;
+    line-height: 30px;
+    font-size: 26px;
+    font-family: helveticaNR;
+    text-align: center;
+    padding-top: 15px;
+    padding-right: 5px;
+}
+
+.tabla{
+    color: lightgray;
+    letter-spacing: 0px;
+    padding: 5px 5px 5px 5px;
+    margin: 0px;
+    letter-spacing: 0px;
+    font-size: 15px;
+    font-family: helveticaNR;
+    text-align: center;
+    padding: 0px;
+    text-transform: uppercase;
+}
+
+.tds{
+    color: lightgray;
+    letter-spacing: 0px;
+    padding: 0px 15px 0px 15px;
+    margin: 0px;
+    letter-spacing: 0px;
+    font-size: 15px;
+    font-family: helveticaNR;
+    text-align: center;
+}
+
+.uv{
+    color: lightgray;
+    letter-spacing: 0px;
+    padding: 0px 5px 0px 15px;
+    margin: 0px;
+    letter-spacing: 0px;
+    font-size: 15px;
+    font-family: helveticaNR;
+    text-align: right;
+}
+
+.imagen{
+    height: 40px;
+    width: 40px;
+}
+
+.alertas{
+    color: lightgray;
+    letter-spacing: 0px;
+    padding: 0px 5px 0px 15px;
+    margin: 0px;
+    letter-spacing: 0px;
+    font-size: 15px;
+    font-family: helveticaNR;
+    text-align: left;
 }

@@ -122,6 +122,7 @@ export class LluviasPage implements DoCheck{
     this.auxD = [];
     const hoy = new Date();
     const mm = hoy.getMonth();
+      this.rrAyer = Number(this.mensajes2[this.mensajes2.length-2].lluvia);
 
     this.dato.rr_mes = Number(this.mensajes3[ mm ].lluvia);
 

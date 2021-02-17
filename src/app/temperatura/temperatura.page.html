@@ -32,10 +32,17 @@
     <ion-row>
         <ion-col size="6" class="tem">
             <ion-row>
-                <ion-col size="12" class="tem">
-                    {{ this.dato.temp_af.toFixed(0) }}º
+                <ion-col size="12" class="tem" *ngIf=" (this.dato.temp_af <70); else noTemp">
+                    {{ this.dato.temp_af.toFixed(1) }}º
                 </ion-col>
+                <ng-template #noTemp>
+                    <ion-col  size="12" class="tem">
+                        S/D
+                    </ion-col>
+                </ng-template>
             </ion-row>
+
+
             <ion-row>
                 <ion-col size="12" class="fecha">
                     {{ this.dia }} de {{ this.nombreMes }} {{ this.anio}}

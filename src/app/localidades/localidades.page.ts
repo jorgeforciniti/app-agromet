@@ -22,9 +22,10 @@ export class LocalidadesPage implements OnInit {
   onClick( check ){
     localStorage.setItem('estacion', check.Identificacion);
     localStorage.setItem('datos', JSON.stringify(check));
-    this.router.navigate(['/home']);
     localStorage.setItem('temperatura', '1');
+    localStorage.setItem('home', '1');
     localStorage.setItem('lluvia', '1');
     localStorage.setItem('helada', '1');
+    this.router.navigate(['/home']);
   }
 }

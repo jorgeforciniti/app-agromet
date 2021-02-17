@@ -106,6 +106,7 @@ export class TemperaturaPage implements DoCheck{
     // tslint:disable-next-line: max-line-length
     this.hora = this.dato.fecha_I.substr(11, 5);
     this.dato.temp_af = Number(this.dato.temp_af);
+    console.log(this.dato.temp_af);
   }
 
   async traerTemp24hs(){

@@ -124,8 +124,6 @@
                     <th style='width: 10%;'>hs<br>máx.</th>
                     <th style='width: 10%;'>hs<br>Total</th>
                     <th style='width: 8%;'>Días</th>
-                    <th style='width: 10%;'>FPH</th>
-                    <th style='width: 10%;'>FUH</th>
                     <th style='width: 7%;'>Reg.</th>
                 </tr>
                 <tr *ngFor="let item of mensajes">
@@ -151,14 +149,6 @@
                         [style.background]=" item.temperatura <= -6  ? 'red' : item.temperatura <= -4 ? 'rgb(255, 153, 0)' : item.temperatura <= -2 ? 'rgb(255, 204, 153)' :  'rgb(255, 255, 153)'"
                         [style.color]="item.temperatura <= -4 ? 'white' : 'black'">
                             {{item.dias}}</td>
-                    <td *ngIf="item.fph != null" class="numeros"
-                        [style.background]=" item.temperatura <= -6  ? 'red' : item.temperatura <= -4 ? 'rgb(255, 153, 0)' : item.temperatura <= -2 ? 'rgb(255, 204, 153)' :  'rgb(255, 255, 153)'"
-                        [style.color]="item.temperatura <= -4 ? 'white' : 'black'">
-                            {{item.fph}}</td>
-                    <td *ngIf="item.fph != null" class="numeros"
-                        [style.background]=" item.temperatura <= -6  ? 'red' : item.temperatura <= -4 ? 'rgb(255, 153, 0)' : item.temperatura <= -2 ? 'rgb(255, 204, 153)' :  'rgb(255, 255, 153)'"
-                        [style.color]="item.temperatura <= -4 ? 'white' : 'black'">
-                            {{item.fuh}}</td>
                     <td *ngIf="item.fph != null" class="numeros"
                         [style.background]=" item.temperatura <= -6  ? 'red' : item.temperatura <= -4 ? 'rgb(255, 153, 0)' : item.temperatura <= -2 ? 'rgb(255, 204, 153)' :  'rgb(255, 255, 153)'"
                         [style.color]="item.temperatura <= -4 ? 'white' : 'black'">

@@ -1,6 +1,5 @@
 import { Component, OnInit } from '@angular/core';
 import { EstacionesService } from 'src/app/services/estaciones.service';
-import { Router } from '@angular/router';
 import swal from 'sweetalert2';
 import { LoadingController } from '@ionic/angular';
 
@@ -20,7 +19,7 @@ export class MapaRRPage implements OnInit {
   imagen: string;
   mapas: string;
 
-  constructor(private datosTemperaturas: EstacionesService, private router: Router, public loadingCtrl: LoadingController) { }
+  constructor(private datosTemperaturas: EstacionesService, public loadingCtrl: LoadingController) { }
 
   ngOnInit() {
     this.traeLluvias();
@@ -101,7 +100,7 @@ export class MapaRRPage implements OnInit {
       this.rr = Number(this.mensajes[i].lluvia);
 
       this.color = 'gris_negro.png';
-      // tslint:disable-next-line: max-line-length
+
       if (this.rr === 0){
         this.color = 'gris_negro.png';
       }
@@ -129,7 +128,7 @@ export class MapaRRPage implements OnInit {
             description: this.mensajes[i].nombre,
             temperatura: this.rr,
             color: this.color,
-            iconSize: [20, 20]}
+            iconSize: [20+(this.rr/3.5), 20+(this.rr/3.5)]}
         }
       );
     }

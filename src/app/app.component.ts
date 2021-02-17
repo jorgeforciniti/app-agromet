@@ -1,4 +1,4 @@
-import { Component, OnInit, DoCheck, ɵConsole } from '@angular/core';
+import { Component, OnInit, DoCheck } from '@angular/core';
 import { EstacionesService } from 'src/app/services/estaciones.service';
 import { Platform } from '@ionic/angular';
 import { SplashScreen } from '@ionic-native/splash-screen/ngx';
@@ -15,6 +15,12 @@ localStorage.setItem('estacion', '2049');
 })
 
 export class AppComponent implements OnInit, DoCheck {
+
+  // *******  Importante
+  // Cambiar la version
+
+  version = {"version": "2.1.3"} 
+
   loading: number;
   show = true;
   mostrar = false;
@@ -79,11 +85,15 @@ export class AppComponent implements OnInit, DoCheck {
       localStorage.setItem('datos', JSON.stringify(posts));
       loading.dismiss();
     });
+
+    localStorage.setItem('home', '1');
     localStorage.setItem('temperatura', '1');
     localStorage.setItem('lluvia', '1');
     localStorage.setItem('helada', '1');
   }
 
+// trae la version
+  versionLocal: any= {};
   async traerVersion(){
     const loading = await this.loadingCtrl.create({
       spinner: 'bubbles',
@@ -94,20 +104,19 @@ export class AppComponent implements OnInit, DoCheck {
     });
     await loading.present();
 
+    console.log("Version: "+this.version.version)
     this.datosEstaciones.getVersion()
     .subscribe( (posts: any[]) => {
       this.mensajes = posts;
-      let version = 0;
+      let versionNueva = "";
       let link = '';
-      version = Number(this.mensajes.version);
-      // console.log(this.plt);
+      versionNueva = this.mensajes.versionNueva;
       if (this.plt.is('android')){
         link = this.mensajes.android;
       }else{
         link = this.mensajes.ios;
       }
-      // console.log(link);
-      if ( version > 0 ){
+      if ( versionNueva != this.version.version ){
         swal.fire({
           title: 'Existe una nueva versión',
           icon: 'question',
