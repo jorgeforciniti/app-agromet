@@ -15,16 +15,6 @@ localStorage.setItem('estacion', '2049');
 })
 
 export class AppComponent implements OnInit, DoCheck {
-
-  // *******  Importante
-  // Cambiar la version
-
-  version = {"version": "2.1.3"} 
-
-  loading: number;
-  show = true;
-  mostrar = false;
-  mensajes: any;
   constructor(
     private datosEstaciones: EstacionesService,
     private platform: Platform,
@@ -35,6 +25,19 @@ export class AppComponent implements OnInit, DoCheck {
   ) {
    this.initializeApp();
   }
+
+  // *******  Importante
+  // Cambiar la version
+
+  version = {version: '2.1.3'};
+
+  loading: number;
+  show = true;
+  mostrar = false;
+  mensajes: any;
+
+// trae la version
+  versionLocal: any = {};
 
   initializeApp() {
     this.platform.ready().then(() => {
@@ -91,9 +94,6 @@ export class AppComponent implements OnInit, DoCheck {
     localStorage.setItem('lluvia', '1');
     localStorage.setItem('helada', '1');
   }
-
-// trae la version
-  versionLocal: any= {};
   async traerVersion(){
     const loading = await this.loadingCtrl.create({
       spinner: 'bubbles',
@@ -104,11 +104,11 @@ export class AppComponent implements OnInit, DoCheck {
     });
     await loading.present();
 
-    console.log("Version: "+this.version.version)
+    console.log('Version: ' + this.version.version);
     this.datosEstaciones.getVersion()
     .subscribe( (posts: any[]) => {
       this.mensajes = posts;
-      let versionNueva = "";
+      let versionNueva = '';
       let link = '';
       versionNueva = this.mensajes.versionNueva;
       if (this.plt.is('android')){
@@ -116,7 +116,7 @@ export class AppComponent implements OnInit, DoCheck {
       }else{
         link = this.mensajes.ios;
       }
-      if ( versionNueva != this.version.version ){
+      if ( versionNueva !== this.version.version ){
         swal.fire({
           title: 'Existe una nueva versión',
           icon: 'question',
