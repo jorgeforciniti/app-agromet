@@ -40,6 +40,7 @@ export class MapaheladasPage implements OnInit {
         if (heladas === 0){
           this.tipoT = 'de hoy';
           this.datosTemperaturas.getHelDia()
+          // tslint:disable-next-line: deprecation
           .subscribe( (posts: any[]) => {
             this.mensajes = posts;
             this.mostrarMapa(heladas);
@@ -48,6 +49,7 @@ export class MapaheladasPage implements OnInit {
         }else if (heladas === 1){
           this.tipoT = 'del mes';
           this.datosTemperaturas.getHelMes()
+          // tslint:disable-next-line: deprecation
           .subscribe( (posts: any[]) => {
             this.mensajes = posts;
             this.mostrarMapa(heladas);
@@ -56,6 +58,7 @@ export class MapaheladasPage implements OnInit {
         }else{
           this.tipoT = 'del año';
           this.datosTemperaturas.getHelAnio()
+          // tslint:disable-next-line: deprecation
           .subscribe( (posts: any[]) => {
             this.mensajes = posts;
             this.mostrarMapa(heladas);

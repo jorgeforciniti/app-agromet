@@ -37,6 +37,7 @@ export class MapaRRPage implements OnInit {
     await loading.present();
 
     this.datosTemperaturas.getRR24()
+    // tslint:disable-next-line: deprecation
     .subscribe( (posts: any[]) => {
       this.mensajes = posts;
       this.mostrarMapa();
@@ -128,7 +129,7 @@ export class MapaRRPage implements OnInit {
             description: this.mensajes[i].nombre,
             temperatura: this.rr,
             color: this.color,
-            iconSize: [20+(this.rr/3.5), 20+(this.rr/3.5)]}
+            iconSize: [20 + (this.rr / 3.5), 20 + (this.rr / 3.5)]}
         }
       );
     }

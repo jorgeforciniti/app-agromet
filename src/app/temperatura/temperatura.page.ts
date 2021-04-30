@@ -120,6 +120,7 @@ export class TemperaturaPage implements DoCheck{
     await loading.present();
 
     this.datosTemperaturas.getTemperatura24()
+    // tslint:disable-next-line: deprecation
     .subscribe( (posts: any[]) => {
       this.mensajes = posts[0];
       this.mensajes2 = posts[1];
@@ -174,7 +175,7 @@ export class TemperaturaPage implements DoCheck{
         }
         this.auxH.push(this.mensajes2[i].fecha.substr(8, 2) + '-' + this.mensajes2[i].fecha.substr(5, 2));
       }
-      this.lineChartData = [{ data: this.auxT, label: 'Máximas', fill: false, lineTension: 0}, 
+      this.lineChartData = [{ data: this.auxT, label: 'Máximas', fill: false, lineTension: 0},
       { data: this.auxM, label: 'Mínimas', fill: false, lineTension: 0}];
       this.lineChartLabels = this.auxH;
     }else{
@@ -196,14 +197,14 @@ export class TemperaturaPage implements DoCheck{
 
         this.auxH.push( this.mesesCorto[parseInt(this.mensajes3[i].mes, 10) - 1] );
       }
-      this.lineChartData = [{ data: this.auxT, label: 'Máx. media', fill: false, lineTension: 0}, 
+      this.lineChartData = [{ data: this.auxT, label: 'Máx. media', fill: false, lineTension: 0},
       { data: this.auxM, label: 'Mín. Media', fill: false, lineTension: 0}];
       this.lineChartLabels = this.auxH;
     }
   }
 
   cargarImagen(){
-    if(this.dato.temp_af<30){
+    if (this.dato.temp_af < 30){
       this.imagen = '../../assets/fondos/temperaturas2.jpg';
     }else{
       this.imagen = '../../assets/fondos/temperaturas1.jpg';

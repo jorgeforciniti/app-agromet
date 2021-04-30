@@ -41,6 +41,7 @@ export class MapathoyPage implements OnInit {
     if (maximas){
       this.tipoT = 'máximas';
       this.datosTemperaturas.getTempMax()
+      // tslint:disable-next-line: deprecation
       .subscribe( (posts: any[]) => {
         this.mensajes = posts;
         this.mostrarMapa();
@@ -49,6 +50,7 @@ export class MapathoyPage implements OnInit {
     }else{
       this.tipoT = 'mínimas';
       this.datosTemperaturas.getTempMin()
+      // tslint:disable-next-line: deprecation
       .subscribe( (posts: any[]) => {
         this.mensajes = posts;
         this.mostrarMapa();

@@ -37,6 +37,7 @@ export class EventosPage implements OnInit {
     await loading.present();
 
     this.datosNoticias.getNoticias()
+      // tslint:disable-next-line: deprecation
       .subscribe( (posts: any[]) => {
         this.mensajes = posts;
         loading.dismiss();

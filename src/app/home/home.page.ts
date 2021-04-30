@@ -138,6 +138,7 @@ export class HomePage implements DoCheck, OnInit{
 
     console.log('pidiendo pronostico');
     this.pronostico.getPronostico()
+    // tslint:disable-next-line: deprecation
     .subscribe( (posts: any[]) => {
       this.mensajes = posts;
 
