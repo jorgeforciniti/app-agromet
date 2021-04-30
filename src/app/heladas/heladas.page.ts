@@ -84,7 +84,6 @@ export class HeladasPage implements DoCheck {
           }
           this.mensajes[i].temperatura = Number(this.mensajes[i].temperatura);
         }
-        loading.dismiss();
       });
     }else if (heladas === 1){
       this.datosTemperaturas.getHelMes()
@@ -104,7 +103,6 @@ export class HeladasPage implements DoCheck {
           }
           this.mensajes[i].temperatura = Number(this.mensajes[i].temperatura);
         }
-        loading.dismiss();
       });
     }else{
       this.datosTemperaturas.getHelAnio()
@@ -124,9 +122,10 @@ export class HeladasPage implements DoCheck {
           }
           this.mensajes[i].temperatura = Number(this.mensajes[i].temperatura);
         }
-        loading.dismiss();
       });
+
     }
+    loading.dismiss();
   }
 
   onClickHoy(){

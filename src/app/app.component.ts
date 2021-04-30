@@ -29,15 +29,12 @@ export class AppComponent implements OnInit, DoCheck {
   // *******  Importante
   // Cambiar la version
 
-  version = {version: '2.1.3'};
+  version = {version: '2.1.5'};
 
   loading: number;
   show = true;
   mostrar = false;
   mensajes: any;
-
-// trae la version
-  versionLocal: any = {};
 
   initializeApp() {
     this.platform.ready().then(() => {
@@ -78,12 +75,14 @@ export class AppComponent implements OnInit, DoCheck {
     await loading.present();
 
     this.datosEstaciones.getPosts()
+      // tslint:disable-next-line: deprecation
       .subscribe( (posts: any[]) => {
         this.mensajes = posts;
         localStorage.setItem('estaciones', JSON.stringify(this.mensajes));
       });
 
     this.datosEstaciones.getDatos()
+    // tslint:disable-next-line: deprecation
     .subscribe( (posts: any[]) => {
       localStorage.setItem('datos', JSON.stringify(posts));
       loading.dismiss();
@@ -106,6 +105,7 @@ export class AppComponent implements OnInit, DoCheck {
 
     console.log('Version: ' + this.version.version);
     this.datosEstaciones.getVersion()
+    // tslint:disable-next-line: deprecation
     .subscribe( (posts: any[]) => {
       this.mensajes = posts;
       let versionNueva = '';

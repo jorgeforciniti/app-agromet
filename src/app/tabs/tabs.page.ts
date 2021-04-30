@@ -11,6 +11,7 @@ export class TabsPage {
   home: string;
   temperaturas: string;
   lluvias: string;
+  publicidad: string;
   heladas: string;
   eventos: string;
   logo: string;
@@ -21,15 +22,16 @@ export class TabsPage {
     this.lluvias = '../../assets/tab-icons/btnLluvias.png';
     this.heladas = '../../assets/tab-icons/btnHeladas.png';
     this.eventos = '../../assets/tab-icons/btnEventos.png';
+    this.publicidad = 'https://agromet.eeaoc.gob.ar/android/prop1.gif';
     this.logo = '../../assets/logo-agromet.png';
   }
-  
   salir(){
-    console.log("Salir")
+    console.log('Salir');
     localStorage.setItem('home', '1');
     localStorage.setItem('temperatura', '1');
     localStorage.setItem('lluvia', '1');
     localStorage.setItem('helada', '1');
+    // tslint:disable-next-line: no-string-literal
     navigator['app'].exitApp();
   }
 }
