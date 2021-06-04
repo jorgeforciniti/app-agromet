@@ -29,7 +29,7 @@ export class AppComponent implements OnInit, DoCheck {
   // *******  Importante
   // Cambiar la version
 
-  version = {version: '2.1.5'};
+  version = {version: '2.2.0'};
 
   loading: number;
   show = true;

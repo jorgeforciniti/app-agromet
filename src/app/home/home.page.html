@@ -53,13 +53,13 @@
                             <ion-col size="11" class="uv">
                                 Índice UV: {{uv}}
                             </ion-col>
-                            <ion-col size="1" style="background-color: green;" *ngIf=" (this.uv<3); else amarillo"></ion-col>
+                            <ion-col size="1" style="background-color: green; -webkit-border-radius: 50%; border-radius: 50%;" *ngIf=" (this.uv<3); else amarillo"></ion-col>
                             <ng-template #amarillo>
-                                <ion-col size="1" style="background-color: yellow;" *ngIf=" (this.uv<6); else naranja"></ion-col>
+                                <ion-col size="1" style="background-color: yellow; -webkit-border-radius: 50%; border-radius: 50%;" *ngIf=" (this.uv<6); else naranja"></ion-col>
                                 <ng-template #naranja>
-                                    <ion-col size="1" style="background-color: orange;" *ngIf=" (this.uv<8); else rojo"></ion-col>
+                                    <ion-col size="1" style="background-color: orange; -webkit-border-radius: 50%; border-radius: 50%;" *ngIf=" (this.uv<8); else rojo"></ion-col>
                                     <ng-template #rojo>
-                                        <ion-col size="1" style="background-color: red;"></ion-col>
+                                        <ion-col size="1" style="background-color: red; -webkit-border-radius: 50%; border-radius: 50%;"></ion-col>
                                     </ng-template>
                                     </ng-template>
                             </ng-template>
