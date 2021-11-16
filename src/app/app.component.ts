@@ -5,6 +5,9 @@ import { SplashScreen } from '@ionic-native/splash-screen/ngx';
 import { StatusBar } from '@ionic-native/status-bar/ngx';
 import swal from 'sweetalert2';
 import { LoadingController } from '@ionic/angular';
+import {enableProdMode} from '@angular/core';
+
+// enableProdMode();
 
 localStorage.setItem('estacion', '2049');
 
@@ -22,14 +25,14 @@ export class AppComponent implements OnInit, DoCheck {
     private statusBar: StatusBar,
     private plt: Platform,
     public loadingCtrl: LoadingController
-  ) {
-   this.initializeApp();
-  }
+    ) {
+      this.initializeApp();
+    }
 
   // *******  Importante
   // Cambiar la version
 
-  version = {version: '2.2.0'};
+  version = {version: '2.2.4'};
 
   loading: number;
   show = true;
@@ -44,27 +47,19 @@ export class AppComponent implements OnInit, DoCheck {
   }
 
   ngOnInit() {
-    this.traerVersion();
+    // habilitar para control de versiones
+    // this.traerVersion();
+
     this.loading = 0;
     this.traeEstaciones();
   }
 
   ngDoCheck() {
-    this.traerDatos();
-  }
-
-  async traerDatos(){
-    this.mensajes = JSON.parse(localStorage.getItem('estaciones'));
-    try {
-      this.loading = this.mensajes.length;
-      this.show = false;
-      this.mostrar = true;
-    } catch (error) {
-      console.log(error);
-    }
+//    this.traerDatos();
   }
 
   async traeEstaciones(){
+    console.log('trae Estaciones y datos desde appComponent ****');
     const loading = await this.loadingCtrl.create({
       spinner: 'bubbles',
       translucent: true,
@@ -86,13 +81,24 @@ export class AppComponent implements OnInit, DoCheck {
     .subscribe( (posts: any[]) => {
       localStorage.setItem('datos', JSON.stringify(posts));
       loading.dismiss();
+      this.traerDatos();
+      this.banderas('1');
     });
-
-    localStorage.setItem('home', '1');
-    localStorage.setItem('temperatura', '1');
-    localStorage.setItem('lluvia', '1');
-    localStorage.setItem('helada', '1');
   }
+
+  async traerDatos(){
+    console.log('traerDatos (appComponent)');
+    this.mensajes = JSON.parse(localStorage.getItem('estaciones'));
+    try {
+      this.loading = this.mensajes.length;
+      this.show = false;
+      this.mostrar = true;
+    } catch (error) {
+      console.log("Error!!!: " + error);
+    }
+  }
+
+/* ************************ */
   async traerVersion(){
     const loading = await this.loadingCtrl.create({
       spinner: 'bubbles',
@@ -116,6 +122,7 @@ export class AppComponent implements OnInit, DoCheck {
       }else{
         link = this.mensajes.ios;
       }
+
       if ( versionNueva !== this.version.version ){
         swal.fire({
           title: 'Existe una nueva versión',
@@ -132,7 +139,16 @@ export class AppComponent implements OnInit, DoCheck {
           window.open(link); } });
           // Salir de la app
       }
+
       loading.dismiss();
     });
   }
+
+  banderas(valor){
+    localStorage.setItem('home', valor);
+    localStorage.setItem('temperatura', valor);
+    localStorage.setItem('lluvia', valor);
+    localStorage.setItem('helada', valor);
+  }
+
 }

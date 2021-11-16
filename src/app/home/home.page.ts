@@ -30,28 +30,27 @@ export class HomePage implements DoCheck, OnInit{
   minimasD: any [] = [];
   datosH: any [] = [];
   alertas: any [] = [];
+  loading: number;
 
   constructor(
     private pronostico: EstacionesService,
     private router: Router,
     public loadingCtrl: LoadingController,
     public navCtrl: NavController ) {
-    this.cargarDatos();
-    this.cargarImagen();
   }
 
   ngOnInit() {
+    this.loading = 0;
+    localStorage.setItem('home', '1');
+    this.traeDatosDeAPI();
     setTimeout(
       () => {
+        console.log('actualizar');
         localStorage.setItem('home', '1');
-        localStorage.setItem('temperatura', '1');
-        localStorage.setItem('lluvia', '1');
-        localStorage.setItem('helada', '1');
-        console.log('actualizando');
         this.router.navigate(['/home']);
       }, 600000
     );
-}
+  }
 
   ngDoCheck() {
     if (localStorage.getItem('home') === '1'){
@@ -60,14 +59,35 @@ export class HomePage implements DoCheck, OnInit{
       this.cargarImagen();
       this.traerPronostico();
       localStorage.setItem('home', '0');
+    }else{
+      console.log('home sigue siendo 0');
     }
   }
 
+  async traeDatosDeAPI(){
+    console.log('trae datos desde home ****');
+    const loading = await this.loadingCtrl.create({
+      spinner: 'bubbles',
+      translucent: true,
+      cssClass: 'custom-class custom-loading',
+      showBackdrop: false,
+      message: 'Espere por favor...',
+    });
+    await loading.present();
+
+    this.pronostico.getDatos()
+    // tslint:disable-next-line: deprecation
+    .subscribe( (posts: any[]) => {
+      localStorage.setItem('datos', JSON.stringify(posts));
+      loading.dismiss();
+//      this.cargarDatos();
+      localStorage.setItem('home', '0');
+    });
+
+  }
+
   refrescar(event){
-    localStorage.setItem('home', '1');
-    localStorage.setItem('temperatura', '1');
-    localStorage.setItem('lluvia', '1');
-    localStorage.setItem('helada', '1');
+    this.banderas('1');
     console.log('refrescando');
     setTimeout(() => {
       console.log('Async operation has ended');
@@ -104,6 +124,7 @@ export class HomePage implements DoCheck, OnInit{
     this.dato.RR_dia = Math.round(parseInt( this.dato.RR_dia, 10));
     this.dato.rr_15 = parseFloat( this.dato.rr_15);
     this.dato.viento_max = Math.round(parseInt( this.dato.viento_max, 10));
+    console.log('cargando Datos...');
   }
 
   onClick(){
@@ -136,7 +157,7 @@ export class HomePage implements DoCheck, OnInit{
     });
     await loading.present();
 
-    console.log('pidiendo pronostico');
+    console.log('pidiendo pronostico ****');
     this.pronostico.getPronostico()
     // tslint:disable-next-line: deprecation
     .subscribe( (posts: any[]) => {
@@ -192,4 +213,12 @@ export class HomePage implements DoCheck, OnInit{
       loading.dismiss();
     });
   }
+
+  banderas(valor){
+    localStorage.setItem('home', valor);
+    localStorage.setItem('temperatura', valor);
+    localStorage.setItem('lluvia', valor);
+    localStorage.setItem('helada', valor);
+    }
+
 }

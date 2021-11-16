@@ -124,10 +124,11 @@ export class LluviasPage implements DoCheck{
     const hoy = new Date();
     const mm = hoy.getMonth();
     this.rrAyer = Number(this.mensajes2[this.mensajes2.length - 2].lluvia);
-
-    this.dato.rr_mes = Number(this.mensajes3[ mm ].lluvia);
-
-
+    try {
+      this.dato.rr_mes = Number(this.mensajes3[ mm ].lluvia);
+    } catch (error) {
+      this.dato.rr_mes = Number(this.mensajes3[ this.mensajes3.length - 1 ].lluvia);
+    }
 
     if (tipoR === '1'){
       for (i = 0; i < this.mensajes.length; i++){
