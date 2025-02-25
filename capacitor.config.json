@@ -3,16 +3,28 @@
   "appName": "agromet2",
   "webDir": "www",
   "bundledWebRuntime": false,
-  "capacitor": {
-    "preferences": {
-      "ScrollEnabled": false,
-      "android-minSdkVersion": 24,
-      "BackupWebStorage": "none",
-      "SplashMaintainAspectRatio": true,
-      "FadeSplashScreenDuration": 300,
-      "SplashShowOnlyFirstTime": false,
-      "SplashScreen": "screen",
-      "SplashScreenDelay": 3000
+  "ios": {
+  "buildNumber": "2",
+  "version": "2.3.1",
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 3000,
+      "launchAutoHide": true,
+      "androidScaleType": "CENTER_CROP",
+      "showSpinner": false,
+      "splashFullScreen": true,
+      "splashImmersive": true
     }
+  },
+  "preferences": {
+    "ScrollEnabled": false,
+    "android-minSdkVersion": 24,
+    "BackupWebStorage": "none",
+    "SplashMaintainAspectRatio": true,
+    "FadeSplashScreenDuration": 300,
+    "SplashShowOnlyFirstTime": false,
+    "SplashScreen": "screen",
+    "SplashScreenDelay": 3000
   }
+}
 }
