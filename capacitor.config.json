@@ -1,6 +1,6 @@
 {
-  "appId": "com.agrometeeaoc.app",
-  "appName": "agromet2",
+  "appId": "com.agromet.eeaoc",
+  "appName": "com.agromet.eeaoc",
   "webDir": "www",
   "bundledWebRuntime": false,
   "ios": {
