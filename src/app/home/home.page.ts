@@ -21,10 +21,11 @@ export class HomePage implements DoCheck, OnInit{
   hora: string;
   diaSemana: string;
   mensajes: any = {};
+  msj: any = {};
   imagen: string;
   ubicacion: string;
   icono: string;
-  uv = 0;
+  uv = "";
   iconosD: any [] = [];
   maximasD: any [] = [];
   minimasD: any [] = [];
@@ -59,8 +60,6 @@ export class HomePage implements DoCheck, OnInit{
       this.cargarImagen();
       this.traerPronostico();
       localStorage.setItem('home', '0');
-    }else{
-      console.log('home sigue siendo 0');
     }
   }
 
@@ -158,47 +157,57 @@ export class HomePage implements DoCheck, OnInit{
     await loading.present();
 
     console.log('pidiendo pronostico ****');
+
+    this.pronostico.getClimaActual()
+    // tslint:disable-next-line: deprecation
+    .subscribe( (postsC: any[]) => {
+      this.msj = postsC;
+      this.icono = '../../assets/w-icons/' + this.msj.weather[0].icon + '.png';      
+    });
+
     this.pronostico.getPronostico()
     // tslint:disable-next-line: deprecation
     .subscribe( (posts: any[]) => {
       this.mensajes = posts;
 
-      console.log(this.mensajes);
-      this.icono = '../../assets/w-icons/' + this.mensajes.current.weather[0].icon + '.png';
-      this.uv = this.mensajes.current.uvi.toFixed(0);
+//      this.uv = this.mensajes.current.uvi.toFixed(0);
+      this.uv = "";
 
-      this.iconosD = [];
-      this.maximasD = [];
-      this.minimasD = [];
-      for (let i = 1; i < 8; i++) {
-        this.iconosD.push('../../assets/w-icons/' + this.mensajes.daily[i].weather[0].icon + '.png');
-        this.maximasD.push(this.mensajes.daily[i].temp.max.toFixed(0));
-        this.minimasD.push(this.mensajes.daily[i].temp.min.toFixed(0));
-      }
-      let ban = 0;
-      let x = 0;
+      let ban = 0, fecha = 0;
+      let fechaDia;
       this.datosH = [];
 
-      for (let i = 1; i < this.mensajes.hourly.length; i++) {
-        if (ban === 0){
-          if ( new Date(this.mensajes.hourly[i].dt * 1000).getHours() !== 0){
-            if (x === 2){
-              this.datosH.push([
-                new Date(this.mensajes.hourly[i].dt * 1000).getHours() +
-                ':00', '../../assets/w-icons/' +
-                this.mensajes.hourly[i].weather[0].icon +
-                '.png', this.mensajes.hourly[i].temp.toFixed(0),
-                this.mensajes.hourly[i].humidity.toFixed(0),
-                (this.mensajes.hourly[i].wind_speed * 3.6).toFixed(0)
+      for (let i = 1; i < this.mensajes.cnt; i++) {
+        fecha=new Date(this.mensajes.list[i].dt * 1000).getDate();
+        fechaDia=new Date(this.mensajes.list[i].dt * 1000);
+
+        let utcDay = fechaDia.getUTCDate(); // Día (UTC)
+        let utcMonth = fechaDia.getUTCMonth() + 1; // Mes (UTC) - recuerda que los meses en JavaScript son 0-11
+        let utcYear = fechaDia.getUTCFullYear(); // Año (UTC)
+        
+        // Formatear la fecha en formato dd/mm/yyyy
+        let formattedDate = `${utcDay.toString().padStart(2, '0')}/${utcMonth.toString().padStart(2, '0')}/${utcYear}`;
+                
+        if (ban != fecha){
+          ban=fecha
+          this.datosH.push([
+            formattedDate,
+            0,
+            0,
+            0,
+            0,
+            0
+        ]);
+    }
+          this.datosH.push([
+                0,
+                new Date(this.mensajes.list[i].dt * 1000).getHours() + ':00',
+                '../../assets/w-icons/' + this.mensajes.list[i].weather[0].icon + '.png',
+                this.mensajes.list[i].main.temp.toFixed(0),
+                this.mensajes.list[i].main.humidity.toFixed(0),
+                (this.mensajes.list[i].wind.speed * 3.6).toFixed(0),
+                this.mensajes.list[i].weather[0].description
             ]);
-              x = 0;
-            } else {
-              x++;
-            }
-          }else{
-            ban = 1;
-          }
-        }
       }
 
       this.alertas = [];

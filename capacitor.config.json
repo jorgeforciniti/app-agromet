@@ -1,8 +1,9 @@
 {
-  "appId": "com.agromet.app",
+  "appId": "com.agrometeeaoc.app",
   "appName": "agromet2",
   "webDir": "www",
-  "cordova": {
+  "bundledWebRuntime": false,
+  "capacitor": {
     "preferences": {
       "ScrollEnabled": false,
       "android-minSdkVersion": 24,

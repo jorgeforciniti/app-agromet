@@ -48,22 +48,6 @@
                             </ion-col>
                         </ion-row>
 
-                    <!-- índice UV -->
-                        <ion-row>
-                            <ion-col size="11" class="uv">
-                                Índice UV:&nbsp;{{uv}}
-                            </ion-col>
-                            <ion-col size="1" style="background-color: green; -webkit-border-radius: 50%; border-radius: 50%;" *ngIf=" (this.uv<3); else amarillo"></ion-col>
-                            <ng-template #amarillo>
-                                <ion-col size="1" style="background-color: yellow; -webkit-border-radius: 50%; border-radius: 50%;" *ngIf=" (this.uv<6); else naranja"></ion-col>
-                                <ng-template #naranja>
-                                    <ion-col size="1" style="background-color: orange; -webkit-border-radius: 50%; border-radius: 50%;" *ngIf=" (this.uv<8); else rojo"></ion-col>
-                                    <ng-template #rojo>
-                                        <ion-col size="1" style="background-color: red; -webkit-border-radius: 50%; border-radius: 50%;"></ion-col>
-                                    </ng-template>
-                                    </ng-template>
-                            </ng-template>
-                        </ion-row>
                     </ion-col>
             </ion-row>
 
@@ -219,44 +203,37 @@
                 </ion-col>
             </ion-row>
 
-            <div class="pronostico">
-                <span>ALERTAS</span>
-            </div>
-
-            <table style="margin: 0 auto;">
-                <tr *ngFor="let item of alertas">
-                    <td class="alertas">
-                        {{item.description}}
-                    </td>
-                </tr>
-            </table>
-
-            <ion-row>
-                <ion-col size="12">
-                <div class="finita"><hr></div>
-                </ion-col>
-            </ion-row>
-
-            <div class="pronostico">
-                <span>HOY</span>
-            </div>
-            <table style="margin: 0 auto;">
+            <table style="margin: auto;">
                 <tr *ngFor="let item of datosH">
-                    <td class="tds">
-                        {{item[0]}}
-                    </td>
-                    <td class="tds">
-                        <img src="{{item[1]}}" class="imagen">
-                    </td>
-                    <td class="tds">
-                        {{item[2]}}º
-                    </td>
-                    <td class="tds">
-                        {{item[3]}}%
-                    </td>
-                    <td class="tds">
-                        {{item[4]}}km/h
-                    </td>
+
+                    <ion-row  class="tem" *ngIf=" (this.item[0] != 0); else noTemp">
+                        <td class="tdstitulo">
+                            {{item[0]}}
+                        </td>
+                    </ion-row>
+
+                    <ng-template #noTemp>
+                        <ion-row class="tem">
+                            <td class="tds">
+                                {{item[1]}}
+                            </td>
+                            <td class="tds">
+                                <img src="{{item[2]}}" class="imagen">
+                            </td>
+                            <td class="tds">
+                                {{item[3]}}º
+                            </td>
+                            <td class="tds">
+                                {{item[4]}}%
+                            </td>
+                            <td class="tds">
+                                {{item[5]}} km/h
+                            </td>
+                            <td class="tds">
+                                {{item[6]}}
+                            </td>
+                                </ion-row>
+                    </ng-template>
 
                 </tr>
             </table>
@@ -265,32 +242,6 @@
                 <div class="finita"><hr></div>
                 </ion-col>
             </ion-row>
-
-            <div class="pronostico">
-                <span>A 7 DÍAS</span>
-            </div>
-            <table style="margin: 0 auto;">
-                <tr>
-                    <td *ngFor="let item of semana" class="tabla">
-                        {{item}}
-                    </td>
-                </tr>
-                <tr>
-                    <td *ngFor="let item of iconosD" class="tabla">
-                        <img src="{{item}}">
-                    </td>
-                </tr>
-                <tr>
-                    <td *ngFor="let item of maximasD" class="tabla">
-                        {{item}}
-                    </td>
-                </tr>
-                <tr>
-                    <td *ngFor="let item of minimasD" class="tabla">
-                        {{item}}
-                    </td>
-                </tr>
-            </table>
             <br>
             
         </ion-content>

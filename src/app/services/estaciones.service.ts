@@ -50,7 +50,12 @@ export class EstacionesService {
   }
   getPronostico() {
     this.dato = JSON.parse(localStorage.getItem('datos'));
-    return this.http.get(`https://api.openweathermap.org/data/2.5/onecall?lat=${this.dato.lat}&lon=${this.dato.lon}&lang=es&units=metric&appid=ea2faa440ccc747a20a042317dadac3f&exclude=minutely`);
+    return this.http.get(`https://api.openweathermap.org/data/2.5/forecast?lat=${this.dato.lat}&lon=${this.dato.lon}&lang=es&units=metric&appid=ea2faa440ccc747a20a042317dadac3f`);
   }
+  getClimaActual() {
+    this.dato = JSON.parse(localStorage.getItem('datos'));
+    return this.http.get(`https://api.openweathermap.org/data/2.5/weather?lat=${this.dato.lat}&lon=${this.dato.lon}&lang=es&units=metric&appid=ea2faa440ccc747a20a042317dadac3f`);
+  }
+
 }
 
