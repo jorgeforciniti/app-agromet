@@ -11,7 +11,7 @@ import { LoadingController } from '@ionic/angular';
   styleUrls: ['temperatura.page.scss']
 })
 
-export class TemperaturaPage implements DoCheck{
+export class TemperaturaPage implements DoCheck {
 
   dato: any;
   dia: string;
@@ -39,7 +39,7 @@ export class TemperaturaPage implements DoCheck{
   public lineChartData: ChartDataSets[] = [
     { data: [0, 0, 0, 0, 0, 0, 0], label: 'Máximas', fill: false, lineTension: 0 },
     { data: [0, 0, 0, 0, 0, 0, 0], label: 'Mínimas', fill: false, lineTension: 0 }
- ];
+  ];
   public lineChartLabels: Label[] = [];
 
   public lineChartOptions: (ChartOptions) = {
@@ -50,7 +50,7 @@ export class TemperaturaPage implements DoCheck{
         {
           id: 'y-axis-0',
           position: 'left',
-          scaleLabel: {display: true, labelString: 'ºC'}
+          scaleLabel: { display: true, labelString: 'ºC' }
         }
       ]
     }
@@ -64,7 +64,7 @@ export class TemperaturaPage implements DoCheck{
       pointBorderColor: 'rgba(64,0,0,0.8)',
       pointHoverBackgroundColor: 'rgba(255,0,0,0.8)',
       pointHoverBorderColor: 'rgba(255,0,0,0.8)'
-},
+    },
     { // red
       backgroundColor: 'rgba(0,0,255,0.0)',
       borderColor: 'rgba(0,0,255,0.6)',
@@ -79,12 +79,12 @@ export class TemperaturaPage implements DoCheck{
 
   // **************************************************
 
-  constructor( private datosTemperaturas: EstacionesService, private router: Router, public loadingCtrl: LoadingController) {
+  constructor(private datosTemperaturas: EstacionesService, private router: Router, public loadingCtrl: LoadingController) {
     this.cargarDatos();
   }
 
   ngDoCheck() {
-    if (localStorage.getItem('temperatura') === '1'){
+    if (localStorage.getItem('temperatura') === '1') {
       this.cargarDatos();
       this.traerTemp24hs();
       localStorage.setItem('temperatura', '0');
@@ -92,7 +92,7 @@ export class TemperaturaPage implements DoCheck{
     }
   }
 
-  cargarDatos(){
+  cargarDatos() {
     this.dato = JSON.parse(localStorage.getItem('datos'));
     this.dia = this.dato.fecha_I.substr(8, 2);
     const mes = this.dato.fecha_I.substr(5, 2);
@@ -109,7 +109,7 @@ export class TemperaturaPage implements DoCheck{
     console.log(this.dato.temp_af);
   }
 
-  async traerTemp24hs(){
+  async traerTemp24hs() {
     const loading = await this.loadingCtrl.create({
       spinner: 'bubbles',
       translucent: true,
@@ -119,94 +119,95 @@ export class TemperaturaPage implements DoCheck{
     });
     await loading.present();
 
-    this.datosTemperaturas.getTemperatura24()
-    // tslint:disable-next-line: deprecation
-    .subscribe( (posts: any[]) => {
-      this.mensajes = posts[0];
-      this.mensajes2 = posts[1];
-      this.mensajes3 = posts[2];
-      this.traerTemp('1');
-      loading.dismiss();
-    });
+    const estacion = Number(localStorage.getItem('estacion') ?? 0);
+    this.datosTemperaturas.getTemperatura24(estacion)
+      // tslint:disable-next-line: deprecation
+      .subscribe((posts: any[]) => {
+        this.mensajes = posts[0];
+        this.mensajes2 = posts[1];
+        this.mensajes3 = posts[2];
+        this.traerTemp('1');
+        loading.dismiss();
+      });
   }
 
-  onClickAhora(){
+  onClickAhora() {
     this.router.navigate(['tabs/mapat']);
   }
-  onClickHoy(){
+  onClickHoy() {
     this.router.navigate(['tabs/mapathoy']);
   }
 
-  traerTemp(tipoT){
+  traerTemp(tipoT) {
     let i: number;
     this.auxT = [];
     this.auxM = [];
     this.auxH = [];
-    if (tipoT === '1'){
-      for (i = 0; i < this.mensajes.length; i++){
+    if (tipoT === '1') {
+      for (i = 0; i < this.mensajes.length; i++) {
         if (Number(this.mensajes[i].temperatura) > -20 &&
           Number(this.mensajes[i].temperatura) < 60 &&
-          this.mensajes[i].temperatura != null){
+          this.mensajes[i].temperatura != null) {
           this.auxT.push(Number(this.mensajes[i].temperatura).toFixed(1));
-        }else{
+        } else {
           this.auxT.push(null);
         }
         this.auxH.push(this.mensajes[i].hora);
       }
-      this.lineChartData = [{ data: this.auxT, label: 'Temperatura', fill: false, lineTension: 0}];
+      this.lineChartData = [{ data: this.auxT, label: 'Temperatura', fill: false, lineTension: 0 }];
       this.lineChartLabels = this.auxH;
       this.tMax = Math.max.apply(null, this.auxT);
       this.tMin = Math.min.apply(null, this.auxT);
-    }else if (tipoT === '2'){
-      for (i = 0; i < this.mensajes2.length; i++){
+    } else if (tipoT === '2') {
+      for (i = 0; i < this.mensajes2.length; i++) {
         if (Number(this.mensajes2[i].t_max) > -20 &&
           Number(this.mensajes2[i].t_max) < 60 &&
-          this.mensajes2[i].t_max != null){
+          this.mensajes2[i].t_max != null) {
           this.auxT.push(Number(this.mensajes2[i].t_max).toFixed(1));
-        }else{
+        } else {
           this.auxT.push(null);
         }
         if (Number(this.mensajes2[i].t_min) > -20 &&
           Number(this.mensajes2[i].t_min) < 60 &&
-          this.mensajes2[i].t_min != null){
+          this.mensajes2[i].t_min != null) {
           this.auxM.push(Number(this.mensajes2[i].t_min).toFixed(1));
-        }else{
+        } else {
           this.auxM.push(null);
         }
         this.auxH.push(this.mensajes2[i].fecha.substr(8, 2) + '-' + this.mensajes2[i].fecha.substr(5, 2));
       }
-      this.lineChartData = [{ data: this.auxT, label: 'Máximas', fill: false, lineTension: 0},
-      { data: this.auxM, label: 'Mínimas', fill: false, lineTension: 0}];
+      this.lineChartData = [{ data: this.auxT, label: 'Máximas', fill: false, lineTension: 0 },
+      { data: this.auxM, label: 'Mínimas', fill: false, lineTension: 0 }];
       this.lineChartLabels = this.auxH;
-    }else{
-      for (i = 0; i < this.mensajes3.length; i++){
+    } else {
+      for (i = 0; i < this.mensajes3.length; i++) {
         if (Number(this.mensajes3[i].t_max) > -20 &&
           Number(this.mensajes3[i].t_max) < 60 &&
-          this.mensajes3[i].t_max != null){
+          this.mensajes3[i].t_max != null) {
           this.auxT.push(Number(this.mensajes3[i].t_max).toFixed(1));
-        }else{
+        } else {
           this.auxT.push(null);
         }
         if (Number(this.mensajes3[i].t_min) > -20 &&
           Number(this.mensajes3[i].t_min) < 60 &&
-          this.mensajes3[i].t_min != null){
+          this.mensajes3[i].t_min != null) {
           this.auxM.push(Number(this.mensajes3[i].t_min).toFixed(1));
-        }else{
+        } else {
           this.auxM.push(null);
         }
 
-        this.auxH.push( this.mesesCorto[parseInt(this.mensajes3[i].mes, 10) - 1] );
+        this.auxH.push(this.mesesCorto[parseInt(this.mensajes3[i].mes, 10) - 1]);
       }
-      this.lineChartData = [{ data: this.auxT, label: 'Máx. media', fill: false, lineTension: 0},
-      { data: this.auxM, label: 'Mín. Media', fill: false, lineTension: 0}];
+      this.lineChartData = [{ data: this.auxT, label: 'Máx. media', fill: false, lineTension: 0 },
+      { data: this.auxM, label: 'Mín. Media', fill: false, lineTension: 0 }];
       this.lineChartLabels = this.auxH;
     }
   }
 
-  cargarImagen(){
-    if (this.dato.temp_af < 30){
+  cargarImagen() {
+    if (this.dato.temp_af < 30) {
       this.imagen = '../../assets/fondos/temperaturas2.jpg';
-    }else{
+    } else {
       this.imagen = '../../assets/fondos/temperaturas1.jpg';
     }
     this.ubicacion = '../../assets/wheater-icons/ubicacion.png';

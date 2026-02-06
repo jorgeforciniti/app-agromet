@@ -10,7 +10,7 @@ import { LoadingController } from '@ionic/angular';
   templateUrl: 'lluvias.page.html',
   styleUrls: ['lluvias.page.scss']
 })
-export class LluviasPage implements DoCheck{
+export class LluviasPage implements DoCheck {
 
   dato: any;
   dia: string;
@@ -31,12 +31,13 @@ export class LluviasPage implements DoCheck{
 
   public barChartOptions: ChartOptions = {
     responsive: true,
-    scales: { xAxes: [{}],
-              yAxes: [{
-                id: 'y-axis-0',
-                position: 'left',
-                scaleLabel: {display: true, labelString: 'mm'}
-            }]
+    scales: {
+      xAxes: [{}],
+      yAxes: [{
+        id: 'y-axis-0',
+        position: 'left',
+        scaleLabel: { display: true, labelString: 'mm' }
+      }]
     }
   };
   public barChartLabels: Label[] = ['', '', '', '', '', '', ''];
@@ -53,18 +54,18 @@ export class LluviasPage implements DoCheck{
 
   // **************************************************
 
- imagen: string;
+  imagen: string;
   ubicacion: string;
   mapas: string;
 
   // **************************************************
 
-  constructor( private datosLluvias: EstacionesService, private router: Router, public loadingCtrl: LoadingController) {
+  constructor(private datosLluvias: EstacionesService, private router: Router, public loadingCtrl: LoadingController) {
     this.cargarDatos();
   }
 
   ngDoCheck() {
-    if (localStorage.getItem('lluvia') === '1'){
+    if (localStorage.getItem('lluvia') === '1') {
       this.cargarDatos();
       this.traerRRMes();
       localStorage.setItem('lluvia', '0');
@@ -72,7 +73,7 @@ export class LluviasPage implements DoCheck{
     }
   }
 
-  cargarDatos(){
+  cargarDatos() {
     this.dato = JSON.parse(localStorage.getItem('datos'));
     this.dia = this.dato.fecha_I.substr(8, 2);
     const mes = this.dato.fecha_I.substr(5, 2);
@@ -90,7 +91,7 @@ export class LluviasPage implements DoCheck{
     this.dato.rr_15 = Number(this.dato.rr_15);
   }
 
-  async traerRRMes(){
+  async traerRRMes() {
     this.auxRR = [];
     this.auxD = [];
     const loading = await this.loadingCtrl.create({
@@ -102,22 +103,23 @@ export class LluviasPage implements DoCheck{
     });
     await loading.present();
 
-    this.datosLluvias.getRRMes()
-    // tslint:disable-next-line: deprecation
-    .subscribe( (posts: any[]) => {
-      this.mensajes = posts[0];
-      this.mensajes2 = posts[1];
-      this.mensajes3 = posts[2];
-      this.traerRR('1');
-      loading.dismiss();
-    });
+    const estacion = Number(localStorage.getItem('estacion') ?? 0);
+    this.datosLluvias.getRRMes(estacion)
+      // tslint:disable-next-line: deprecation
+      .subscribe((posts: any[]) => {
+        this.mensajes = posts[0];
+        this.mensajes2 = posts[1];
+        this.mensajes3 = posts[2];
+        this.traerRR('1');
+        loading.dismiss();
+      });
   }
 
-  onClickAhora(){
-     this.router.navigate(['tabs/mapa-rr']);
+  onClickAhora() {
+    this.router.navigate(['tabs/mapa-rr']);
   }
 
-  traerRR(tipoR){
+  traerRR(tipoR) {
     let i: number;
     this.auxRR = [];
     this.auxD = [];
@@ -125,54 +127,54 @@ export class LluviasPage implements DoCheck{
     const mm = hoy.getMonth();
     this.rrAyer = Number(this.mensajes2[this.mensajes2.length - 2].lluvia);
     try {
-      this.dato.rr_mes = Number(this.mensajes3[ mm ].lluvia);
+      this.dato.rr_mes = Number(this.mensajes3[mm].lluvia);
     } catch (error) {
-      this.dato.rr_mes = Number(this.mensajes3[ this.mensajes3.length - 1 ].lluvia);
+      this.dato.rr_mes = Number(this.mensajes3[this.mensajes3.length - 1].lluvia);
     }
 
-    if (tipoR === '1'){
-      for (i = 0; i < this.mensajes.length; i++){
-        if (Number(this.mensajes[i].lluvia) < 500 && this.mensajes[i].lluvia != null){
+    if (tipoR === '1') {
+      for (i = 0; i < this.mensajes.length; i++) {
+        if (Number(this.mensajes[i].lluvia) < 500 && this.mensajes[i].lluvia != null) {
           this.auxRR.push(Number(this.mensajes[i].lluvia).toFixed(1));
-        }else{
+        } else {
           this.auxRR.push(null);
         }
         this.auxD.push(this.mensajes[i].hora);
       }
-      this.barChartData = [{ data: this.auxRR, label: 'Lluvia'}];
+      this.barChartData = [{ data: this.auxRR, label: 'Lluvia' }];
       this.barChartLabels = this.auxD;
-    }else if (tipoR === '2'){
-      for (i = 0; i < this.mensajes2.length; i++){
-        if (Number(this.mensajes[i].lluvia) < 1000 && this.mensajes[i].lluvia != null){
+    } else if (tipoR === '2') {
+      for (i = 0; i < this.mensajes2.length; i++) {
+        if (Number(this.mensajes[i].lluvia) < 1000 && this.mensajes[i].lluvia != null) {
           this.auxRR.push(Number(this.mensajes2[i].lluvia).toFixed(1));
-        }else{
+        } else {
           this.auxRR.push(null);
         }
         this.auxD.push(this.mensajes2[i].dia.substr(8, 2) + '-' + this.mensajes2[i].dia.substr(5, 2));
       }
-      this.barChartData = [{ data: this.auxRR, label: 'Lluvia'}];
+      this.barChartData = [{ data: this.auxRR, label: 'Lluvia' }];
       this.barChartLabels = this.auxD;
-    }else{
-      for (i = 0; i < this.mensajes3.length; i++){
-        if (Number(this.mensajes[i].lluvia) < 1000 && this.mensajes[i].lluvia != null){
+    } else {
+      for (i = 0; i < this.mensajes3.length; i++) {
+        if (Number(this.mensajes[i].lluvia) < 1000 && this.mensajes[i].lluvia != null) {
           this.auxRR.push(Number(this.mensajes3[i].lluvia).toFixed(1));
-        }else{
+        } else {
           this.auxRR.push(null);
         }
-        this.auxD.push( this.mesesCorto[parseInt(this.mensajes3[i].mes, 10) - 1] );
+        this.auxD.push(this.mesesCorto[parseInt(this.mensajes3[i].mes, 10) - 1]);
       }
-      this.barChartData = [{ data: this.auxRR, label: 'Lluvia'}];
+      this.barChartData = [{ data: this.auxRR, label: 'Lluvia' }];
       this.barChartLabels = this.auxD;
     }
   }
-  cargarImagen(){
-    if (this.dato.RR_dia < 0.5){
+  cargarImagen() {
+    if (this.dato.RR_dia < 0.5) {
       this.imagen = '../../assets/fondos/inicio-soleado.jpg';
-    }else if (this.dato.RR_dia < 3) {
+    } else if (this.dato.RR_dia < 3) {
       this.imagen = '../../assets/fondos/lluvias2.jpg';
-    }else if (this.dato.RR_dia < 10) {
+    } else if (this.dato.RR_dia < 10) {
       this.imagen = '../../assets/fondos/lluvias1.jpg';
-    }else{
+    } else {
       this.imagen = '../../assets/fondos/lluvias3.jpg';
     }
     this.ubicacion = '../../assets/wheater-icons/ubicacion.png';

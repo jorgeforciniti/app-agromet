@@ -34,14 +34,19 @@
         <ion-row>
           <ion-col size="6.7" class="tem">
               <ion-row style="display: flex; align-items: baseline;">
-                
                 <ion-col size="9" class="rr" *ngIf=" (this.dato.RR_dia > 50); else texto">
                   {{ this.dato.RR_dia.toFixed(0) }}
                 </ion-col>
                 <ng-template #texto>
-                  <ion-col size="9" class="rr">
-                     {{ this.dato.RR_dia.toFixed(1) }}
+
+                  <ion-col size="9" class="rr" *ngIf=" (this.dato.RR_dia > 400); else texto1">
+                    S/D
                   </ion-col>
+                  <ng-template #texto1>
+                    <ion-col size="9" class="rr">
+                       {{ this.dato.RR_dia.toFixed(1) }}
+                    </ion-col>
+                  </ng-template>
                 </ng-template>
                 
                 <ion-col size="3" class="rr1">

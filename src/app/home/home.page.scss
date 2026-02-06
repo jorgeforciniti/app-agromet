@@ -1,19 +1,20 @@
 @font-face {
     font-family: helveticaNR;
     src: url('../../assets/fonts/helvetica-neue-lt-std-55-roman.otf');
-    }
-    @font-face {
-        font-family: helveticaNBC;
-        src: url('../../assets/fonts/HelveticaNeueLTStd-BdCn.otf');
-        }
+}
 
-.contenido{
+@font-face {
+    font-family: helveticaNBC;
+    src: url('../../assets/fonts/HelveticaNeueLTStd-BdCn.otf');
+}
+
+.contenido {
     --padding-top: 10px;
     --padding-start: 10px;
     --padding-end: 10px;
 }
 
-.estacion1{
+.estacion1 {
     color: lightgray;
     font-size: 16px;
     font-family: helveticaNBC;
@@ -23,10 +24,11 @@
     text-transform: uppercase;
 }
 
-.estacion2{
+.estacion2 {
     padding-top: 15px;
 }
-.diasemana{
+
+.diasemana {
     color: lightgray;
     letter-spacing: 2px;
     font-size: 18px;
@@ -37,24 +39,24 @@
     text-transform: uppercase;
 }
 
-.tem{
-    color: rgb( 128, 227, 211);
+.tem {
+    color: rgb(128, 227, 211);
     letter-spacing: 1px;
     text-align: left;
     padding-top: 3px;
     padding-right: 10px;
-    font-family: helveticaNR ;
+    font-family: helveticaNR;
     font-size: 68px;
 }
 
-.ico{
+.ico {
     text-align: right;
     padding-top: 0px;
     padding-bottom: 0px;
     padding-right: 10px;
 }
 
-.fecha{
+.fecha {
     color: lightgray;
     letter-spacing: 0px;
     font-size: 16px;
@@ -65,7 +67,7 @@
     text-transform: uppercase;
 }
 
-.fila{
+.fila {
     display: flex;
     align-items: center;
     color: lightgray;
@@ -73,7 +75,7 @@
     margin: 0px;
 }
 
-.cuerpo1{
+.cuerpo1 {
     padding: 0px;
     margin: 0px;
     text-transform: uppercase;
@@ -81,7 +83,7 @@
     padding-left: 5px;
 }
 
-.cuerpo2{
+.cuerpo2 {
     padding: 0px;
     margin: 0px;
     letter-spacing: 0px;
@@ -92,26 +94,26 @@
 }
 
 hr {
-    background-color: rgb( 128, 227, 211) !important;
+    background-color: rgb(128, 227, 211) !important;
     height: 2px;
     display: block !important;
     font-size: 2em !important;
     opacity: 1 !important;
     visibility: visible !important;
     margin: 0px !important;
-  }
+}
 
 .finita hr {
-    background-color: rgb( 128, 227, 211) !important;
+    background-color: rgb(128, 227, 211) !important;
     height: 1px;
     display: block !important;
     font-size: 2em !important;
     opacity: 1 !important;
     visibility: visible !important;
     margin: 0px !important;
-  }
+}
 
-  #fechayhora{
+#fechayhora {
     color: lightgray;
     letter-spacing: 0px;
     line-height: 30px;
@@ -123,7 +125,7 @@ hr {
     text-transform: uppercase;
 }
 
-.pronostico{
+.pronostico {
     color: lightgray;
     letter-spacing: 0px;
     line-height: 30px;
@@ -134,7 +136,7 @@ hr {
     padding-right: 5px;
 }
 
-.tabla{
+.tabla {
     color: lightgray;
     letter-spacing: 0px;
     padding: 5px 5px 5px 5px;
@@ -146,7 +148,8 @@ hr {
     padding: 0px;
     text-transform: uppercase;
 }
-.tds{
+
+.tds {
     color: lightgray;
     letter-spacing: 0px;
     padding: 0px 10px 0px 5px;
@@ -156,18 +159,20 @@ hr {
     font-family: helveticaNR;
     text-align: center;
 }
-.tdstitulo{
+
+.tdstitulo {
     color: lightblue;
     letter-spacing: 0px;
     padding: 0px 5px 0px 5px;
     margin: 0px;
     letter-spacing: 0px;
-    font-size: 16px;
+    text-align: center;
+    font-size: 22px;
     font-family: helveticaNR;
     text-align: center;
 }
 
-.uv{
+.uv {
     color: lightgray;
     letter-spacing: 0px;
     padding: 0px 5px 0px 15px;
@@ -178,12 +183,12 @@ hr {
     text-align: right;
 }
 
-.imagen{
+.imagen {
     height: 40px;
     width: 40px;
 }
 
-.alertas{
+.alertas {
     color: lightgray;
     letter-spacing: 0px;
     padding: 0px 5px 0px 15px;
@@ -194,7 +199,7 @@ hr {
     text-align: left;
 }
 
-.actualizar{
+.actualizar {
     width: 100%;
     height: 20%;
     position: relative;
@@ -202,45 +207,139 @@ hr {
     text-align: center;
 }
 
-.actualizar p{
+.actualizar p {
     color: lightgray;
     letter-spacing: 0px;
     letter-spacing: 0px;
     font-size: 25px;
-    font-family: helveticaNR;    
+    font-family: helveticaNR;
 }
 
 .mouse {
-	width: 100%;
-	height: 200%;
+    width: 100%;
+    height: 200%;
 }
 
 .scroll {
-	animation-name: scroll;
-	animation-duration: 2.5s;
-	animation-timing-function: cubic-bezier(0.650, -0.550, 0.250, 1.500);
-	animation-iteration-count: infinite;
-	transform-origin: 50% 20.5px;
-	will-change: transform, opacity;
-	opacity: 1;
+    animation-name: scroll;
+    animation-duration: 2.5s;
+    animation-timing-function: cubic-bezier(0.650, -0.550, 0.250, 1.500);
+    animation-iteration-count: infinite;
+    transform-origin: 50% 20.5px;
+    will-change: transform, opacity;
+    opacity: 1;
 }
 
 .scroll-link {
-	position: absolute;
-	bottom: 1rem;
+    position: absolute;
+    bottom: 1rem;
     top: 20%;
     left: 50%;
-	transform: translateX(-50%);
+    transform: translateX(-50%);
 }
 
 @keyframes scroll {
-	0%, 20% {
-		transform: translateY(0) scaleY(1);
-        opacity: 1
-	}
 
-	100% {
-		transform: translateY(36px) scaleY(2);
-		opacity: 0.2;
-	}
+    0%,
+    20% {
+        transform: translateY(0) scaleY(1);
+        opacity: 1
+    }
+
+    100% {
+        transform: translateY(36px) scaleY(2);
+        opacity: 0.2;
+    }
+}
+
+.alertasTitulo {
+    text-align: center;
+    font-size: 22px;
+    margin-top: 8px;
+    margin-bottom: 6px;
+}
+
+.alertasVacias {
+    text-align: center;
+    opacity: 0.8;
+    margin-bottom: 8px;
+}
+
+.alertaBox {
+    margin: 8px 14px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+}
+
+.alertaHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.alertaNivel {
+    font-weight: 700;
+}
+
+.alertaFecha {
+    opacity: 0.9;
+    margin-bottom: 6px;
+}
+
+.alertaDesc {
+    line-height: 1.25;
+}
+
+.alertaInstr pre {
+    margin: 8px 0 0 0;
+    white-space: pre-wrap;
+    font-family: inherit;
+    line-height: 1.2;
+    opacity: 0.95;
+}
+
+/* Colores por nivel */
+.nivel-3 {
+    background: rgba(255, 215, 00, 0.35);
+}
+
+.nivel-4 {
+    background: rgba(230, 126, 34, 0.35);
+}
+
+.nivel-5 {
+    background: rgba(192, 57, 43, 0.35);
+}
+
+.centrados {
+    display: flex;
+    justify-content: center;
+    /* horizontal */
+    align-items: center;
+}
+
+.imagenes {
+    height: 2.5em;
+    padding: 0px 0px 0px 0px;
+    margin: 0px;
+}
+
+.texto {
+    color: lightgray;
+    letter-spacing: 0px;
+    padding: 20px;
+    margin: 0px;
+    letter-spacing: 0px;
+    font-size: 22px;
+    font-family: helveticaNR;
+    text-align: center;
+}
+.imagenes img {
+    width: auto;
+    height: 100%;
+    object-fit: contain;
+    object-position: center;
+    display: block;
 }

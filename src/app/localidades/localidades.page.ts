@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { EstacionesService } from 'src/app/services/estaciones.service';
 import { Router } from '@angular/router';
-import { analyzeAndValidateNgModules } from '@angular/compiler';
 
 @Component({
   selector: 'app-localidades',
@@ -11,21 +10,28 @@ import { analyzeAndValidateNgModules } from '@angular/compiler';
 export class LocalidadesPage implements OnInit {
 
   mensajes: any[] = [];
-  loading: any;
 
-  constructor( private estacionesService: EstacionesService, private router: Router ) { }
+  constructor(private estacionesService: EstacionesService, private router: Router) { }
 
   ngOnInit() {
-    this.mensajes = JSON.parse(localStorage.getItem('estaciones'));
+    this.mensajes = JSON.parse(localStorage.getItem('estaciones') || '[]');
   }
 
-  onClick( check ){
-    localStorage.setItem('estacion', check.Identificacion);
-    localStorage.setItem('datos', JSON.stringify(check));
+  onClick(check: any) {
+    const estacionId =
+      check?.Identificacion ?? check?.identificacion ?? check?.ID ?? check?.id;
+
+    if (estacionId == null) {
+      console.log('[LOCALIDADES] estación sin Identificacion:', check);
+      return;
+    }
+
+    this.estacionesService.setSelectedStation(estacionId);
     localStorage.setItem('temperatura', '1');
     localStorage.setItem('home', '1');
     localStorage.setItem('lluvia', '1');
     localStorage.setItem('helada', '1');
-    this.router.navigate(['/home']);
+
+    this.router.navigateByUrl('/tabs/home');
   }
 }
