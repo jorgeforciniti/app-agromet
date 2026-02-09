@@ -1,26 +1,57 @@
-<ion-content [fullscreen]="true" class="contenido" style="--background: url({{imagen}})">
-  <app-header titulo="Mapa de heladas {{ tipoT }}"></app-header>
+<ion-content class="contenido" [fullscreen]="true">
+  <div class="wrap">
 
+    <div class="topControls">
+      <div class="screenTitle">MAPA DE HELADAS</div>
 
-  <ion-row>
-    <ion-col size="4" class="mapita">
-      <img src="{{mapas}}">
-      <span (click)="traeHeladas(0)" >
-          día
-      </span>
-  </ion-col>
-  <ion-col size="4" class="mapita">
-    <img src="{{mapas}}">
-    <span (click)="traeHeladas(1)" >
-      Mes
-    </span>
-  </ion-col>
-  <ion-col size="4" class="mapita">
-    <img src="{{mapas}}">
-    <span (click)="traeHeladas(2)" >
-        Año
-    </span>
-  </ion-col>
-</ion-row>
-    <div id="mapa"></div>
+      <ion-segment [(ngModel)]="modo" (ionChange)="onModoChange()" class="seg">
+        <ion-segment-button value="dia">
+          <ion-label>Día</ion-label>
+        </ion-segment-button>
+        <ion-segment-button value="mes">
+          <ion-label>Mes</ion-label>
+        </ion-segment-button>
+        <ion-segment-button value="anio">
+          <ion-label>Año</ion-label>
+        </ion-segment-button>
+      </ion-segment>
+
+      <ion-segment *ngIf="modo==='anio'" [(ngModel)]="anioSeleccionado" (ionChange)="redibujarAnio()" class="segYear">
+        <ion-segment-button [value]="anioActual">
+          <ion-label>{{ anioActual }}</ion-label>
+        </ion-segment-button>
+        <ion-segment-button [value]="anioAnterior">
+          <ion-label>{{ anioAnterior }}</ion-label>
+        </ion-segment-button>
+      </ion-segment>
+    </div>
+
+    <div id="map"></div>
+
+    <div class="legend">
+      <div class="legendTitle">Criterio (T mínima)</div>
+
+      <div class="legendRow">
+        <span class="dot d0"></span>
+        <span>Sin helada (&gt; 2°C)</span>
+      </div>
+      <div class="legendRow">
+        <span class="dot d1"></span>
+        <span>Riesgo (0 a 2°C)</span>
+      </div>
+      <div class="legendRow">
+        <span class="dot d2"></span>
+        <span>Helada (0 a -2°C)</span>
+      </div>
+      <div class="legendRow">
+        <span class="dot d3"></span>
+        <span>Severa (&le; -2°C)</span>
+      </div>
+
+      <div class="legendHint">
+        Tocá un punto para ver detalle.
+      </div>
+    </div>
+
+  </div>
 </ion-content>

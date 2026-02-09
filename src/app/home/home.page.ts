@@ -35,7 +35,6 @@ export class HomePage implements OnInit, OnDestroy {
   alertaHoy: any = null;
   smnAlertsByArea: { [area: number]: any[] } = {};
   maxAlertLevel: number = 0;
-  alertaTexto: string = '';
 
   dato: any = {};
   message: any = {};
@@ -228,8 +227,6 @@ export class HomePage implements OnInit, OnDestroy {
                     this.alertas = list;
                     for (const a of list) this.maxAlertLevel = Math.max(this.maxAlertLevel, a?.nivel ?? 0);
                   }
-
-                  this.alertaTexto = this.getAlertLabel(this.maxAlertLevel);
 
                   this.alertas.sort((a, b) => {
                     const nb = (b?.nivel ?? 0) - (a?.nivel ?? 0);
@@ -471,8 +468,64 @@ export class HomePage implements OnInit, OnDestroy {
     return [10, 11, 12, 31].includes(id);
   }
 
-  private getAlertAreaForStation(estacionId: string | number | null): number {
-    return this.isVallesStation(estacionId) ? 3375 : 3373;
+  get aplicarOk(): boolean {
+    const d = this.dato || {};
+    return !(
+      d.temp_af >= 30 ||
+      d.hum_af <= 55 ||
+      d.rr_15 > 0 ||
+      d.viento_max > 10
+    );
+  }
+
+  get aplicarTexto(): string {
+    return this.aplicarOk ? 'Favorable para aplicar' : 'No aplicar agroquímicos';
+  }
+
+  get aplicarMotivos(): string[] {
+    const d = this.dato || {};
+    const out: string[] = [];
+    if (d.temp_af >= 30) out.push('Temperatura alta');
+    if (d.hum_af <= 55) out.push('Humedad baja');
+    if (d.rr_15 > 0) out.push('Lluvia reciente');
+    if (d.viento_medio > 10) { out.push('Viento fuerte') } else {
+      if (d.viento_max > 10) out.push('Ráfagas fuertes');
+    }
+    return out;
+  }
+
+  showForecastAll = false;
+  showAlertsAll = false;
+
+  // Pronóstico corto (para no mostrar la tabla eterna)
+  get datosHShort(): any[] {
+    if (!Array.isArray(this.datosH)) return [];
+    const out: any[] = [];
+
+    for (const item of this.datosH) {
+      // tus headers de fecha tienen item[0] != 0
+      if (item[0] !== 0) continue;
+
+      out.push(item);
+      if (out.length >= 10) break; // ajustá 8/10/12 según quieras
+    }
+    return out;
+  }
+
+  // Alertas visibles (para colapsar)
+
+  get alertasVisibles(): any[] {
+    if (!Array.isArray(this.alertas)) return [];
+    return this.showAlertsAll ? this.alertas : this.alertas.slice(0, 2);
+  }
+
+  fmt1(n: any): string {
+    const v = Number(n);
+    return Number.isFinite(v) ? v.toFixed(1) : 'S/D';
+  }
+  fmt0(n: any): string {
+    const v = Number(n);
+    return Number.isFinite(v) ? v.toFixed(0) : 'S/D';
   }
 
 }

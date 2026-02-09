@@ -1,37 +1,148 @@
-@font-face {
-    font-family: helveticaNR;
-    src: url('../../../assets/fonts/helvetica-neue-lt-std-55-roman.otf');
-    }
-@font-face {
-    font-family: helveticaNBC;
-    src: url('../../../assets/fonts/HelveticaNeueLTStd-BdCn.otf');
-    }
-
-#mapa{
-    width: 100% !important;
-    height: 92% !important;
-    background-color: #f6f6f4;
+:host {
+  --accent: rgb(128, 227, 211);
+  --text: #d7d7d7;
+  --card: rgba(0, 0, 0, 0.38);
+  --border: rgba(128, 227, 211, 0.35);
 }
 
-.marker{
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    background-size: 50%;
-    cursor: pointer;
+:host ::ng-deep .mapboxgl-popup-content {
+  background: rgba(0, 0, 0, 0.78) !important;
+  color: #e8e8e8 !important;
+  border: 1px solid rgba(128, 227, 211, 0.35) !important;
+  border-radius: 12px !important;
+  padding: 10px 12px !important;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.45) !important;
+  max-width: 260px !important;
 }
 
-span{
-    color: rgb( 128, 227, 211) !important;
-    font-family: helveticaNBC ;
-    font-size: 18px;
-    padding-top: 0px;
-    padding-left: 10px;
-    margin: 0px;
+/* La “puntita” del popup */
+:host ::ng-deep .mapboxgl-popup-tip {
+  border-top-color: rgba(0, 0, 0, 0.78) !important;
 }
-.mapas{
-    padding-top: 0px;
-    margin-top: 0px;
-    height: 42px;
-    text-align: center;
+
+/* Por si te meten estilos raros a div/spans */
+:host ::ng-deep .mapboxgl-popup-content * {
+  color: inherit !important;
 }
+
+:host ::ng-deep .mbxPopup {
+  font-size: 13px;
+  line-height: 1.25;
+}
+
+:host ::ng-deep .mbxTitle {
+  font-weight: 800;
+  margin-bottom: 4px;
+  letter-spacing: .2px;
+}
+
+:host ::ng-deep .mbxSep {
+  height: 1px;
+  background: rgba(128, 227, 211, 0.25);
+  margin: 6px 0;
+}
+
+.contenido {
+  --padding-top: 0;
+  --padding-start: 0;
+  --padding-end: 0;
+}
+
+/* Layout: controles arriba + mapa que ocupa todo el resto */
+.wrap {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.topControls {
+  padding: 10px 12px 8px 12px;
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+}
+
+.screenTitle {
+  text-align: center;
+  color: var(--text);
+  letter-spacing: 1px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  font-size: 0.95rem;
+}
+
+.seg, .segYear {
+  --background: rgba(0, 0, 0, 0.22);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+}
+
+.segYear {
+  margin-top: 8px;
+}
+
+ion-segment-button {
+  --color: rgba(215, 215, 215, 0.7);
+  --color-checked: var(--accent);
+  font-weight: 700;
+}
+
+/* El mapa ahora ocupa el resto del alto */
+#map {
+  flex: 1;
+  width: 100%;
+}
+
+/* Leyenda flotante */
+.legend {
+  position: absolute;
+  left: 12px;
+  bottom: 16px;
+  z-index: 999;
+  padding: 10px 10px;
+  border-radius: 12px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text);
+  width: min(220px, 70vw);
+  backdrop-filter: blur(10px);
+}
+
+.legendTitle {
+  font-weight: 800;
+  letter-spacing: .5px;
+  margin-bottom: 6px;
+  font-size: 0.85rem;
+}
+
+.legendRow {
+  display: grid;
+  grid-template-columns: 18px 1fr;
+  gap: 8px;
+  align-items: center;
+  font-size: 0.8rem;
+  margin: 3px 0;
+}
+
+.legendHint {
+  margin-top: 6px;
+  opacity: 0.75;
+  font-size: 0.75rem;
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  display: inline-block;
+  border: 2px solid rgba(255,255,255,0.85);
+  box-shadow: 0 0 10px rgba(0,0,0,0.35);
+}
+
+/* Colores de referencia (ajustalos a tus criterios reales) */
+.d0 { background: rgba(173, 255, 153, 0.65); }   // “sin helada”
+.d1 { background: rgba(253, 253, 3, 0.75); }   // “riesgo”
+.d2 { background: rgba(255, 145, 0, 0.80); }   // “helada”
+.d3 { background: rgba(255, 0, 0, 0.85); }   // “severa”
+.d4 { background: rgba(85, 0, 0, 0.85); }   // “muy severa”

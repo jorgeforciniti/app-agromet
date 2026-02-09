@@ -18,50 +18,66 @@ export class LluviasPage implements DoCheck {
   anio: string;
   hora: string;
   diaSemana: string;
-  mensajes: any[] = [];
-  mensajes2: any[] = [];
-  mensajes3: any[] = [];
+
+  mensajes: any[] = [];   // hoy (intervalos)
+  mensajes2: any[] = [];  // 30 días
+  mensajes3: any[] = [];  // mensual
+
   rrAyer = 0;
   mesesCorto = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
 
   private auxRR: any[] = [];
   private auxD: any[] = [];
 
-  // **************************************************
+  // UI
+  selectedRange: '1' | '2' | '3' = '1';
+  isLoading = false;
 
+  // Chart
   public barChartOptions: ChartOptions = {
     responsive: true,
+    maintainAspectRatio: false, // 👈 importante para que respete chartWrap
     scales: {
-      xAxes: [{}],
+      xAxes: [{
+        ticks: { fontColor: '#d7d7d7' as any }
+      }],
       yAxes: [{
         id: 'y-axis-0',
         position: 'left',
-        scaleLabel: { display: true, labelString: 'mm' }
+        scaleLabel: { display: true, labelString: 'mm' },
+        ticks: { fontColor: '#d7d7d7' as any }
       }]
-    }
+    },
+    legend: { display: false } as any
   };
-  public barChartLabels: Label[] = ['', '', '', '', '', '', ''];
+
+  public barChartLabels: Label[] = [];
   public barChartType: ChartType = 'bar';
   public barChartLegend = false;
 
   public barChartData: ChartDataSets[] = [
-    { data: [0, 0, 0, 0, 0, 0, 0], label: 'lluvia' }
+    { data: [], label: 'Lluvia' }
   ];
 
   public barChartColors: Color[] = [
-    { backgroundColor: 'blue' }
+    {
+      backgroundColor: 'rgba(128, 227, 211, 0.65)',
+      borderColor: 'rgba(128, 227, 211, 1)'
+    }
   ];
 
-  // **************************************************
-
+  // imágenes (si las usás todavía en algún lado)
   imagen: string;
   ubicacion: string;
   mapas: string;
 
-  // **************************************************
-
-  constructor(private datosLluvias: EstacionesService, private router: Router, public loadingCtrl: LoadingController) {
+  constructor(
+    private datosLluvias: EstacionesService,
+    private router: Router,
+    public loadingCtrl: LoadingController
+  ) {
     this.cargarDatos();
+    this.cargarImagen();
   }
 
   ngDoCheck() {
@@ -74,18 +90,22 @@ export class LluviasPage implements DoCheck {
   }
 
   cargarDatos() {
-    this.dato = JSON.parse(localStorage.getItem('datos'));
+    this.dato = JSON.parse(localStorage.getItem('datos') || 'null');
+    if (!this.dato?.fecha_I) return;
+
     this.dia = this.dato.fecha_I.substr(8, 2);
     const mes = this.dato.fecha_I.substr(5, 2);
     this.anio = this.dato.fecha_I.substr(0, 4);
+
     const dias = ['Domingo', 'Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado'];
     const meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+
     const dt = new Date(mes + ' ' + this.dia + ', ' + this.anio);
     this.diaSemana = dias[dt.getUTCDay()];
     this.nombreMes = meses[parseInt(mes, 10) - 1];
 
-    // tslint:disable-next-line: max-line-length
     this.hora = this.dato.fecha_I.substr(11, 5);
+
     this.dato.RR_dia = Number(this.dato.RR_dia);
     this.dato.rr_mes = Number(this.dato.rr_mes);
     this.dato.rr_15 = Number(this.dato.rr_15);
@@ -94,6 +114,8 @@ export class LluviasPage implements DoCheck {
   async traerRRMes() {
     this.auxRR = [];
     this.auxD = [];
+    this.isLoading = true;
+
     const loading = await this.loadingCtrl.create({
       spinner: 'bubbles',
       translucent: true,
@@ -104,70 +126,89 @@ export class LluviasPage implements DoCheck {
     await loading.present();
 
     const estacion = Number(localStorage.getItem('estacion') ?? 0);
+
     this.datosLluvias.getRRMes(estacion)
-      // tslint:disable-next-line: deprecation
-      .subscribe((posts: any[]) => {
-        this.mensajes = posts[0];
-        this.mensajes2 = posts[1];
-        this.mensajes3 = posts[2];
-        this.traerRR('1');
-        loading.dismiss();
+      .subscribe({
+        next: (posts: any[]) => {
+          this.mensajes = posts?.[0] || [];
+          this.mensajes2 = posts?.[1] || [];
+          this.mensajes3 = posts?.[2] || [];
+
+          // defaults
+          this.selectedRange = '1';
+          this.traerRR('1');
+        },
+        error: () => { /* silencioso */ },
+        complete: () => {
+          this.isLoading = false;
+          loading.dismiss().catch(() => {});
+        }
       });
+  }
+
+  onRangeChange(ev: any) {
+    const v = String(ev?.detail?.value || '1') as '1'|'2'|'3';
+    this.selectedRange = v;
+    this.traerRR(v);
   }
 
   onClickAhora() {
     this.router.navigate(['tabs/mapa-rr']);
   }
 
-  traerRR(tipoR) {
-    let i: number;
+  traerRR(tipoR: '1' | '2' | '3') {
     this.auxRR = [];
     this.auxD = [];
+
+    // rrAyer y rr_mes
+    try {
+      if (this.mensajes2?.length >= 2) {
+        this.rrAyer = Number(this.mensajes2[this.mensajes2.length - 2].lluvia);
+      } else {
+        this.rrAyer = 0;
+      }
+    } catch {
+      this.rrAyer = 0;
+    }
+
     const hoy = new Date();
     const mm = hoy.getMonth();
-    this.rrAyer = Number(this.mensajes2[this.mensajes2.length - 2].lluvia);
+
     try {
-      this.dato.rr_mes = Number(this.mensajes3[mm].lluvia);
-    } catch (error) {
-      this.dato.rr_mes = Number(this.mensajes3[this.mensajes3.length - 1].lluvia);
+      this.dato.rr_mes = Number(this.mensajes3?.[mm]?.lluvia);
+    } catch {
+      this.dato.rr_mes = Number(this.mensajes3?.[this.mensajes3.length - 1]?.lluvia || 0);
     }
 
     if (tipoR === '1') {
-      for (i = 0; i < this.mensajes.length; i++) {
-        if (Number(this.mensajes[i].lluvia) < 500 && this.mensajes[i].lluvia != null) {
-          this.auxRR.push(Number(this.mensajes[i].lluvia).toFixed(1));
-        } else {
-          this.auxRR.push(null);
-        }
+      for (let i = 0; i < this.mensajes.length; i++) {
+        const v = Number(this.mensajes[i].lluvia);
+        this.auxRR.push((v < 500 && this.mensajes[i].lluvia != null) ? Number(v.toFixed(1)) : null);
         this.auxD.push(this.mensajes[i].hora);
       }
-      this.barChartData = [{ data: this.auxRR, label: 'Lluvia' }];
-      this.barChartLabels = this.auxD;
     } else if (tipoR === '2') {
-      for (i = 0; i < this.mensajes2.length; i++) {
-        if (Number(this.mensajes[i].lluvia) < 1000 && this.mensajes[i].lluvia != null) {
-          this.auxRR.push(Number(this.mensajes2[i].lluvia).toFixed(1));
-        } else {
-          this.auxRR.push(null);
-        }
+      for (let i = 0; i < this.mensajes2.length; i++) {
+        const v = Number(this.mensajes2[i].lluvia);
+        this.auxRR.push((v < 1000 && this.mensajes2[i].lluvia != null) ? Number(v.toFixed(1)) : null);
         this.auxD.push(this.mensajes2[i].dia.substr(8, 2) + '-' + this.mensajes2[i].dia.substr(5, 2));
       }
-      this.barChartData = [{ data: this.auxRR, label: 'Lluvia' }];
-      this.barChartLabels = this.auxD;
     } else {
-      for (i = 0; i < this.mensajes3.length; i++) {
-        if (Number(this.mensajes[i].lluvia) < 1000 && this.mensajes[i].lluvia != null) {
-          this.auxRR.push(Number(this.mensajes3[i].lluvia).toFixed(1));
-        } else {
-          this.auxRR.push(null);
-        }
+      for (let i = 0; i < this.mensajes3.length; i++) {
+        const v = Number(this.mensajes3[i].lluvia);
+        this.auxRR.push((v < 1000 && this.mensajes3[i].lluvia != null) ? Number(v.toFixed(1)) : null);
         this.auxD.push(this.mesesCorto[parseInt(this.mensajes3[i].mes, 10) - 1]);
       }
-      this.barChartData = [{ data: this.auxRR, label: 'Lluvia' }];
-      this.barChartLabels = this.auxD;
     }
+
+    this.barChartData = [{ data: this.auxRR, label: 'Lluvia' }];
+    this.barChartLabels = this.auxD;
   }
+
   cargarImagen() {
+    // ya no dependemos del background-image viejo,
+    // pero lo dejo por si querés recuperar una imagen dinámica.
+    if (!this.dato) return;
+
     if (this.dato.RR_dia < 0.5) {
       this.imagen = '../../assets/fondos/inicio-soleado.jpg';
     } else if (this.dato.RR_dia < 3) {
@@ -177,6 +218,7 @@ export class LluviasPage implements DoCheck {
     } else {
       this.imagen = '../../assets/fondos/lluvias3.jpg';
     }
+
     this.ubicacion = '../../assets/wheater-icons/ubicacion.png';
     this.mapas = '../../assets/tab-icons/btnMapas.png';
   }

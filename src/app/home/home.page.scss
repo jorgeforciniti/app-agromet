@@ -9,9 +9,27 @@
 }
 
 .contenido {
-    --padding-top: 10px;
-    --padding-start: 10px;
-    --padding-end: 10px;
+  --padding-top: 10px;
+  --padding-start: 10px;
+  --padding-end: 10px;
+
+  --background-repeat: no-repeat;
+  --background-position: center center;
+  --background-size: cover;   // 👈 mantiene relación de aspecto
+}
+
+.bg {
+  position: fixed;
+  inset: 0;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
+  z-index: 0;
+}
+
+.content {
+  position: relative;
+  z-index: 1;
 }
 
 .estacion1 {
@@ -342,4 +360,222 @@ hr {
     object-fit: contain;
     object-position: center;
     display: block;
+}
+
+.decision-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 10px;
+  margin: 10px 0;
+  font-weight: 600;
+}
+
+.bgOverlay{
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(0,0,0,.55),
+    rgba(0,0,0,.35),
+    rgba(0,0,0,.55)
+  );
+  z-index: 0;
+}
+.contentWrap{
+  position: relative;
+  z-index: 1;
+}
+
+.pronosticoTitle{
+  display:flex;
+  justify-content: space-between;
+  align-items:center;
+  margin: 8px 14px 4px;
+  color:#fff;
+  font-weight:700;
+}
+.linkBtn{
+  background: transparent;
+  border: 0;
+  color: #a8f0ff;
+  font-size: 15px;
+}
+.forecastTable{
+  width: calc(100% - 20px);
+  margin: 0 10px 10px;
+  border-collapse: collapse;
+  background: rgba(0,0,0,.25);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.forecastTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+  font-size: 0.85rem;
+}
+
+.tds {
+  padding: 6px 4px;
+  text-align: center;
+  color: #fff;
+}
+
+.tds.desc {
+  text-align: left;
+  font-size: 0.75rem;
+  opacity: 0.9;
+}
+
+.tds.icono img {
+  width: 28px;
+  height: 28px;
+  background-color: rgb(255, 255, 255, 0.1);
+}
+
+.pronosticoTitle {
+  padding: 6px;
+  text-align: center;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-size: 0.9rem;
+}
+
+.pronosticoFecha td {
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.alertasHeader{
+  display:flex;
+  justify-content: space-between;
+  align-items:center;
+  margin: 10px 14px 6px;
+  color:#fff;
+  font-weight: 800;
+  letter-spacing: .3px;
+}
+
+.alertaSin{
+  margin: 0 14px 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(0,0,0,.25);
+  color:#fff;
+  opacity: .9;
+}
+
+.alertaBox{
+  margin: 8px 14px;
+  padding: 12px 12px;
+  border-radius: 12px;
+  background: rgba(0,0,0,.30);
+  border: 1px solid rgba(255,255,255,.12);
+  color:#fff;
+}
+
+.alertaHeaderRow{
+  display:flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.badge{
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.15);
+}
+
+.divider{
+  height: 1px;
+  margin: 10px 14px;
+  background: rgba(168,240,255,.45);
+}
+
+.topSticky{
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  padding: 8px 10px;
+  background: rgba(0,0,0,.35);
+  backdrop-filter: blur(6px);
+}
+
+.alertaBox {
+  border-radius: 10px;
+  padding: 10px;
+  margin-bottom: 8px;
+  background: rgba(255,255,255,0.08);
+}
+
+.nivel-3 { border-left: 5px solid #f4c430; }
+.nivel-4 { border-left: 5px solid #ff8c00; }
+.nivel-5 { border-left: 5px solid #ff3b3b; }
+
+.alertaHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.forecastTable.full {
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.contenido::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  z-index: 0;
+}
+
+.no-aplicar {
+  background: rgba(255, 80, 80, 0.15);
+  border-left: 4px solid #ff4d4d;
+  max-width: calc(calc(3.9 / var(--ion-grid-columns, 9)) * 100%) !important;
+  flex: 0 0 calc(calc(3.9 / var(--ion-grid-columns, 9)) * 100%) !important;
+}
+
+.aplicar {
+  background: rgba(60, 200, 120, 0.15);
+  border-left: 4px solid #3cc878;
+  max-width: calc(calc(3.9 / var(--ion-grid-columns, 9)) * 100%) !important;
+  flex: 0 0 calc(calc(3.9 / var(--ion-grid-columns, 9)) * 100%) !important;
+}
+
+.aplicar-texto {
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.aplicar-motivos {
+  margin-top: 2px;
+  font-size: 0.75rem;
+  opacity: 0.85;
+}
+
+.aplicar-col {
+  padding: 0 !important;     // <-- clave: elimina el padding del ion-col
+}
+
+.aplicar-box {
+  width: 100%;
+  height: 100%;
+  padding: 8px 10px;         // padding interno (ya no depende del col)
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+ion-row.fila {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
 }

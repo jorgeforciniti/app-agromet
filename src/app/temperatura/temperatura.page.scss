@@ -1,138 +1,187 @@
 @font-face {
-    font-family: helveticaNR;
-    src: url('../../assets/fonts/helvetica-neue-lt-std-55-roman.otf');
-    }
+  font-family: helveticaNR;
+  src: url('../../assets/fonts/helvetica-neue-lt-std-55-roman.otf');
+}
 @font-face {
-    font-family: helveticaNBC;
-    src: url('../../assets/fonts/HelveticaNeueLTStd-BdCn.otf');
-        }
-
-.contenido{
-    --padding-top: 10px;
-    --padding-start: 10px;
-    --padding-end: 10px
-}
-        
-.estacion1{
-    color: lightgray;
-    font-size: 16px;
-    font-family: helveticaNBC;
-    text-align: right;
-    padding-top: 15px;
-    padding-right: 5px;
-    text-transform: uppercase;
+  font-family: helveticaNBC;
+  src: url('../../assets/fonts/HelveticaNeueLTStd-BdCn.otf');
 }
 
-.estacion2{
-    padding-top: 15px;
-}
-.diasemana{
-    color: lightgray;
-    letter-spacing: 2px;
-    font-size: 18px;
-    font-family: helveticaNR;
-    text-align: left;
-    padding-top: 5px;
-    padding-right: 10px;
-    text-transform: uppercase;
+:host {
+  --accent: rgb(128, 227, 211);
+  --text: #d7d7d7;
+  --muted: rgba(215, 215, 215, 0.7);
+  --card: rgba(0, 0, 0, 0.35);
+  --border: rgba(128, 227, 211, 0.35);
 }
 
-.tem{
-    color: rgb( 128, 227, 211);
-    letter-spacing: 1px;
-    text-align: left;
-    padding-top: 3px;
-    padding-right: 10px;
-    font-family: helveticaNR ;
-    font-size: 52px;
+.contenido {
+  --padding-top: 10px;
+  --padding-start: 12px;
+  --padding-end: 12px;
 }
 
-.fecha{
-    color: lightgray;
-    letter-spacing: 0px;
-    font-size: 14px;
-    font-family: helveticaNR;
-    text-align: left;
-    padding-top: 5px;
-    padding-right: 10px;
-    text-transform: uppercase;
+.topbar {
+  --background: rgba(0, 0, 0, 0.35);
+  --border-color: transparent;
+  backdrop-filter: blur(10px);
 }
 
-.fila{
-    display: flex;
-    align-items: center;
-    color: lightgray;
-    padding: 0px;
-    margin: 0px;
-}
-        
-        
-hr {
-    background-color: rgb( 128, 227, 211) !important;
-    height: 2px;
-    display: block !important;
-    font-size: 2em !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-    margin: 0px !important;
-  }
-
-  .cuerpo{
-    display: flex;
-    align-items: center;
-    color: lightgray;
-    font-family: helveticaNR ;
-    font-size: 16px;
-    text-transform: uppercase;
-    justify-content: left;
-    padding-left: 5px;
+.title {
+  font-family: helveticaNBC;
+  letter-spacing: 1px;
+  color: var(--text);
 }
 
-span{
-    color: rgb( 128, 227, 211) !important;
-    font-family: helveticaNBC ;
-    font-size: 16px;
-    padding: 15px;
-    margin: 0px;
+.stationName {
+  font-family: helveticaNBC;
+  color: var(--accent);
+  font-size: 0.85rem;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
 }
 
-#fechayhora{
-    color: lightgray;
-    letter-spacing: 0px;
-    line-height: 30px;
-    font-size: 26px;
-    font-family: helveticaNR;
-    text-align: center;
-    padding-top: 15px;
-    padding-right: 5px;
-    text-transform: uppercase;
+/* RESUMEN */
+.summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding: 12px;
+  margin-top: 8px;
+  border-radius: 14px;
+  background: var(--card);
+  border: 1px solid var(--border);
 }
 
-ion-label{
-    font-family: helveticaNBC !important;
-    font-size: 15px;
-    color: rgb( 128, 227, 211) !important;
-    background-color: transparent;
-    padding: 0px 0px 0px 5px;
-    margin: 0px;
+.summary-left .dow {
+  color: var(--text);
+  font-family: helveticaNR;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  font-size: 0.95rem;
 }
 
-ion-radio{
-    --color: rgb( 128, 227, 211) !important;
-    --color-checked: rgb( 128, 227, 211) !important;
-    padding: 0px;
-    margin: 0px;
-    background-color: transparent !important;
+.summary-left .temp {
+  color: var(--accent);
+  font-family: helveticaNR;
+  font-size: 3.2rem;
+  line-height: 1.0;
+  margin-top: 4px;
 }
 
-ion-list{
-    padding: 0px;
-    margin: 0px;
-    background-color: transparent !important;
+.summary-left .date {
+  color: var(--muted);
+  font-family: helveticaNR;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  margin-top: 6px;
 }
 
-.mapa{
-    display: flex; 
-    align-items: center; 
-    height: 42px;
+.summary-right {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.minmaxText {
+  color: var(--accent);
+  font-family: helveticaNBC;
+  font-size: 0.95rem;
+}
+
+.actions {
+  display: grid;
+  gap: 8px;
+}
+
+.actionBtn {
+  --border-color: var(--border);
+  --color: var(--accent);
+  font-family: helveticaNBC;
+}
+
+/* SEGMENT */
+.seg {
+  margin-top: 12px;
+  --background: rgba(0, 0, 0, 0.22);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+}
+
+ion-segment-button {
+  --color: var(--muted);
+  --color-checked: var(--accent);
+  font-family: helveticaNBC;
+}
+
+/* CARD GRÁFICO */
+.card {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 14px;
+  background: var(--card);
+  border: 1px solid var(--border);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.cardTitle {
+  color: var(--text);
+  font-family: helveticaNBC;
+  letter-spacing: 0.5px;
+}
+
+.cardHint {
+  color: var(--muted);
+  font-family: helveticaNR;
+  font-size: 0.8rem;
+}
+
+.chartWrap {
+  height: 320px; /* clave: en móvil si no fijás altura, se “aprieta” */
+  width: 100%;
+}
+
+/* LOADING */
+.loadingBox {
+  height: 320px;
+  display: grid;
+  place-items: center;
+  gap: 8px;
+}
+
+.loadingText {
+  color: var(--muted);
+  font-family: helveticaNR;
+}
+
+/* HORA */
+#fechayhora {
+  color: var(--text);
+  font-family: helveticaNR;
+  text-align: center;
+  margin: 14px 0 10px 0;
+  text-transform: uppercase;
+}
+
+#fechayhora span {
+  color: var(--accent);
+  font-family: helveticaNBC;
+  font-size: 1.3rem;
+}
+
+ion-content.contenido.grad::part(scroll) {
+  background:
+    radial-gradient(1200px 700px at 30% 10%, rgba(0,255,240,.12), transparent 60%),
+    linear-gradient(180deg, #071a24 0%, #061018 100%);
+}
+
+ion-content.contenido.grad::part(background) {
+  background: rgba(0, 0, 0, 0.12);
 }

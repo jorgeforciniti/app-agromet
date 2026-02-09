@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { EstacionesService } from 'src/app/services/estaciones.service';
-import { Router } from '@angular/router';
+import { NavController } from '@ionic/angular';
 
 @Component({
   selector: 'app-localidades',
@@ -8,30 +8,34 @@ import { Router } from '@angular/router';
   styleUrls: ['./localidades.page.scss'],
 })
 export class LocalidadesPage implements OnInit {
-
   mensajes: any[] = [];
 
-  constructor(private estacionesService: EstacionesService, private router: Router) { }
+  constructor(
+    private estacionesService: EstacionesService,
+    private navCtrl: NavController
+  ) {}
 
   ngOnInit() {
     this.mensajes = JSON.parse(localStorage.getItem('estaciones') || '[]');
   }
 
-  onClick(check: any) {
-    const estacionId =
-      check?.Identificacion ?? check?.identificacion ?? check?.ID ?? check?.id;
+  onClick(estacion: any) {
+    const id = estacion?.Identificacion ?? estacion?.identificacion ?? estacion?.id;
+    if (!id) return;
 
-    if (estacionId == null) {
-      console.log('[LOCALIDADES] estación sin Identificacion:', check);
-      return;
-    }
+    // 1) set estación + emitir cambio
+    this.estacionesService.setSelectedStation(id);
 
-    this.estacionesService.setSelectedStation(estacionId);
+    // 2) limpiar cache de datos para evitar “mostrar lo viejo”
+    localStorage.removeItem('datos');
+
+    // 3) flags como ya hacías
     localStorage.setItem('temperatura', '1');
     localStorage.setItem('home', '1');
     localStorage.setItem('lluvia', '1');
     localStorage.setItem('helada', '1');
 
-    this.router.navigateByUrl('/tabs/home');
+    // 4) volver al tab home (1 sola navegación)
+    this.navCtrl.navigateBack('/tabs/home');
   }
 }

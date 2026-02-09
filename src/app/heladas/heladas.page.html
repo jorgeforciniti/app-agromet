@@ -1,163 +1,204 @@
-<ion-content [fullscreen]="true" class="contenido" style="--background: url({{imagen}})">
-    <app-header titulo="Heladas"></app-header>
-  
-    <!-- Estacion -->
-    <ion-row class="fila">
-        <ion-col size="2.5">
-            <hr>
-        </ion-col>
-  
-        <ion-col size="8.5" class="estacion1">
-            {{ this.dato.nombre }}
-        </ion-col>
-        <ion-col size="1" class="estacion2">
-            <img src="{{ubicacion}}">
-        </ion-col>
-    </ion-row>
-  
-    <ion-row>
-        <ion-col size="12" style="height: 10px;">
-        </ion-col>
-    </ion-row>
+<!-- heladas.page.html -->
+<ion-content [fullscreen]="true" class="contenido grad">
+  <app-header titulo="Heladas"></app-header>
 
-    <!-- día -->
-    <ion-row>
-        <ion-col size="7" class="diasemana">
-            {{ this.diaSemana }}
-        </ion-col>
-        <ion-col size="5" class="diasemana">
-            <hr>
-        </ion-col>
-    </ion-row>
+  <!-- Estación -->
+  <div class="stationRow">
+    <div class="stationLine"></div>
+    <div class="stationName">{{ dato?.nombre }}</div>
+    <button class="stationIconBtn" type="button">
+      <img [src]="ubicacion" alt="Ubicación" />
+    </button>
+  </div>
 
-    <!-- Heladas -->
-    <ion-row>
-        <ion-col size="6.7">
-            <ion-row>
-                <ion-col size="12" style="height: 10px;">
-                </ion-col>
-            </ion-row>
-            <ion-row>
-                <ion-col size="12" style="height: 10px;">
-                </ion-col>
-            </ion-row>
-            <ion-row>
-                <ion-col size="12" class="he1" *ngIf=" (this.tMin < 0); else texto">
-                    {{ this.tMin.toFixed(1) }} ºC
-                </ion-col>
-                <ng-template #texto>
-                    <ion-col size="12"  class="he2">
-                        No hubo heladas en esta localidad
-                    </ion-col>
-                </ng-template>
-            </ion-row>
-            <ion-row>
-                <ion-col size="12" style="height: 10px;">
-                </ion-col>
-            </ion-row>
-            <ion-row>
-                <ion-col size="12" style="height: 10px;">
-                </ion-col>
-            </ion-row>
-                    <ion-row>
-                <ion-col size="12" class="fecha">
-                    {{ this.dia }} de {{ this.nombreMes }} {{ this.anio}}
-                </ion-col>
-            </ion-row>
-        </ion-col>
-    
-        <!-- espacio -->
-        <ion-col size="0.6">
-        </ion-col>
-    
-        <ion-col size="4.7">
-            <ion-list>
-                <ion-radio-group value=0 (ionChange)="traerHeladas($event.detail.value)" id="tipo_contacto">
-                    <ion-row>
-                        <ion-col size="12" class="mapa">
-                            <img src="{{mapas}}">
-                            <span (click)="onClickHoy()" >
-                                Mapa de heladas
-                            </span>
-                        </ion-col>
-                    </ion-row>
-                    <ion-row>
-                        <ion-col size="5" class="radios">
-                            <ion-label>Hoy</ion-label>
-                        </ion-col>    
-                        <ion-col size="7" size-lg class="centrar">
-                            <ion-item color="none" lines="none" style="--min-height: 24px;">
-                                <ion-radio slot="start" value=0></ion-radio>
-                            </ion-item>
-                        </ion-col>
-                    </ion-row>
-                    <ion-row>
-                        <ion-col size="5" class="radios">
-                            <ion-label>Mes</ion-label>
-                        </ion-col>    
-                        <ion-col size="7" size-lg class="centrar">
-                            <ion-item color="none" lines="none" style="--min-height: 24px;">
-                                <ion-radio slot="start" value=1></ion-radio>
-                            </ion-item>
-                        </ion-col>
-                    </ion-row>
-                    <ion-row>
-                        <ion-col size="5" class="radios">
-                            <ion-label>Año</ion-label>
-                        </ion-col>    
-                        <ion-col size="7" size-lg class="centrar">
-                            <ion-item color="none" lines="none" style="--min-height: 24px;">
-                                <ion-radio slot="start" value=2></ion-radio>
-                            </ion-item>
-                        </ion-col>
-                    </ion-row>
-                </ion-radio-group>
-            </ion-list>                        
-        </ion-col>
-    </ion-row>
+  <!-- Resumen principal -->
+  <section class="summaryCard">
+    <div class="summaryTop">
+      <div class="summaryLeft">
+        <div class="period">{{ tituloPeriodo }}</div>
 
-    <ion-grid>  
-            <table id="bordes" class="tabla" cellspacing="10" cellpadding="0" *ngIf="this.tMinMin <= 0">
-                <tr>
-                    <th style='width: 30%;'>Nombre</th>
-                    <th style='width: 7%;'>ºC</th>
-                    <th style='width: 10%;'>hs<br>máx.</th>
-                    <th style='width: 10%;'>hs<br>Total</th>
-                    <th style='width: 8%;'>Días</th>
-                    <th style='width: 7%;'>Reg.</th>
-                </tr>
-                <tr *ngFor="let item of mensajes">
-                    <td *ngIf="item.fph != null" class="letras"
-                        [style.background]=" item.temperatura <= -6  ? 'red' : item.temperatura <= -4 ? 'rgb(255, 153, 0)' : item.temperatura <= -2 ? 'rgb(255, 204, 153)' :  'rgb(255, 255, 153)'"
-                        [style.color]="item.temperatura <= -4 ? 'white' : 'black'">
-                            {{item.nombre}}
-                    </td>
-                    <td *ngIf="item.fph != null" class="numeros"
-                        [style.background]=" item.temperatura <= -6  ? 'red' : item.temperatura <= -4 ? 'rgb(255, 153, 0)' : item.temperatura <= -2 ? 'rgb(255, 204, 153)' :  'rgb(255, 255, 153)'"
-                        [style.color]="item.temperatura <= -4 ? 'white' : 'black'">
-                            {{item.temperatura.toFixed(1)}}
-                    </td>
-                    <td *ngIf="item.fph != null" class="numeros"
-                        [style.background]=" item.temperatura <= -6  ? 'red' : item.temperatura <= -4 ? 'rgb(255, 153, 0)' : item.temperatura <= -2 ? 'rgb(255, 204, 153)' :  'rgb(255, 255, 153)'"
-                        [style.color]="item.temperatura <= -4 ? 'white' : 'black'">
-                            {{item.duracion}}</td>
-                    <td *ngIf="item.fph != null" class="numeros"
-                        [style.background]=" item.temperatura <= -6  ? 'red' : item.temperatura <= -4 ? 'rgb(255, 153, 0)' : item.temperatura <= -2 ? 'rgb(255, 204, 153)' :  'rgb(255, 255, 153)'"
-                        [style.color]="item.temperatura <= -4 ? 'white' : 'black'">
-                            {{item.duracion_t}}</td>
-                    <td *ngIf="item.fph != null" class="numeros"
-                        [style.background]=" item.temperatura <= -6  ? 'red' : item.temperatura <= -4 ? 'rgb(255, 153, 0)' : item.temperatura <= -2 ? 'rgb(255, 204, 153)' :  'rgb(255, 255, 153)'"
-                        [style.color]="item.temperatura <= -4 ? 'white' : 'black'">
-                            {{item.dias}}</td>
-                    <td *ngIf="item.fph != null" class="numeros"
-                        [style.background]=" item.temperatura <= -6  ? 'red' : item.temperatura <= -4 ? 'rgb(255, 153, 0)' : item.temperatura <= -2 ? 'rgb(255, 204, 153)' :  'rgb(255, 255, 153)'"
-                        [style.color]="item.temperatura <= -4 ? 'white' : 'black'">
-                            {{item.registros}}
-                    </td>
-                </tr>
-            </table>
-        </ion-grid>
- <div id="fechayhora">
-    {{ this.hora }} hs
-</div>
+        <div class="bigTemp" *ngIf="tMin !== null; else sinDato">
+          {{ fmtTemp(tMin) }} <span class="deg">°C</span>
+        </div>
+
+        <ng-template #sinDato>
+          <div class="bigTemp muted">S/D</div>
+        </ng-template>
+
+        <div class="status">
+          {{ estadoPrincipal }}
+        </div>
+
+        <div class="dateLine" *ngIf="modo !== 'anio'">
+          {{ dia }} de {{ nombreMes }} {{ anio }}
+        </div>
+
+        <div class="dateLine" *ngIf="modo === 'anio'">
+          Comparación anual ({{ anioActual }} / {{ anioPrev }})
+        </div>
+      </div>
+
+      <div class="summaryRight">
+        <div class="metricGrid">
+          <div class="metric">
+            <div class="k">FPH</div>
+            <div class="v">{{ fmtDate(fphSel) }}</div>
+          </div>
+          <div class="metric">
+            <div class="k">FUH</div>
+            <div class="v">{{ fmtDate(fuhSel) }}</div>
+          </div>
+          <div class="metric">
+            <div class="k">Hs máx.</div>
+            <div class="v">{{ fmtNum(durMaxSel) }}</div>
+          </div>
+          <div class="metric">
+            <div class="k">Hs tot.</div>
+            <div class="v">{{ fmtNum(durTotalSel) }}</div>
+          </div>
+          <div class="metric">
+            <div class="k">Días c/hel</div>
+            <div class="v">{{ fmtNum(diasSel) }}</div>
+          </div>
+          <div class="metric">
+            <div class="k">Reg.</div>
+            <div class="v">{{ fmtNum(registrosSel) }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Acción: Mapa -->
+    <button class="mapBtn" type="button" (click)="onClickHoy()">
+      <img [src]="mapas" alt="Mapa" />
+      <span>Mapa de heladas</span>
+    </button>
+
+    <!-- Selector de modo -->
+    <div class="modeCard">
+      <ion-segment class="seg" [value]="modo" (ionChange)="onModoChange($event.detail.value)">
+        <ion-segment-button value="dia">
+          <ion-label>HOY</ion-label>
+        </ion-segment-button>
+        <ion-segment-button value="mes">
+          <ion-label>MES</ion-label>
+        </ion-segment-button>
+        <ion-segment-button value="anio">
+          <ion-label>AÑO</ion-label>
+        </ion-segment-button>
+      </ion-segment>
+
+      <!-- Leyenda -->
+      <div class="legend">
+        <span class="chip reddark">≤ -6</span>
+        <span class="chip red">-5.9 a -4</span>
+        <span class="chip orange">-3.9 a -2</span>
+        <span class="chip warn">-1.9 a 0</span>
+        <span class="chip nt">Sin helada</span>
+      </div>
+
+      <div class="legend" *ngIf="modo === 'anio'">
+        <span class="legendHint">Temperatura mínima y métricas por estación</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Tabla / Lista -->
+  <section class="tableCard" *ngIf="hayFilas; else sinFilas">
+    <div class="tableTitle">
+      <div class="tt">
+        {{ modo === 'anio' ? ('Comparación anual (' + anioActual + ' / ' + anioPrev + ')') : 'Heladas registradas' }}
+      </div>
+      <div class="thint" *ngIf="modo === 'anio'">
+        En “Días c/hel” y “Reg.” se muestra {{ anioActual }}/{{ anioPrev }}
+      </div>
+    </div>
+
+    <!-- Header -->
+    <div class="gridHeader" [class.anio]="modo === 'anio'">
+      <div class="c name">NOMBRE</div>
+
+      <ng-container *ngIf="modo === 'anio'; else headerDiaMes">
+        <div class="c y">{{ anioActual }}</div>
+        <div class="c y">{{ anioPrev }}</div>
+        <div class="c dr">DÍAS c/hel</div>
+        <div class="c dr">REG.</div>
+      </ng-container>
+
+      <ng-template #headerDiaMes>
+        <div class="c y">°C</div>
+        <div class="c hs">HS MÁX.</div>
+        <div class="c hs">HS TOT.</div>
+        <div class="c dr">DÍAS c/hel</div>
+        <div class="c dr">REG.</div>
+      </ng-template>
+    </div>
+
+    <!-- Rows -->
+    <div class="gridRow" *ngFor="let item of rowsVisibles" [class.anio]="modo === 'anio'">
+      <!-- Nombre -->
+      <div class="cell name">
+        {{ item?.nombre }}
+      </div>
+
+      <!-- AÑO -->
+      <ng-container *ngIf="modo === 'anio'; else rowDiaMes">
+        <!-- Año actual -->
+        <div class="cell badge"
+             [ngClass]="nivelPorTemp(item?.cur?.temperatura)">
+          <div class="val">{{ fmtTemp(item?.cur?.temperatura) }}</div>
+        </div>
+
+        <!-- Año previo -->
+        <div class="cell badge"
+             [ngClass]="nivelPorTemp(item?.prev?.temperatura)">
+          <div class="val">{{ fmtTemp(item?.prev?.temperatura) }}</div>
+        </div>
+
+        <!-- DÍAS (act/prev) -->
+        <div class="cell duo">
+          <div class="top">{{ fmtNum(item?.cur?.dias) }}</div>
+          <div class="bot">{{ fmtNum(item?.prev?.dias) }}</div>
+        </div>
+
+        <!-- REG (act/prev) -->
+        <div class="cell duo">
+          <div class="top">{{ fmtNum(item?.cur?.registros) }}</div>
+          <div class="bot">{{ fmtNum(item?.prev?.registros) }}</div>
+        </div>
+      </ng-container>
+
+      <!-- DÍA / MES -->
+      <ng-template #rowDiaMes>
+        <div class="cell badge" [ngClass]="nivelPorTemp(item?.temperatura)">
+          <div class="val">{{ fmtTemp(item?.temperatura) }}</div>
+        </div>
+        <div class="cell num">{{ fmtNum(item?.duracion) }}</div>
+        <div class="cell num">{{ fmtNum(item?.duracion_t) }}</div>
+        <div class="cell num">{{ fmtNum(item?.dias) }}</div>
+        <div class="cell num">{{ fmtNum(item?.registros) }}</div>
+      </ng-template>
+    </div>
+
+    <!-- Ver más / menos -->
+    <div class="moreRow" *ngIf="(modo === 'anio' ? rowsAnio?.length : rowsDiaMes?.length) > 12">
+      <ion-button fill="clear" size="small" class="moreBtn" (click)="showAll = !showAll">
+        {{ showAll ? 'Ver menos' : 'Ver más' }}
+      </ion-button>
+    </div>
+  </section>
+
+  <ng-template #sinFilas>
+    <section class="emptyCard">
+      <div class="emptyTitle">Sin heladas registradas</div>
+      <div class="emptyText">
+        Para el período seleccionado no hay estaciones con FPH (heladas) disponibles.
+      </div>
+    </section>
+  </ng-template>
+
+  <!-- Hora -->
+  <div id="fechayhora">
+    {{ hora }} <span>HS</span>
+  </div>
 </ion-content>

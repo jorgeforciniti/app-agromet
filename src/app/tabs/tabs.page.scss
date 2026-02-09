@@ -1,16 +1,15 @@
 ion-tab-bar.tab-bar {
-    --background: rgba(100,100,100,0.1);
+    --background: rgba(100, 100, 100, 0.1);
     font-family: Helvetica;
-    --color: rgb( 00, 246, 237)
-
+    --color: powderblue;
 }
 
-ion-tab-button{
+ion-tab-button {
     --padding-start: 0px;
     --padding-end: 0px;
 }
 
-.tab-completo{
+.tab-completo {
     width: 100%;
     height: 100%;
     background: rgb(0, 0, 0, 1);
@@ -22,9 +21,23 @@ ion-tab-button {
 }
 
 ion-img {
-  width: auto !important;
-  height: auto !important;
-  background-repeat: no-repeat;
-  background-size: cover;
-  background-position: center;
+    width: auto !important;
+    height: auto !important;
+    color: powderblue !important;
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: center;
+}
+
+ion-tab-button.tab-selected {
+    color: dodgerblue;
+    font-weight: 600;
+}
+
+ion-tab-bar {
+    color: dodgerblue;
+}
+
+ion-tab-button {
+    color: var(--color);
 }

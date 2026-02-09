@@ -1,148 +1,99 @@
-<ion-content [fullscreen]="true" class="contenido" style="--background: url({{imagen}})">
-  <app-header titulo="LLUVIAS"></app-header>
+<ion-content [fullscreen]="true" class="contenido grad">
+  <ion-header class="topbar ion-no-border">
+    <ion-toolbar class="topbar">
+      <ion-title class="title">LLUVIAS</ion-title>
+    </ion-toolbar>
+  </ion-header>
 
-  <!-- Estacion -->
-  <ion-row class="fila">
+  <div class="stationName">
+    {{ dato?.nombre }}
+  </div>
 
-      <ion-col size="2.5">
-          <hr>
-      </ion-col>
+  <!-- RESUMEN -->
+  <div class="summary">
+    <div class="summary-left">
+      <div class="dow">{{ diaSemana }}</div>
 
-      <ion-col size="8.5" class="estacion1">
-          {{ this.dato.nombre }}
-      </ion-col>
-      <ion-col size="1" class="estacion2">
-          <img src="{{ubicacion}}">
-      </ion-col>
-  </ion-row>
+      <div class="rrBig">
+        <span class="rrValue" *ngIf="dato?.RR_dia != null && dato?.RR_dia < 400; else rrSD">
+          {{ dato?.RR_dia >= 50 ? (dato?.RR_dia | number:'1.0-0') : (dato?.RR_dia | number:'1.1-1') }}
+        </span>
+        <ng-template #rrSD>
+          <span class="rrValue">S/D</span>
+        </ng-template>
 
-  <ion-row>
-      <ion-col size="12" style="height: 10px;">
-      </ion-col>
-  </ion-row>  
-  <!-- día -->
-  <ion-row>
-      <ion-col size="7" class="diasemana">
-          {{ this.diaSemana }}
-      </ion-col>
-      <ion-col size="5" class="diasemana">
-          <hr>
-      </ion-col>
-    </ion-row>
-
-        <!-- Lluvia -->
-        <ion-row>
-          <ion-col size="6.7" class="tem">
-              <ion-row style="display: flex; align-items: baseline;">
-                <ion-col size="9" class="rr" *ngIf=" (this.dato.RR_dia > 50); else texto">
-                  {{ this.dato.RR_dia.toFixed(0) }}
-                </ion-col>
-                <ng-template #texto>
-
-                  <ion-col size="9" class="rr" *ngIf=" (this.dato.RR_dia > 400); else texto1">
-                    S/D
-                  </ion-col>
-                  <ng-template #texto1>
-                    <ion-col size="9" class="rr">
-                       {{ this.dato.RR_dia.toFixed(1) }}
-                    </ion-col>
-                  </ng-template>
-                </ng-template>
-                
-                <ion-col size="3" class="rr1">
-                  mm
-                </ion-col>
-              </ion-row>
-              <ion-row>
-                  <ion-col size="12" class="fecha">
-                      {{ this.dia }} de {{ this.nombreMes }} {{ this.anio}}
-                  </ion-col>
-              </ion-row>
-          </ion-col>
-  
-          <!-- espacio -->
-          <ion-col size="0.6">
-          </ion-col>
-  
-          <ion-col size="4.7">
-            <ion-row>
-              <ion-col size="4" class="cuerpo">
-                Hoy
-              </ion-col>
-              <ion-col size="8" class="cuerpo">
-                {{ this.dato.RR_dia.toFixed(1) }} mm <br>
-              </ion-col>
-            </ion-row>
-            <ion-row>
-              <ion-col size="4" class="cuerpo">
-                Ayer
-              </ion-col>
-              <ion-col size="8" class="cuerpo">
-               {{ this.rrAyer.toFixed(1) }} mm <br>
-              </ion-col>
-            </ion-row>
-            <ion-row>
-              <ion-col size="4" class="cuerpo">
-                Mes
-              </ion-col>
-              <ion-col size="8" class="cuerpo">
-                {{ this.dato.rr_mes.toFixed(1) }} mm <br>
-              </ion-col>
-            </ion-row>
-            <ion-row>
-              <ion-col size="12" class="mapa">
-                <img src="{{mapas}}">
-                  <span (click)="onClickAhora()" >
-                    Mapa últimas 24 horas
-                  </span>
-              </ion-col>
-            </ion-row>
-          </ion-col>
-        </ion-row>
-  
- 
-      <!-- -->
-       <ion-grid style="--padding: 0px; --margin: 0px;">  
-          <div class="flex">
-            <div class="flex-item">
-                <ion-list>
-                  <ion-radio-group value=1 (ionChange)="traerRR($event.detail.value)">
-                      <ion-row>
-                          <ion-col size="4" size-lg class="centrar">
-                              <ion-item color="none" lines="none">
-                                  <ion-label>Hoy</ion-label>
-                                  <ion-radio slot="start" value=1></ion-radio>
-                              </ion-item>
-                          </ion-col>
-                          <ion-col size="4" size-lg class="centrar">
-                              <ion-item color="none" lines="none">
-                                  <ion-label>30 días</ion-label>
-                                  <ion-radio slot="start" value=2></ion-radio>
-                              </ion-item>
-                          </ion-col>
-                          <ion-col size="4" size-lg class="centrar">
-                              <ion-item color="none" lines="none">
-                                  <ion-label>Año</ion-label>
-                                  <ion-radio slot="start" value=3></ion-radio>
-                              </ion-item>
-                          </ion-col>
-                        </ion-row>
-                  </ion-radio-group>
-              </ion-list>
-              </div>
-            </div>
-            <div style="display: block; background: rgba(255,255,255,0.5);">
-              <canvas baseChart width="400" height="300"
-            [datasets]="barChartData"
-            [labels]="barChartLabels"
-            [options]="barChartOptions"
-            [legend]="barChartLegend"
-            [colors]="barChartColors"
-            [chartType]="barChartType">
-          </canvas>
+        <span class="rrUnit">mm</span>
       </div>
-          </ion-grid>
-          <div id="fechayhora">
-            {{ this.hora }} hs
+
+      <div class="date">{{ dia }} de {{ nombreMes }} {{ anio }}</div>
+    </div>
+
+    <div class="summary-right">
+      <div class="miniGrid">
+        <div class="miniRow">
+          <span class="miniKey">Hoy</span>
+          <span class="miniVal">{{ dato?.RR_dia != null ? (dato?.RR_dia | number:'1.1-1') : 'S/D' }} mm</span>
         </div>
+        <div class="miniRow">
+          <span class="miniKey">Ayer</span>
+          <span class="miniVal">{{ rrAyer != null ? (rrAyer | number:'1.1-1') : 'S/D' }} mm</span>
+        </div>
+        <div class="miniRow">
+          <span class="miniKey">Mes</span>
+          <span class="miniVal">{{ dato?.rr_mes != null ? (dato?.rr_mes | number:'1.1-1') : 'S/D' }} mm</span>
+        </div>
+      </div>
+
+      <ion-button class="actionBtn" fill="outline" size="small" (click)="onClickAhora()">
+        <ion-icon name="map-outline" slot="start"></ion-icon>
+        Mapa últimas 24 horas
+      </ion-button>
+    </div>
+  </div>
+
+  <!-- SELECTOR -->
+  <ion-segment class="seg" [value]="selectedRange" (ionChange)="onRangeChange($event)">
+    <ion-segment-button value="1">
+      <ion-label>Hoy</ion-label>
+    </ion-segment-button>
+    <ion-segment-button value="2">
+      <ion-label>30 días</ion-label>
+    </ion-segment-button>
+    <ion-segment-button value="3">
+      <ion-label>Año</ion-label>
+    </ion-segment-button>
+  </ion-segment>
+
+  <!-- CARD GRÁFICO -->
+  <div class="card">
+    <div class="cardHeader">
+      <div class="cardTitle">
+        {{ selectedRange === '1' ? 'Lluvia por intervalo (hoy)' : (selectedRange === '2' ? 'Lluvia diaria (últimos 30 días)' : 'Lluvia mensual (año)') }}
+      </div>
+      <div class="cardHint">mm</div>
+    </div>
+
+    <div class="chartWrap" *ngIf="!isLoading; else loadingTpl">
+      <canvas
+        baseChart
+        [datasets]="barChartData"
+        [labels]="barChartLabels"
+        [options]="barChartOptions"
+        [legend]="barChartLegend"
+        [colors]="barChartColors"
+        [chartType]="barChartType">
+      </canvas>
+    </div>
+
+    <ng-template #loadingTpl>
+      <div class="loadingBox">
+        <ion-spinner name="bubbles"></ion-spinner>
+        <div class="loadingText">Cargando datos...</div>
+      </div>
+    </ng-template>
+  </div>
+
+  <div id="fechayhora">
+    <span>{{ hora }} hs</span>
+  </div>
 </ion-content>

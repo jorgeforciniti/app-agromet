@@ -1,127 +1,88 @@
-<ion-content [fullscreen]="true" class="contenido" style="--background: url({{imagen}})">
-    <app-header titulo="Temperaturas"></app-header>
+<ion-header translucent="true">
+  <ion-toolbar class="topbar">
+    <ion-title class="title">TEMPERATURAS</ion-title>
 
-    <!-- Estacion -->
-    <ion-row class="fila">
-        <ion-col size="2.5">
-            <hr>
-        </ion-col>
-        <ion-col size="8.5" class="estacion1">
-            {{ this.dato.nombre }}
-        </ion-col>
-        <ion-col size="1" class="estacion2">
-            <img src="{{ubicacion}}">
-        </ion-col>
-    </ion-row>
+    <ion-buttons slot="end">
+      <ion-button fill="clear" (click)="goLocalidades()">
+        <ion-icon name="location-outline" slot="start"></ion-icon>
+        <span class="stationName">{{ estacionNombre || 'Localidad' }}</span>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
 
-    <ion-row>
-        <ion-col size="12" style="height: 10px;">
-        </ion-col>
-    </ion-row>  
-    <!-- día -->
-    <ion-row>
-        <ion-col size="6" class="diasemana">
-            {{ this.diaSemana }}
-        </ion-col>
-        <ion-col size="6" class="diasemana">
-            <hr>
-        </ion-col>
-    </ion-row>
-        
-    <!-- Temperatura -->
-    <ion-row>
-        <ion-col size="6" class="tem">
-            <ion-row>
-                <ion-col size="12" class="tem" *ngIf=" (this.dato.temp_af <70); else noTemp">
-                    {{ this.dato.temp_af.toFixed(1) }}º
-                </ion-col>
-                <ng-template #noTemp>
-                    <ion-col  size="12" class="tem">
-                        S/D
-                    </ion-col>
-                </ng-template>
-            </ion-row>
+<ion-content [fullscreen]="true" class="contenido grad">
+    
+    <!-- RESUMEN -->
+  <div class="summary">
+    <div class="summary-left">
+      <div class="dow">{{ diaSemana }}</div>
+      <div class="temp">{{ tActualTexto }}</div>
+      <div class="date">{{ fechaTexto }}</div>
+    </div>
 
+    <div class="summary-right">
+      <div class="minmax">
+        <span class="minmaxText">{{ tMinTexto }} / {{ tMaxTexto }}</span>
+      </div>
 
-            <ion-row>
-                <ion-col size="12" class="fecha">
-                    {{ this.dia }} de {{ this.nombreMes }} {{ this.anio}}
-                </ion-col>
-            </ion-row>
-        </ion-col>
+      <div class="actions">
+        <ion-button class="actionBtn" size="small" fill="outline" (click)="openMapaAhora()">
+          <ion-icon name="map-outline" slot="start"></ion-icon>
+          Mapa ahora
+        </ion-button>
 
-        <!-- espacio -->
-        <ion-col size="0.5">
-        </ion-col>
+        <ion-button class="actionBtn" size="small" fill="outline" (click)="openMapaHoy()">
+          <ion-icon name="map-outline" slot="start"></ion-icon>
+          Mapa hoy
+        </ion-button>
+      </div>
+    </div>
+  </div>
 
-        <ion-col size="5.5">
-            <ion-row>
-                <ion-col size="12" class="cuerpo">
-                    {{ this.tMin.toFixed(1) }}ºC / {{ this.tMax.toFixed(1) }}ºC
-                </ion-col>
-            </ion-row>
-            <ion-row>
-                <ion-col size="12" class="mapa">
-                    <img src="{{mapas}}">
-                    <span (click)="onClickAhora()" >
-                        Mapa ahora
-                    </span>
-                </ion-col>
-            </ion-row>
-            <ion-row>
-                <ion-col size="12" class="mapa">
-                    <img src="{{mapas}}">
-                    <span (click)="onClickHoy()" >
-                        Mapa hoy
-                    </span>
-                </ion-col>
-            </ion-row>
-        </ion-col>
-    </ion-row>
+  <!-- SELECTOR DE PERÍODO -->
+  <ion-segment class="seg" [value]="range" (ionChange)="onRangeChange($event)">
+    <ion-segment-button value="day">
+      <ion-label>Hoy</ion-label>
+    </ion-segment-button>
+    <ion-segment-button value="days30">
+      <ion-label>30 días</ion-label>
+    </ion-segment-button>
+    <ion-segment-button value="year">
+      <ion-label>Año</ion-label>
+    </ion-segment-button>
+  </ion-segment>
 
-    <!-- Gráfico -->
+  <!-- GRÁFICO -->
+  <div class="card">
+    <div class="cardHeader">
+      <div class="cardTitle">{{ chartTitle }}</div>
+      <div class="cardHint">{{ chartHint }}</div>
+    </div>
 
-    <ion-grid>  
-        <div class="flex">
-            <div class="flex-item">
-                <ion-list>
-                    <ion-radio-group value=1 (ionChange)="traerTemp($event.detail.value)">
-                        <ion-row>
-                            <ion-col size="4">
-                                <ion-item color="none" lines="none">
-                                    <ion-label>Hoy</ion-label>
-                                    <ion-radio slot="start" value=1></ion-radio>
-                                </ion-item>
-                            </ion-col>
-                            <ion-col size="4">
-                                <ion-item color="none" lines="none">
-                                    <ion-label>30 días</ion-label>
-                                    <ion-radio slot="start" value=2></ion-radio>
-                                </ion-item>
-                            </ion-col>
-                            <ion-col size="4">
-                                <ion-item color="none" lines="none">
-                                    <ion-label>Año</ion-label>
-                                    <ion-radio slot="start" value=3></ion-radio>
-                                </ion-item>
-                            </ion-col>
-                          </ion-row>
-                    </ion-radio-group>
-                </ion-list>                        
-              </div>
-            </div>
-        <div style="display: block; background: rgba(255,255,255,0.6);">
-            <canvas baseChart width="400" height="300"
+    <div class="chartWrap" *ngIf="chartReady; else loadingTpl">
+      <canvas
+        baseChart
         [datasets]="lineChartData"
         [labels]="lineChartLabels"
         [options]="lineChartOptions"
         [colors]="lineChartColors"
         [legend]="lineChartLegend"
-        [chartType]="lineChartType"></canvas>
+        [chartType]="lineChartType"
+        [plugins]="lineChartPlugins">
+      </canvas>
     </div>
-  </ion-grid>
-  <div id="fechayhora">
-       {{ this.hora }} hs
+
+    <ng-template #loadingTpl>
+      <div class="loadingBox">
+        <ion-spinner name="crescent"></ion-spinner>
+        <div class="loadingText">Cargando serie…</div>
+      </div>
+    </ng-template>
   </div>
 
+  <!-- HORA -->
+  <div id="fechayhora">
+    <span>{{ horaTexto }}</span>
+  </div>
 </ion-content>

@@ -1,216 +1,291 @@
-import { Component, DoCheck } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { EstacionesService } from 'src/app/services/estaciones.service';
-import { ChartDataSets, ChartOptions } from 'chart.js';
-import { Color, Label } from 'ng2-charts';
-import { LoadingController } from '@ionic/angular';
+import { Subject, of } from 'rxjs';
+import { catchError, takeUntil, timeout } from 'rxjs/operators';
 
 @Component({
   selector: 'app-temperatura',
-  templateUrl: 'temperatura.page.html',
-  styleUrls: ['temperatura.page.scss']
+  templateUrl: './temperatura.page.html',
+  styleUrls: ['./temperatura.page.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
+export class TemperaturaPage implements OnInit, OnDestroy {
+  private destroy$ = new Subject<void>();
 
-export class TemperaturaPage implements DoCheck {
+  // UI
+  estacionNombre = '';
+  diaSemana = '';
+  fechaTexto = '';
+  horaTexto = '';
 
-  dato: any;
-  dia: string;
-  nombreMes: string;
-  anio: string;
-  hora: string;
-  diaSemana: string;
-  mensajes: any[] = [];
-  mensajes2: any[] = [];
-  mensajes3: any[] = [];
-  tMax = 0;
-  tMin = 0;
-  mesesCorto = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+  tActualTexto = 'S/D';
+  tMinTexto = 'S/D';
+  tMaxTexto = 'S/D';
 
-  // *************************************************
-  imagen: string;
-  ubicacion: string;
-  mapas: string;
+  range: 'day' | 'days30' | 'year' = 'day';
+  chartReady = false;
 
-  // *************************************************
+  chartTitle = 'Pronóstico / Observación';
+  chartHint = 'Serie';
 
-  private auxT: any[] = [];
-  private auxM: any[] = [];
-  private auxH: any[] = [];
-  public lineChartData: ChartDataSets[] = [
-    { data: [0, 0, 0, 0, 0, 0, 0], label: 'Máximas', fill: false, lineTension: 0 },
-    { data: [0, 0, 0, 0, 0, 0, 0], label: 'Mínimas', fill: false, lineTension: 0 }
-  ];
-  public lineChartLabels: Label[] = [];
+  // DATA cruda
+  private serieDia: Array<{ hora: string; temperatura: string }> = [];
+  private serie30: Array<{ fecha: string; t_max: string; t_min: string }> = [];
+  private serieMes: Array<{ mes: string; t_max: string; t_min: string }> = [];
 
-  public lineChartOptions: (ChartOptions) = {
+  // CHARTJS (ng2-charts)
+  lineChartData: any[] = [{ data: [], label: 'Temperatura' }];
+  lineChartLabels: string[] = [];
+  lineChartOptions: any = {
     responsive: true,
-    scales: {
-      xAxes: [{}],
-      yAxes: [
-        {
-          id: 'y-axis-0',
-          position: 'left',
-          scaleLabel: { display: true, labelString: 'ºC' }
-        }
-      ]
-    }
-  };
-
-  public lineChartColors: Color[] = [
-    { // red
-      backgroundColor: 'rgba(156,0,0,0.0)',
-      borderColor: 'rgba(156,0,0,0.6)',
-      pointBackgroundColor: 'rgba(156,0,0,1)',
-      pointBorderColor: 'rgba(64,0,0,0.8)',
-      pointHoverBackgroundColor: 'rgba(255,0,0,0.8)',
-      pointHoverBorderColor: 'rgba(255,0,0,0.8)'
+    maintainAspectRatio: false,
+    animation: { duration: 200 },
+    elements: {
+      point: { radius: 2, hitRadius: 10, hoverRadius: 4 },
+      line: { tension: 0.25, borderWidth: 2 },
     },
-    { // red
-      backgroundColor: 'rgba(0,0,255,0.0)',
-      borderColor: 'rgba(0,0,255,0.6)',
-      pointBackgroundColor: 'rgba(0,0,255,1)',
-      pointBorderColor: 'rgba(0,0,128,1)',
-      pointHoverBackgroundColor: '#fff',
-      pointHoverBorderColor: 'rgba(0,0,0,0.8)'
-    }
+    plugins: {
+      legend: { display: false },
+      tooltip: { enabled: true },
+    },
+    scales: {
+      x: {
+        ticks: { maxTicksLimit: 8 },
+        grid: { display: true },
+      },
+      y: {
+        ticks: { maxTicksLimit: 6 },
+        grid: { display: true },
+      },
+    },
+  };
+  lineChartColors: any[] = [
+    {
+      borderColor: 'rgba(128,227,211,1)',
+      backgroundColor: 'rgba(128,227,211,0.15)',
+      pointBackgroundColor: 'rgba(128,227,211,1)',
+      pointBorderColor: 'rgba(128,227,211,1)',
+    },
   ];
-  public lineChartLegend = false;
-  public lineChartType = 'line';
+  lineChartLegend = false;
+  lineChartType = 'line';
+  lineChartPlugins: any[] = [];
 
-  // **************************************************
+  constructor(
+    private estacionesService: EstacionesService,
+    private router: Router,
+    private cdr: ChangeDetectorRef
+  ) {}
 
-  constructor(private datosTemperaturas: EstacionesService, private router: Router, public loadingCtrl: LoadingController) {
-    this.cargarDatos();
+  ngOnInit() {
+    this.load();
+    // si tu servicio emite cambios de estación, recargamos acá
+    this.estacionesService.stationChanged$
+      ?.pipe(takeUntil(this.destroy$))
+      .subscribe(() => this.load());
   }
 
-  ngDoCheck() {
-    if (localStorage.getItem('temperatura') === '1') {
-      this.cargarDatos();
-      this.traerTemp24hs();
-      localStorage.setItem('temperatura', '0');
-      this.cargarImagen();
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  ionViewDidEnter() {
+    // por si cambian localStorage desde otra pantalla
+    this.load();
+  }
+
+  private load() {
+    const estacion = localStorage.getItem('estacion');
+    const datosRaw = localStorage.getItem('datos');
+    const datos = this.safeParse(datosRaw) || {};
+
+    this.estacionNombre = datos?.nombre || '';
+    this.setHeaderDateFromDatos(datos);
+
+    if (!estacion || estacion === '0') {
+      this.chartReady = false;
+      this.cdr.markForCheck();
+      return;
     }
-  }
 
-  cargarDatos() {
-    this.dato = JSON.parse(localStorage.getItem('datos'));
-    this.dia = this.dato.fecha_I.substr(8, 2);
-    const mes = this.dato.fecha_I.substr(5, 2);
-    this.anio = this.dato.fecha_I.substr(0, 4);
-    const dias = ['Domingo', 'Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado'];
-    const meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
-    const dt = new Date(mes + ' ' + this.dia + ', ' + this.anio);
-    this.diaSemana = dias[dt.getUTCDay()];
-    this.nombreMes = meses[parseInt(mes, 10) - 1];
+    this.chartReady = false;
+    this.cdr.markForCheck();
 
-    // tslint:disable-next-line: max-line-length
-    this.hora = this.dato.fecha_I.substr(11, 5);
-    this.dato.temp_af = Number(this.dato.temp_af);
-    console.log(this.dato.temp_af);
-  }
+    this.estacionesService.getTemperatura24(estacion)
+      .pipe(
+        timeout(15000),
+        catchError((e) => {
+          console.log('[TEMP] ERROR getTemperatura24:', e);
+          return of(null);
+        }),
+        takeUntil(this.destroy$)
+      )
+      .subscribe((res: any) => {
+        if (!Array.isArray(res) || !Array.isArray(res[0])) {
+          this.chartReady = true; // para que deje de spinear aunque venga vacío
+          this.applyEmptyChart('Sin datos');
+          this.cdr.markForCheck();
+          return;
+        }
 
-  async traerTemp24hs() {
-    const loading = await this.loadingCtrl.create({
-      spinner: 'bubbles',
-      translucent: true,
-      cssClass: 'custom-class custom-loading',
-      showBackdrop: false,
-      message: 'Espere por favor...',
-    });
-    await loading.present();
+        // Formato: [[serieDia],[serie30],[serieMes]]
+        this.serieDia = Array.isArray(res[0]) ? res[0] : [];
+        this.serie30 = Array.isArray(res[1]) ? res[1] : [];
+        this.serieMes = Array.isArray(res[2]) ? res[2] : [];
 
-    const estacion = Number(localStorage.getItem('estacion') ?? 0);
-    this.datosTemperaturas.getTemperatura24(estacion)
-      // tslint:disable-next-line: deprecation
-      .subscribe((posts: any[]) => {
-        this.mensajes = posts[0];
-        this.mensajes2 = posts[1];
-        this.mensajes3 = posts[2];
-        this.traerTemp('1');
-        loading.dismiss();
+        this.updateSummaryFromDaySeries();
+        this.buildChart(this.range);
+
+        this.chartReady = true;
+        this.cdr.markForCheck();
       });
   }
 
-  onClickAhora() {
+  onRangeChange(ev: any) {
+    const v = ev?.detail?.value;
+    this.range = (v === 'days30' || v === 'year' || v === 'day') ? v : 'day';
+    this.buildChart(this.range);
+    this.cdr.markForCheck();
+  }
+
+  private buildChart(range: 'day' | 'days30' | 'year') {
+    if (range === 'day') {
+      this.chartTitle = 'Hoy';
+      this.chartHint = 'Cada 15–60 min (según disponibilidad)';
+
+      const labels = this.serieDia.map(x => x.hora);
+      const data = this.serieDia.map(x => this.toNum(x.temperatura)).filter(v => Number.isFinite(v));
+
+      if (!labels.length || !data.length) return this.applyEmptyChart('Sin datos de hoy');
+
+      this.lineChartLabels = labels;
+      this.lineChartData = [{ data, label: 'Temperatura (°C)' }];
+      return;
+    }
+
+    if (range === 'days30') {
+      this.chartTitle = 'Últimos 30 días';
+      this.chartHint = 'Mínima y máxima diarias';
+
+      const labels = this.serie30.map(x => this.formatShortDate(x.fecha));
+      const tmin = this.serie30.map(x => this.toNum(x.t_min));
+      const tmax = this.serie30.map(x => this.toNum(x.t_max));
+
+      if (!labels.length) return this.applyEmptyChart('Sin datos 30 días');
+
+      this.lineChartLabels = labels;
+      this.lineChartData = [
+        { data: tmin, label: 'T mín (°C)' },
+        { data: tmax, label: 'T máx (°C)' },
+      ];
+      return;
+    }
+
+    // year
+    this.chartTitle = 'Promedio mensual (año)';
+    this.chartHint = 'T mín / T máx medias';
+
+    const labels = this.serieMes.map(x => this.mesNombre(x.mes));
+    const tmin = this.serieMes.map(x => this.toNum(x.t_min));
+    const tmax = this.serieMes.map(x => this.toNum(x.t_max));
+
+    if (!labels.length) return this.applyEmptyChart('Sin datos anuales');
+
+    this.lineChartLabels = labels;
+    this.lineChartData = [
+      { data: tmin, label: 'T mín (°C)' },
+      { data: tmax, label: 'T máx (°C)' },
+    ];
+  }
+
+  private updateSummaryFromDaySeries() {
+    const vals = this.serieDia.map(x => this.toNum(x.temperatura)).filter(v => Number.isFinite(v));
+    if (!vals.length) {
+      this.tActualTexto = 'S/D';
+      this.tMinTexto = 'S/D';
+      this.tMaxTexto = 'S/D';
+      return;
+    }
+
+    const last = vals[vals.length - 1];
+    const min = Math.min(...vals);
+    const max = Math.max(...vals);
+
+    this.tActualTexto = `${last.toFixed(1)}°`;
+    this.tMinTexto = `${min.toFixed(1)}°`;
+    this.tMaxTexto = `${max.toFixed(1)}°`;
+  }
+
+  private setHeaderDateFromDatos(datos: any) {
+    // tu datos.fecha_I viene tipo "YYYY-MM-DD HH:mm:ss" (según tu Home)
+    const fi: string = datos?.fecha_I || '';
+    if (!fi || fi.length < 10) {
+      this.diaSemana = '';
+      this.fechaTexto = '';
+      this.horaTexto = '';
+      return;
+    }
+
+    const yyyy = fi.slice(0, 4);
+    const mm = fi.slice(5, 7);
+    const dd = fi.slice(8, 10);
+    const hhmm = fi.length >= 16 ? fi.slice(11, 16) : '';
+
+    const date = new Date(`${yyyy}-${mm}-${dd}T${hhmm || '00:00'}:00`);
+    this.diaSemana = new Intl.DateTimeFormat('es-AR', { weekday: 'long' }).format(date).toUpperCase();
+    this.fechaTexto = new Intl.DateTimeFormat('es-AR', { day: '2-digit', month: 'long', year: 'numeric' })
+      .format(date)
+      .toUpperCase();
+    this.horaTexto = hhmm ? `${hhmm} HS` : '';
+  }
+
+  private applyEmptyChart(msg: string) {
+    this.chartTitle = msg;
+    this.chartHint = '';
+    this.lineChartLabels = [];
+    this.lineChartData = [{ data: [], label: '' }];
+  }
+
+  private toNum(v: any): number {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : NaN;
+  }
+
+  private formatShortDate(iso: string): string {
+    // "2026-02-06" -> "06/02"
+    if (!iso || iso.length < 10) return iso;
+    const d = iso.slice(8, 10);
+    const m = iso.slice(5, 7);
+    return `${d}/${m}`;
+  }
+
+  private mesNombre(m: any): string {
+    const n = Number(m);
+    const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    if (!Number.isFinite(n) || n < 1 || n > 12) return String(m ?? '');
+    return meses[n - 1];
+  }
+
+  private safeParse(value: string | null) {
+    if (!value) return null;
+    try { return JSON.parse(value); } catch { return null; }
+  }
+
+  // Acciones (ajustá URLs si tus rutas son otras)
+  goLocalidades() {
+    this.router.navigate(['/localidades']);
+  }
+
+  openMapaAhora() {
+    // poné tu URL real
     this.router.navigate(['tabs/mapat']);
   }
-  onClickHoy() {
+
+  openMapaHoy() {
+    // poné tu URL real
     this.router.navigate(['tabs/mapathoy']);
   }
 
-  traerTemp(tipoT) {
-    let i: number;
-    this.auxT = [];
-    this.auxM = [];
-    this.auxH = [];
-    if (tipoT === '1') {
-      for (i = 0; i < this.mensajes.length; i++) {
-        if (Number(this.mensajes[i].temperatura) > -20 &&
-          Number(this.mensajes[i].temperatura) < 60 &&
-          this.mensajes[i].temperatura != null) {
-          this.auxT.push(Number(this.mensajes[i].temperatura).toFixed(1));
-        } else {
-          this.auxT.push(null);
-        }
-        this.auxH.push(this.mensajes[i].hora);
-      }
-      this.lineChartData = [{ data: this.auxT, label: 'Temperatura', fill: false, lineTension: 0 }];
-      this.lineChartLabels = this.auxH;
-      this.tMax = Math.max.apply(null, this.auxT);
-      this.tMin = Math.min.apply(null, this.auxT);
-    } else if (tipoT === '2') {
-      for (i = 0; i < this.mensajes2.length; i++) {
-        if (Number(this.mensajes2[i].t_max) > -20 &&
-          Number(this.mensajes2[i].t_max) < 60 &&
-          this.mensajes2[i].t_max != null) {
-          this.auxT.push(Number(this.mensajes2[i].t_max).toFixed(1));
-        } else {
-          this.auxT.push(null);
-        }
-        if (Number(this.mensajes2[i].t_min) > -20 &&
-          Number(this.mensajes2[i].t_min) < 60 &&
-          this.mensajes2[i].t_min != null) {
-          this.auxM.push(Number(this.mensajes2[i].t_min).toFixed(1));
-        } else {
-          this.auxM.push(null);
-        }
-        this.auxH.push(this.mensajes2[i].fecha.substr(8, 2) + '-' + this.mensajes2[i].fecha.substr(5, 2));
-      }
-      this.lineChartData = [{ data: this.auxT, label: 'Máximas', fill: false, lineTension: 0 },
-      { data: this.auxM, label: 'Mínimas', fill: false, lineTension: 0 }];
-      this.lineChartLabels = this.auxH;
-    } else {
-      for (i = 0; i < this.mensajes3.length; i++) {
-        if (Number(this.mensajes3[i].t_max) > -20 &&
-          Number(this.mensajes3[i].t_max) < 60 &&
-          this.mensajes3[i].t_max != null) {
-          this.auxT.push(Number(this.mensajes3[i].t_max).toFixed(1));
-        } else {
-          this.auxT.push(null);
-        }
-        if (Number(this.mensajes3[i].t_min) > -20 &&
-          Number(this.mensajes3[i].t_min) < 60 &&
-          this.mensajes3[i].t_min != null) {
-          this.auxM.push(Number(this.mensajes3[i].t_min).toFixed(1));
-        } else {
-          this.auxM.push(null);
-        }
-
-        this.auxH.push(this.mesesCorto[parseInt(this.mensajes3[i].mes, 10) - 1]);
-      }
-      this.lineChartData = [{ data: this.auxT, label: 'Máx. media', fill: false, lineTension: 0 },
-      { data: this.auxM, label: 'Mín. Media', fill: false, lineTension: 0 }];
-      this.lineChartLabels = this.auxH;
-    }
-  }
-
-  cargarImagen() {
-    if (this.dato.temp_af < 30) {
-      this.imagen = '../../assets/fondos/temperaturas2.jpg';
-    } else {
-      this.imagen = '../../assets/fondos/temperaturas1.jpg';
-    }
-    this.ubicacion = '../../assets/wheater-icons/ubicacion.png';
-    this.mapas = '../../assets/tab-icons/btnMapas.png';
-  }
 }
