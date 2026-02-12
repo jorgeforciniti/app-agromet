@@ -40,8 +40,8 @@ const routes: Routes = [
         loadChildren: () => import('../pages/mapaheladas/mapaheladas.module').then(m => m.MapaheladasPageModule)
       },
       {
-        path: 'eventos',
-        loadChildren: () => import('../eventos/eventos.module').then(m => m.EventosPageModule)
+        path: 'aplicaciones',
+        loadChildren: () => import('../aplicaciones/aplicaciones.module').then(m => m.AplicacionesPageModule)
       },
       {
         path: '',

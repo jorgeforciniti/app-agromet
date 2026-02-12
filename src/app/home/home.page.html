@@ -1,326 +1,253 @@
-<ion-content [fullscreen]="true" class="contenido">
-  <div class="bg" [style.background-image]="'url(' + imagen + ')'"></div>
-
-  <div class="content">
-
-    <div class="bgOverlay"></div>
-    <div class="contentWrap">
-        <ion-refresher slot="fixed" (ionRefresh)="refrescar($event)">
-            <ion-refresher-content></ion-refresher-content>
-        </ion-refresher>
-        <div class="topSticky">
-            <ion-button (click)="onClick()" expand="block" color="light">
+<ion-header class="ion-no-border header-glass">
+    <ion-toolbar>
+        <ion-buttons slot="start">
+            <ion-button (click)="onClick()">
                 <ion-icon name="location-outline"></ion-icon>
-                Seleccionar localidad
+                <ion-label class="btn-label">Seleccionar localidad</ion-label>
             </ion-button>
-        </div>
+        </ion-buttons>
 
-        <!-- Estacion -->
-        <ion-row class="fila">
+        <ion-buttons slot="end">
+            <ion-button fill="clear" (click)="onClick()">
+                <ion-icon name="chevron-forward-outline"></ion-icon>
+            </ion-button>
+        </ion-buttons>
+    </ion-toolbar>
+</ion-header>
 
-            <ion-col size="11" class="estacion1">
-                {{ this.dato?.nombre }}
-            </ion-col>
-            <ion-col size="1" class="estacion2">
-                <img src="{{ubicacion}}">
-            </ion-col>
-        </ion-row>
+<ion-content [fullscreen]="true" class="home">
+    <!-- Background -->
+    <div class="bg" [ngStyle]="{ 'background-image': 'url(' + imagen + ')' }"></div>
+    <div class="bg-overlay"></div>
 
-        <!-- día -->
-        <ion-row>
-            <ion-col size="5">
-                <ion-row class="diasemana">
-                    {{ this.diaSemana }}
-                </ion-row>
-                <!-- Temperatura -->
-                <ion-row class="tem" *ngIf=" (this.dato.temp_af <60); else noTemp">
-                    {{ fmt1(this.dato.temp_af) }}º
-                </ion-row>
-                <ng-template #noTemp>
-                    <ion-row class="tem">
-                        S/D
-                    </ion-row>
-                </ng-template>
-            </ion-col>
-            <ion-col size="7">
-                <!-- ícono tiempo -->
-                <ion-row>
-                    <ion-col size="12" class="ico">
-                        <img src="{{icono}}" style="width: 90px; height: 90px;">
-                    </ion-col>
-                </ion-row>
+    <ion-refresher slot="fixed" (ionRefresh)="refrescar($event)">
+        <ion-refresher-content></ion-refresher-content>
+    </ion-refresher>
 
-            </ion-col>
-        </ion-row>
+    <div class="page">
+        <!-- Top greeting -->
+        <div class="topbar">
+            <div class="topbar__left">
+                <div class="saludo">{{ saludo }}</div>
+                <div class="localidad">{{ localidadLabel }}</div>
+            </div>
 
-        <!-- fecha -->
-        <ion-row>
-            <ion-col size="12" class="fecha">
-                {{ this.dia }} de {{ this.nombreMes }} {{ this.anio}}
-            </ion-col>
-        </ion-row>
-
-        <ion-row>
-            <ion-col size="12">
-                <div class="divider"></div>
-            </ion-col>
-        </ion-row>
-
-        <ion-row class="fila">
-            <!-- Humedad -->
-            <ion-col size="1.8" class="cuerpo1">
-                <img src="../../assets/wheater-icons/humedad.png">
-            </ion-col>
-            <ion-col size="3.9" class="cuerpo2" *ngIf=" (this.dato.hum_af <100); else noHum">
-                {{ fmt0(this.dato.hum_af) }} %
-            </ion-col>
-            <ng-template #noHum>
-                <ion-col class="cuerpo2">
-                    S/D
-                </ion-col>
-            </ng-template>
-
-            <!-- espacio -->
-            <ion-col size="0.6">
-            </ion-col>
-
-            <!-- Lluvia -->
-            <ion-col size="1.8" class="cuerpo1">
-                <img src="../../assets/wheater-icons/precipitaciones.png">
-            </ion-col>
-            <ion-col size="3.9" class="cuerpo2" *ngIf=" (this.dato.RR_dia <200); else noRain">
-                {{ fmt1(this.dato.RR_dia) }} mm
-            </ion-col>
-            <ng-template #noRain>
-                <ion-col class="cuerpo2">
-                    S/D
-                </ion-col>
-            </ng-template>
-
-        </ion-row>
-
-        <!-- Línea -->
-        <ion-row>
-            <ion-col size="5.7">
-                <div class="divider"></div>
-            </ion-col>
-            <ion-col size="0.6">
-            </ion-col>
-            <ion-col size="5.7">
-                <div class="divider"></div>
-            </ion-col>
-        </ion-row>
-
-        <ion-row class="fila">
-            <!-- Viento -->
-            <ion-col size="1.8" class="cuerpo1">
-                <img src="../../assets/wheater-icons/viento.png">
-            </ion-col>
-            <ion-col size="3.9" class="cuerpo2" *ngIf=" (this.dato.viento_medio <380); else noWind">
-                {{ fmt1(this.dato.viento_medio) }} km/h
-            </ion-col>
-            <ng-template #noWind>
-                <ion-col class="cuerpo2">
-                    S/D
-                </ion-col>
-            </ng-template>
-
-            <!-- espacio -->
-            <ion-col size="0.6">
-            </ion-col>
-
-            <!-- Dirección -->
-            <ion-col size="1.8" class="cuerpo1">
-                <img src="../../assets/wheater-icons/norte.png">
-            </ion-col>
-            <ion-col size="3.9" class="cuerpo2" *ngIf=" (this.dato.viento_medio <380); else noWind">
-                {{ this.dato.direc }}
-            </ion-col>
-        </ion-row>
-
-        <!-- Línea -->
-        <ion-row>
-            <ion-col size="5.7">
-                <div class="divider"></div>
-            </ion-col>
-            <ion-col size="0.6">
-            </ion-col>
-            <ion-col size="5.7">
-                <div class="divider"></div>
-            </ion-col>
-        </ion-row>
-
-        <ion-row class="fila">
-            <!-- Presión -->
-            <ion-col size="1.8" class="cuerpo1">
-                <img src="../../assets/wheater-icons/presion.png">
-            </ion-col>
-            <ion-col size="3.9" class="cuerpo2"
-                *ngIf=" (this.dato.presion <2000 && this.dato.presion >500); else noPresion">
-                {{ fmt1(this.dato.presion) }} hPa
-            </ion-col>
-            <ng-template #noPresion>
-                <ion-col size="3.9" class="cuerpo2">
-                    ---- hPa
-                </ion-col>
-            </ng-template>
-
-            <!-- espacio -->
-            <ion-col size="0.6">
-            </ion-col>
-
-            <!-- Aplicación -->
-
-            <ion-col size="3.9"  [ngClass]="aplicarOk ? 'aplicar' : 'no-aplicar'">
-                <div class="aplicar-texto">
-                    {{ aplicarTexto }}
-                </div>
-
-                <div class="aplicar-motivos" *ngIf="!aplicarOk && aplicarMotivos.length">
-                    {{ aplicarMotivos.join(' · ') }}
-                </div>
-            </ion-col>
-
-        </ion-row>
-
-        <!-- Línea -->
-        <ion-row>
-            <ion-col size="5.7">
-                <div class="divider"></div>
-            </ion-col>
-            <ion-col size="0.6">
-            </ion-col>
-            <ion-col size="5.7">
-                <div class="divider"></div>
-            </ion-col>
-        </ion-row>
-
-        <div id="fechayhora">
-            <span>{{ this.hora }} hs</span>
-        </div>
-        <br>
-        <ion-row>
-            <ion-col size="12">
-                <div class="divider"></div>
-            </ion-col>
-        </ion-row>
-
-        <!-- ALERTAS -->
-
-        <div class="alertasHeader">
-            <span>Alertas SMN • {{ alertas?.[0]?.area || '' }}</span>
-            <td class="imagenes">
-                <a href="https://openweathermap.org/"><img src="../../assets/images/smn.png" alt=""></a>
-            </td>
-
-            <button class="linkBtn" *ngIf="alertas?.length > 2" (click)="showAlertsAll = !showAlertsAll">
-                {{ showAlertsAll ? 'Ver menos' : 'Ver más' }}
-            </button>
-        </div>
-
-        <div *ngIf="!alertas?.length" class="alertaSin">
-            No hay alertas meteorológicas
-        </div>
-
-        <div *ngFor="let a of alertasVisibles">
-            <div class="alertaBox nivel-{{a.nivel}}" (click)="a.open = !a.open">
-                <div class="alertaHeader">
-                    <strong>{{ a.area }}</strong>
-                    <span>{{ a.fecha }}</span>
-                    <span class="badge">Nivel {{ a.nivel }}</span>
-                </div>
-
-                <div *ngIf="a.open" class="alertaDetalle">
-                    <p>{{ a.descripcion }}</p>
-                    <pre>{{ a.instruccion }}</pre>
-                </div>
+            <div class="topbar__right">
+                <img class="wx-icon" [src]="icono" alt="Icono clima" (error)="imgError($event)" />
             </div>
         </div>
 
+        <!-- Main card -->
+        <div class="card hero">
+            <div class="hero__row">
+                <div class="hero__temp">
+                    <div class="temp">
+                        {{ dato?.temp_af | number: '1.0-1' }}°C
+                        <span class="est-badge" *ngIf="estimated?.temp">• (e)</span>
+                    </div>
 
-        <ion-row>
-            <ion-col size="12">
-                <div class="finita">
-                    <div class="divider"></div>
+                    <div class="date">
+                        {{ diaSemana | uppercase }} {{ dia }} DE {{ nombreMes | uppercase }} {{ anio }}
+                    </div>
                 </div>
-            </ion-col>
-        </ion-row>
 
-        <div class="pronostico">
-        </div>
-        <div class="centrados">
-            <td class="texto">
-                <span>PRONOSTICO</span>
-            </td>
-            <td class="imagenes">
-                <a href="https://openweathermap.org/"><img src="../../assets/images/openweatherlogo.png" alt=""></a>
-            </td>
-        </div>
-
-        <ion-row>
-            <ion-col size="12">
-                <div class="finita">
-                    <div class="divider"></div>
+                <div class="hero__pin" aria-hidden="true">
+                    <ion-icon name="location"></ion-icon>
                 </div>
-            </ion-col>
-        </ion-row>
+            </div>
 
-        <div class="pronosticoTitle">
-            <span>Próximas horas</span>
-            <button class="linkBtn" (click)="showForecastAll = !showForecastAll">
-                {{ showForecastAll ? 'Ver menos' : 'Ver completo' }}
-            </button>
+            <div class="hero__stats">
+                <div class="stat">
+                    <ion-icon name="water-outline"></ion-icon>
+                    <div class="stat__value">
+                        {{ dato?.hum_af }} %
+                        <span class="est-dot" *ngIf="estimated?.hum">• (e)</span>
+                    </div>
+                </div>
+
+                <div class="stat wind-stat">
+                    <ion-icon name="leaf-outline"></ion-icon>
+
+                    <div class="stat__value">
+                        <span class="wind">
+
+                            <span class="wind__speed">{{ dato?.viento_medio | number: '1.0-0' }} km/h</span>
+
+                            <ion-icon class="wind__arrow" name="navigate-outline"
+                                [style.transform]="vientoRotationDeg != null ? 'rotate(' + vientoRotationDeg + 'deg)' : null"
+                                aria-hidden="true"></ion-icon>
+
+                            <span class="wind__dir" *ngIf="vientoDirText">· {{ vientoDirText }}</span>
+                        </span>
+
+                        <span class="est-dot" *ngIf="estimated?.wind">• (e)</span>
+                    </div>
+                </div>
+
+
+                <div class="stat">
+                    <ion-icon name="compass-outline"></ion-icon>
+                    <div class="stat__value">
+                        {{ dato?.presion }} hPa
+                        <span class="est-dot" *ngIf="estimated?.pres">• (e)</span>
+                    </div>
+                </div>
+
+                <!-- lluvia diaria -->
+                <div class="stat">
+                    <ion-icon name="rainy-outline"></ion-icon>
+                    <div class="stat__value">
+                        {{ dato?.RR_dia }} mm
+                        <span class="est-dot" *ngIf="estimated?.rain">• rev</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 👇 SOLO aparece si ALGÚN dato es estimado -->
+            <div class="stat__value"
+                *ngIf="estimated?.temp || estimated?.hum || estimated?.wind || estimated?.pres || estimated?.rain">
+                <span class="est-dot">•(e): estimada por falta de datos</span>
+            </div>
         </div>
 
-        <!-- Vista corta -->
-        <!-- PRONÓSTICO CORTO -->
-        <table *ngIf="!showForecastAll" class="forecastTable">
-            <tr *ngFor="let item of datosHShort">
-                <td class="tds hora">{{ item[1] }}</td>
-                <td class="tds icono">
-                    <img [src]="item[2]" class="imagen">
-                </td>
-                <td class="tds temp">{{ item[3] }}º</td>
-                <td class="tds hum">{{ item[4] }}%</td>
-                <td class="tds viento">{{ item[5] }} km/h</td>
-                <td class="tds desc">{{ item[6] }}</td>
-            </tr>
-        </table>
-
-        <!-- PRONÓSTICO COMPLETO -->
-        <table *ngIf="showForecastAll" class="forecastTable">
-            <ng-container *ngFor="let item of datosH">
-
-                <!-- FILA TÍTULO DE FECHA -->
-                <tr *ngIf="item[0] != 0" class="pronosticoFecha">
-                    <td class="pronosticoTitle" colspan="6">
-                        {{ item[0] }}
-                    </td>
-                </tr>
-
-                <!-- FILA NORMAL -->
-                <tr *ngIf="item[0] == 0">
-                    <td class="tds hora">{{ item[1] }}</td>
-                    <td class="tds icono">
-                        <img [src]="item[2]" class="imagen">
-                    </td>
-                    <td class="tds temp">{{ item[3] }}º</td>
-                    <td class="tds hum">{{ item[4] }}%</td>
-                    <td class="tds viento">{{ item[5] }} km/h</td>
-                    <td class="tds desc">{{ item[6] }}</td>
-                </tr>
-
-            </ng-container>
-        </table>
-
-        <ion-row>
-            <ion-col size="12">
-                <div class="finita">
-                    <div class="divider"></div>
+        <!-- Recommendation -->
+        <button class="card reco" type="button" (click)="verDetalleAplicacion()">
+            <div class="reco__left">
+                <div class="reco__icon" [class.ok]="aplicarOk" [class.bad]="!aplicarOk">
+                    <ion-icon [name]="aplicarOk ? 'checkmark-circle' : 'warning'"></ion-icon>
                 </div>
-            </ion-col>
-        </ion-row>
-        <br>
+
+                <div class="reco__text">
+                    <div class="reco__title">{{ aplicarTexto }}</div>
+                    <div class="reco__sub">
+                        <ng-container *ngIf="aplicarMotivos?.length; else okText">
+                            {{ aplicarMotivos.join(' · ') }}
+                        </ng-container>
+                        <ng-template #okText>Condiciones dentro de rangos permitidos.</ng-template>
+                    </div>
+                </div>
+            </div>
+
+            <div class="reco__chev" aria-hidden="true">
+                <ion-icon name="chevron-forward-outline"></ion-icon>
+            </div>
+        </button>
+
+        <!-- Hour -->
+        <div class="clock">{{ hora }} HS</div>
+
+        <!-- Alerts -->
+        <div class="card section">
+            <div class="section__head">
+                <div class="section__title alert-title">
+                    <span>ALERTA SMN · {{ alertasVisibles?.[0]?.area || 'Tucumán' }}</span>
+
+                    <a class="smn-link" href="https://www.smn.gob.ar/" target="_blank" rel="noopener">
+                        <img src="../../assets/images/smn.png" alt="SMN" />
+                    </a>
+                </div>
+
+                <button class="link" type="button" (click)="showAlertsAll = !showAlertsAll" *ngIf="alertas?.length">
+                    {{ showAlertsAll ? 'Ver menos' : 'Ver completo' }}
+                    <ion-icon name="chevron-forward-outline"></ion-icon>
+                </button>
+            </div>
+
+            <div class="alerts" *ngIf="alertas?.length; else noAlerts">
+                <div class="alert" *ngFor="let a of alertasVisibles" (click)="verDetalleAlerta(a)" role="button"
+                    tabindex="0" [ngClass]="{
+            'lvl-3': a?.nivel == 3,
+            'lvl-4': a?.nivel == 4,
+            'lvl-5': a?.nivel == 5
+          }">
+                    <div class="alert__rail"></div>
+
+                    <div class="alert__flag">
+                        <ion-icon name="flag"></ion-icon>
+                    </div>
+
+                    <div class="alert__body">
+                        <div class="alert__top">
+                            <div class="alert__date">{{ a?.fecha }}</div>
+                            <div class="alert__level">Nivel {{ a?.nivel }}</div>
+                        </div>
+
+                        <div class="alert__desc">{{ a?.descripcion || '—' }}</div>
+                    </div>
+
+                    <div class="alert__chev">
+                        <ion-icon name="chevron-forward-outline"></ion-icon>
+                    </div>
+                </div>
+            </div>
+
+            <ng-template #noAlerts>
+                <div class="empty">Sin alertas vigentes.</div>
+            </ng-template>
+        </div>
+
+        <!-- Forecast -->
+        <div class="card section">
+            <div class="section__head">
+                <div class="section__title forecast-title">
+                    <span>PRONÓSTICO</span>
+
+                    <a class="owm-link" href="https://openweathermap.org/" target="_blank" rel="noopener">
+                        <img src="../../assets/images/openweatherlogo.png" alt="OpenWeather" />
+                    </a>
+                </div>
+
+                <button class="link" (click)="toggleForecast()" type="button">
+                    {{ showForecastAll ? 'Ver menos' : 'Ver completo' }}
+                    <ion-icon name="chevron-forward-outline"></ion-icon>
+                </button>
+            </div>
+
+            <!-- Vista corta (hoy completo) -->
+            <div class="forecast" *ngIf="!showForecastAll">
+                <div class="forecast__row" *ngFor="let r of datosHShort">
+                    <div class="forecast__time">{{ r[1] }}</div>
+
+                    <div class="forecast__icon">
+                        <img [src]="r[2]" (error)="imgError($event)" />
+                    </div>
+
+                    <div class="forecast__temp">{{ r[3] }}°</div>
+
+                    <div class="forecast__meta">
+                        <span class="pill">{{ r[4] }}%</span>
+                        <span class="pill">{{ r[5] }} km/h</span>
+                        <span class="forecast__descInline">{{ r[6] }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vista completa -->
+            <div class="forecast" *ngIf="showForecastAll">
+                <ng-container *ngFor="let d of forecastDias">
+                    <div class="forecast__day">{{ d.label }}</div>
+
+                    <div class="forecast__row" *ngFor="let r of d.rows">
+                        <div class="forecast__time">{{ r[1] }}</div>
+
+                        <div class="forecast__icon">
+                            <img [src]="r[2]" (error)="imgError($event)" />
+                        </div>
+
+                        <div class="forecast__temp">{{ r[3] }}°</div>
+
+                        <div class="forecast__meta">
+                            <span class="pill">{{ r[4] }}%</span>
+                            <span class="pill">{{ r[5] }} km/h</span>
+                            <span class="forecast__descInline">{{ r[6] }}</span>
+                        </div>
+                    </div>
+                </ng-container>
+            </div>
+
+            <div class="owm">OpenWeather</div>
+        </div>
+
+        <div class="spacer"></div>
     </div>
-      </div>
 </ion-content>

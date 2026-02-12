@@ -13,7 +13,7 @@ export class TabsPage {
   lluvias: string;
   publicidad: string;
   heladas: string;
-  eventos: string;
+  aplicaciones: string;
   logo: string;
 
   constructor(platform: Platform) {
@@ -21,7 +21,9 @@ export class TabsPage {
     this.temperaturas = '../../assets/tab-icons/btnTemperaturas.png';
     this.lluvias = '../../assets/tab-icons/btnLluvias.png';
     this.heladas = '../../assets/tab-icons/btnHeladas.png';
-    this.eventos = '../../assets/tab-icons/btnEventos.png';
+    // Reutilizamos el ícono existente de Eventos para la nueva pestaña.
+    // Si más adelante agregás un ícono propio, cambiá la ruta.
+    this.aplicaciones = '../../assets/tab-icons/btnEventos.png';
     this.publicidad = 'https://agromet.eeaoc.gob.ar/android/prop1.gif';
     this.logo = '../../assets/logo-agromet.png';
   }

@@ -36,9 +36,13 @@ export class AppComponent implements OnInit {
 
   initializeApp() {
     this.platform.ready().then(() => {
-      // En browser (ionic serve) esto tira warning (Cordova no disponible) => ok
-      this.statusBar.styleDefault();
-      this.splashScreen.hide();
+      // En browser (ionic serve) Cordova/Capacitor no está disponible.
+      // Evitamos warnings llamando plugins solo en dispositivo/simulador.
+      const isNative = this.platform.is('cordova') || this.platform.is('capacitor');
+      if (isNative) {
+        this.statusBar.styleDefault();
+        this.splashScreen.hide();
+      }
     });
   }
 

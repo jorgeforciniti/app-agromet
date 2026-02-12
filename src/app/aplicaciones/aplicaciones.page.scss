@@ -1,0 +1,351 @@
+@font-face {
+  font-family: helveticaNR;
+  src: url('../../assets/fonts/helvetica-neue-lt-std-55-roman.otf');
+}
+@font-face {
+  font-family: helveticaNBC;
+  src: url('../../assets/fonts/HelveticaNeueLTStd-BdCn.otf');
+}
+
+:host {
+  --accent: rgb(128, 227, 211);
+  --text: #d7d7d7;
+  --muted: rgba(215, 215, 215, 0.7);
+  --card: rgba(0, 0, 0, 0.35);
+  --border: rgba(128, 227, 211, 0.35);
+}
+
+/* Toolbar igual a las otras pantallas */
+ion-header ion-toolbar {
+  --background: rgba(0, 0, 0, 0.35);
+  --border-color: transparent;
+  backdrop-filter: blur(10px);
+}
+
+ion-title {
+  font-family: helveticaNBC;
+  letter-spacing: 1px;
+  color: var(--text);
+}
+
+/* Fondo tipo “grad” como Temperatura/Lluvias */
+ion-content.aplicaciones::part(scroll) {
+  background:
+    radial-gradient(1200px 700px at 30% 10%, rgba(0,255,240,.12), transparent 60%),
+    linear-gradient(180deg, #071a24 0%, #061018 100%);
+}
+
+ion-content.aplicaciones::part(background) {
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.aplicaciones {
+  position: relative;
+}
+
+/* Si querés mantener tu imagen de fondo, dejalo; queda “atenuada” */
+.bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  z-index: 0;
+  filter: saturate(0.9) contrast(1.05);
+  opacity: 0.55;
+}
+
+.bg-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.25);
+  z-index: 1;
+}
+
+.content {
+  position: relative;
+  z-index: 2;
+  padding: 10px 12px 24px 12px;
+}
+
+/* Cards “glass oscuro” */
+ion-card.glass {
+  margin-top: 12px;
+  padding: 0;
+  border-radius: 14px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(10px);
+}
+
+ion-card-title {
+  color: var(--text);
+  font-family: helveticaNBC;
+  letter-spacing: 0.5px;
+}
+
+ion-card-subtitle {
+  color: var(--muted);
+  font-family: helveticaNR;
+}
+
+/* Items dentro del card */
+ion-item {
+  --background: transparent;
+  --color: var(--text);
+}
+
+ion-label {
+  color: var(--text);
+  font-family: helveticaNR;
+}
+
+ion-note {
+  color: var(--muted);
+  font-family: helveticaNR;
+}
+
+/* Botones como en otras pantallas */
+ion-button {
+  font-family: helveticaNBC;
+}
+
+ion-button[fill="outline"] {
+  --border-color: var(--border);
+  --color: var(--accent);
+}
+
+/* Chip y badge semáforo */
+.chip {
+  margin-left: 10px;
+}
+
+/* Métricas (ΔT, inversión, scores) */
+.metric {
+  border-radius: 12px;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.metric-label {
+  font-size: 12px;
+  color: var(--muted);
+  font-family: helveticaNR;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.metric-value {
+  font-size: 18px;
+  font-family: helveticaNBC;
+  color: var(--accent);
+}
+
+/* Listas compactas tipo “recomendaciones/razones” */
+.list-compact ion-item {
+  --min-height: 34px;
+}
+
+.list-compact ion-icon {
+  color: var(--accent);
+}
+
+/* Pronóstico */
+.forecast-row {
+  display: flex;
+  flex-direction: column;
+}
+
+.forecast-time {
+  font-size: 12px;
+  color: var(--muted);
+  font-family: helveticaNR;
+}
+
+.forecast-main {
+  font-size: 14px;
+  color: var(--text);
+  font-family: helveticaNR;
+}
+
+.contenido {
+  --padding-top: 10px;
+  --padding-start: 12px;
+  --padding-end: 12px;
+}
+
+.advice-item {
+  --min-height: auto;
+  align-items: flex-start;     // icono arriba, texto abajo si hace falta
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+
+.advice-item ion-icon[slot="start"] {
+  margin-top: 2px;
+}
+
+.advice-label {
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: unset !important;
+  line-height: 1.25;
+  word-break: break-word;
+}
+
+.advice-item {
+  --inner-padding-end: 8px;
+  --inner-padding-start: 0px;
+}
+
+/* ===== Banda degradada para "Ahora" ===== */
+.status-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 8px 10px;
+  border-radius: 12px;
+  width: 100%;
+
+  span {
+    font-family: helveticaNBC;
+    letter-spacing: 0.5px;
+    color: var(--text);
+  }
+}
+
+/* degradados suaves -> fuertes */
+.status-strip.success {
+  background: linear-gradient(
+    90deg,
+    rgba(46, 204, 113, 0.08) 0%,
+    rgba(46, 204, 113, 0.25) 60%,
+    rgba(46, 204, 113, 0.55) 100%
+  );
+}
+.status-strip.warning {
+  background: linear-gradient(
+    90deg,
+    rgba(241, 196, 15, 0.08) 0%,
+    rgba(241, 196, 15, 0.25) 60%,
+    rgba(241, 196, 15, 0.55) 100%
+  );
+}
+.status-strip.danger {
+  background: linear-gradient(
+    90deg,
+    rgba(231, 76, 60, 0.08) 0%,
+    rgba(231, 76, 60, 0.25) 60%,
+    rgba(231, 76, 60, 0.55) 100%
+  );
+}
+
+/* ===== Banda degradada para filas de pronóstico ===== */
+.forecast-item {
+  --background: transparent;
+  --padding-start: 0px;
+  --inner-padding-end: 0px;
+  margin-top: 8px;
+
+  /* el fondo real del item está en el "native part" */
+  &::part(native) {
+    border-radius: 12px;
+    padding: 10px 12px;
+    background: rgba(0,0,0,0.18);
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+}
+
+.forecast-item.success::part(native) {
+  background: linear-gradient(
+    90deg,
+    rgba(46, 204, 113, 0.06) 0%,
+    rgba(46, 204, 113, 0.18) 60%,
+    rgba(46, 204, 113, 0.40) 100%
+  );
+}
+.forecast-item.warning::part(native) {
+  background: linear-gradient(
+    90deg,
+    rgba(241, 196, 15, 0.06) 0%,
+    rgba(241, 196, 15, 0.18) 60%,
+    rgba(241, 196, 15, 0.40) 100%
+  );
+}
+.forecast-item.danger::part(native) {
+  background: linear-gradient(
+    90deg,
+    rgba(231, 76, 60, 0.06) 0%,
+    rgba(231, 76, 60, 0.18) 60%,
+    rgba(231, 76, 60, 0.40) 100%
+  );
+}
+
+/* Para que el badge quede bien arriba */
+.forecast-item ion-badge {
+  margin-left: 10px;
+}
+
+.meteo-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.meteo-line .place {
+  color: var(--muted);
+  margin-right: 4px;
+}
+
+.meteo-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(0,0,0,0.22);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: var(--text);
+  font-size: 12px;
+  line-height: 1;
+}
+
+.meteo-pill ion-icon {
+  font-size: 14px;
+  color: var(--accent);
+}
+
+/* iconos dentro de metric-label */
+.metric-label ion-icon {
+  margin-right: 6px;
+  vertical-align: middle;
+  color: var(--accent);
+}
+
+.info-icon {
+  font-size: 16px;
+  margin-left: 8px;
+  color: var(--accent);
+  opacity: 0.9;
+}
+
+.info-icon-inline {
+  font-size: 18px;
+  margin-left: 6px;
+  color: var(--accent);
+  opacity: 0.9;
+}
+
+.info-icon:active,
+.info-icon-inline:active {
+  opacity: 0.6;
+}
+
+.info-btn {
+  margin-right: 6px;
+    color: var(--accent);
+  opacity: 0.9;
+
+}
