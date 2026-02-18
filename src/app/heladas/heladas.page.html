@@ -1,15 +1,17 @@
 <!-- heladas.page.html -->
-<ion-content [fullscreen]="true" class="contenido grad">
-  <app-header titulo="Heladas"></app-header>
+<ion-header translucent="true">
+  <ion-toolbar class="topbar">
+    <ion-title class="title">HELADAS</ion-title>
 
-  <!-- Estación -->
-  <div class="stationRow">
-    <div class="stationLine"></div>
-    <div class="stationName">{{ dato?.nombre }}</div>
-    <button class="stationIconBtn" type="button">
-      <img [src]="ubicacion" alt="Ubicación" />
-    </button>
-  </div>
+    <ion-buttons slot="end">
+      <ion-button fill="clear" (click)="goLocalidades()">
+        <ion-icon name="location-outline" slot="start"></ion-icon>
+        <span class="stationName">{{ dato?.nombre }}</span>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+<ion-content [fullscreen]="true" class="contenido grad">
 
   <!-- Resumen principal -->
   <section class="summaryCard">

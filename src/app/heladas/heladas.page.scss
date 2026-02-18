@@ -18,6 +18,12 @@
   --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
 }
 
+.title {
+  font-family: helveticaNBC;
+  letter-spacing: 1px;
+  color: var(--text);
+}
+
 /* Fondo (opción C) */
 ion-content.contenido.grad::part(scroll) {
   background:

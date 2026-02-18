@@ -1,17 +1,19 @@
-import { Component, DoCheck } from '@angular/core';
 import { Router } from '@angular/router';
 import { EstacionesService } from 'src/app/services/estaciones.service';
 import { ChartOptions, ChartType, ChartDataSets } from 'chart.js';
-import { Color, Label } from 'ng2-charts';
+import { Color, Label, BaseChartDirective } from 'ng2-charts';
 import { LoadingController } from '@ionic/angular';
+import { Component, DoCheck, OnInit, ViewChild } from '@angular/core';
 
 @Component({
   selector: 'app-lluvias',
   templateUrl: 'lluvias.page.html',
   styleUrls: ['lluvias.page.scss']
 })
-export class LluviasPage implements DoCheck {
+export class LluviasPage implements DoCheck, OnInit {
 
+  public showChart = false;   // 👈 canvas se crea cuando yo quiero
+  private firstLoadDone = false;
   dato: any;
   dia: string;
   nombreMes: string;
@@ -29,44 +31,50 @@ export class LluviasPage implements DoCheck {
   private auxRR: any[] = [];
   private auxD: any[] = [];
 
-  // UI
   selectedRange: '1' | '2' | '3' = '1';
   isLoading = false;
 
-  // Chart
+  @ViewChild(BaseChartDirective) chart?: BaseChartDirective;
+
   public barChartOptions: ChartOptions = {
     responsive: true,
-    maintainAspectRatio: false, // 👈 importante para que respete chartWrap
+    maintainAspectRatio: false,
+    animation: { duration: 0 } as any,
     scales: {
       xAxes: [{
-        ticks: { fontColor: '#d7d7d7' as any }
+        ticks: {
+          fontColor: '#d7d7d7' as any,
+          maxRotation: 0,
+          autoSkip: true,
+          maxTicksLimit: 10
+        },
+        gridLines: { display: false }
       }],
       yAxes: [{
-        id: 'y-axis-0',
-        position: 'left',
+        ticks: {
+          fontColor: '#d7d7d7' as any,
+          beginAtZero: true,
+          maxTicksLimit: 6
+        },
         scaleLabel: { display: true, labelString: 'mm' },
-        ticks: { fontColor: '#d7d7d7' as any }
+        gridLines: { display: true }
       }]
     },
     legend: { display: false } as any
   };
 
+
   public barChartLabels: Label[] = [];
   public barChartType: ChartType = 'bar';
   public barChartLegend = false;
 
-  public barChartData: ChartDataSets[] = [
-    { data: [], label: 'Lluvia' }
-  ];
+  public barChartData: ChartDataSets[] = [{ data: [], label: 'Lluvia' }];
 
-  public barChartColors: Color[] = [
-    {
-      backgroundColor: 'rgba(128, 227, 211, 0.65)',
-      borderColor: 'rgba(128, 227, 211, 1)'
-    }
-  ];
+  public barChartColors: Color[] = [{
+    backgroundColor: 'rgba(128, 227, 211, 0.65)',
+    borderColor: 'rgba(128, 227, 211, 1)'
+  }];
 
-  // imágenes (si las usás todavía en algún lado)
   imagen: string;
   ubicacion: string;
   mapas: string;
@@ -74,20 +82,36 @@ export class LluviasPage implements DoCheck {
   constructor(
     private datosLluvias: EstacionesService,
     private router: Router,
-    public loadingCtrl: LoadingController
+    public loadingCtrl: LoadingController,
   ) {
     this.cargarDatos();
     this.cargarImagen();
   }
 
-  ngDoCheck() {
-    if (localStorage.getItem('lluvia') === '1') {
-      this.cargarDatos();
-      this.traerRRMes();
-      localStorage.setItem('lluvia', '0');
-      this.cargarImagen();
-    }
+  ngAfterViewInit() {
+    this.recrearCanvas();
   }
+
+  ionViewDidEnter() {
+    this.recrearCanvas();
+  }
+
+  ngOnInit() {
+    // Carga inicial SIEMPRE (resuelve el caso F5)
+    this.cargarDatos();
+    this.cargarImagen();
+    this.traerRRMes();
+    this.firstLoadDone = true;
+  }
+
+  ngDoCheck() {
+  if (localStorage.getItem('lluvia') === '1') {
+    this.cargarDatos();
+    this.traerRRMes();
+    localStorage.setItem('lluvia', '0');
+    this.cargarImagen();
+  }
+}
 
   cargarDatos() {
     this.dato = JSON.parse(localStorage.getItem('datos') || 'null');
@@ -127,29 +151,35 @@ export class LluviasPage implements DoCheck {
 
     const estacion = Number(localStorage.getItem('estacion') ?? 0);
 
-    this.datosLluvias.getRRMes(estacion)
-      .subscribe({
-        next: (posts: any[]) => {
-          this.mensajes = posts?.[0] || [];
-          this.mensajes2 = posts?.[1] || [];
-          this.mensajes3 = posts?.[2] || [];
+    this.datosLluvias.getRRMes(estacion).subscribe({
+      next: (posts: any[]) => {
+        this.mensajes = posts?.[0] || [];
+        this.mensajes2 = posts?.[1] || [];
+        this.mensajes3 = posts?.[2] || [];
 
-          // defaults
-          this.selectedRange = '1';
-          this.traerRR('1');
-        },
-        error: () => { /* silencioso */ },
-        complete: () => {
-          this.isLoading = false;
-          loading.dismiss().catch(() => {});
-        }
-      });
+        this.selectedRange = '1';
+
+        // 1) armá datos/labels primero
+        this.traerRR('1');
+
+        // 2) recién ahora creá el canvas (recreación)
+        this.recrearCanvas();
+      },
+      error: () => {
+        this.isLoading = false;
+      },
+      complete: () => {
+        this.isLoading = false;
+        loading.dismiss().catch(() => { });
+      }
+    });
   }
 
   onRangeChange(ev: any) {
-    const v = String(ev?.detail?.value || '1') as '1'|'2'|'3';
+    const v = String(ev?.detail?.value || '1') as '1' | '2' | '3';
     this.selectedRange = v;
     this.traerRR(v);
+    this.recrearCanvas();
   }
 
   onClickAhora() {
@@ -160,7 +190,6 @@ export class LluviasPage implements DoCheck {
     this.auxRR = [];
     this.auxD = [];
 
-    // rrAyer y rr_mes
     try {
       if (this.mensajes2?.length >= 2) {
         this.rrAyer = Number(this.mensajes2[this.mensajes2.length - 2].lluvia);
@@ -200,26 +229,46 @@ export class LluviasPage implements DoCheck {
       }
     }
 
+    // ⚠️ claves: nuevas referencias SIEMPRE
     this.barChartData = [{ data: this.auxRR, label: 'Lluvia' }];
-    this.barChartLabels = this.auxD;
+    this.barChartLabels = [...this.auxD];
+    this.recrearCanvas();
   }
 
   cargarImagen() {
-    // ya no dependemos del background-image viejo,
-    // pero lo dejo por si querés recuperar una imagen dinámica.
     if (!this.dato) return;
 
-    if (this.dato.RR_dia < 0.5) {
-      this.imagen = '../../assets/fondos/inicio-soleado.jpg';
-    } else if (this.dato.RR_dia < 3) {
-      this.imagen = '../../assets/fondos/lluvias2.jpg';
-    } else if (this.dato.RR_dia < 10) {
-      this.imagen = '../../assets/fondos/lluvias1.jpg';
-    } else {
-      this.imagen = '../../assets/fondos/lluvias3.jpg';
-    }
+    if (this.dato.RR_dia < 0.5) this.imagen = '../../assets/fondos/inicio-soleado.jpg';
+    else if (this.dato.RR_dia < 3) this.imagen = '../../assets/fondos/lluvias2.jpg';
+    else if (this.dato.RR_dia < 10) this.imagen = '../../assets/fondos/lluvias1.jpg';
+    else this.imagen = '../../assets/fondos/lluvias3.jpg';
 
     this.ubicacion = '../../assets/wheater-icons/ubicacion.png';
     this.mapas = '../../assets/tab-icons/btnMapas.png';
   }
+
+  goLocalidades() {
+    this.router.navigate(['/localidades']);
+  }
+
+  private recrearCanvas() {
+    // Apago y prendo el canvas para que Chart.js vuelva a medir el contenedor
+    this.showChart = false;
+
+    setTimeout(() => {
+      this.showChart = true;
+
+      // doble RAF = Ionic termina layout y Chart mide bien
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          try {
+            this.chart?.chart?.resize();
+            this.chart?.update();
+          } catch { }
+        });
+      });
+
+    }, 0);
+  }
+
 }

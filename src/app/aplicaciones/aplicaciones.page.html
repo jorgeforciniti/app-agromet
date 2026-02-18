@@ -20,14 +20,16 @@
       <ion-card-header>
         <ion-card-title>Ubicación</ion-card-title>
         <ion-card-subtitle *ngIf="lat!=null && lon!=null">
-          <ng-container *ngIf="origenUbicacion==='ESTACION'">
-            Estación seleccionada{{ estacionNombre ? (': ' + estacionNombre) : '' }}
-          </ng-container>
-          <ng-container *ngIf="origenUbicacion==='GPS'">
-            Ubicación del celular
-          </ng-container>
-          · Lat {{lat | number:'1.4-4'}} · Lon {{lon | number:'1.4-4'}}
-        </ion-card-subtitle>
+  <ng-container *ngIf="origenUbicacion==='ESTACION'">
+    Estación seleccionada{{ estacionNombre ? (': ' + estacionNombre) : '' }}
+  </ng-container>
+
+  <ng-container *ngIf="origenUbicacion==='GPS'">
+    Ubicación del celular{{ lugarNombre ? (': ' + lugarNombre) : '' }}
+  </ng-container>
+
+  · Lat {{ lat | number:'1.2-2' }} · Lon {{ lon | number:'1.2-2' }}
+</ion-card-subtitle>
         <ion-card-subtitle *ngIf="lat==null || lon==null">
           No se pudo obtener la ubicación de la estación. Podés usar el GPS.
         </ion-card-subtitle>
@@ -82,7 +84,7 @@
           <ion-label>
             Kp (NOAA SWPC)
             <ion-icon class="info-icon-inline" name="information-circle-outline" (click)="openInfo('KP')"></ion-icon>
-            <div class="small" *ngIf="kpTimeTag">Último: {{ kpTimeTag }} UTC</div>
+            <div class="small" *ngIf="kpTimeShort">Último: {{ kpTimeShort }} UTC</div>
           </ion-label>
           <ion-chip class="chip" [color]="kpIndex>=5 ? 'danger' : kpIndex>=4 ? 'warning' : 'success'">
             <ion-label *ngIf="!kpLoading">{{ kpIndex | number:'1.1-1' }}</ion-label>
@@ -146,9 +148,16 @@
               HR {{ climaActual?.main?.humidity }}%
             </span>
 
-            <span class="meteo-pill">
-              <ion-icon name="navigate-outline"></ion-icon>
+            <<span class="meteo-pill wind">
+              <ion-icon
+                class="wind-arrow"
+                name="navigate-outline"
+                [style.transform]="'rotate(' + windIconRotate(climaActual?.wind?.deg) + 'deg)'">
+              </ion-icon>
               {{ formatWindMsToKmh(climaActual?.wind?.speed) }}
+              <span class="wind-dir" *ngIf="climaActual?.wind?.deg != null">
+                · {{ windDirLabel(climaActual?.wind?.deg) }}
+              </span>
             </span>
           </div>
         </ion-card-subtitle>

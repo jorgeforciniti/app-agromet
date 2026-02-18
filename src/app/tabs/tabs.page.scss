@@ -41,3 +41,36 @@ ion-tab-bar {
 ion-tab-button {
     color: var(--color);
 }
+
+ion-tab-bar {
+  --border: 0;
+}
+
+ion-tab-button ion-icon {
+  font-size: 22px;
+}
+
+ion-tab-button ion-label {
+  font-size: 11px;
+}
+
+.exit-btn {
+  --border-radius: 999px;
+  --padding-start: 0;
+  --padding-end: 0;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+
+  ion-icon {
+    font-size: 22px;
+  }
+
+  /* le baja un poco la agresividad visual */
+  opacity: 0.92;
+}
+
+.exit-btn:active {
+  transform: scale(0.98);
+  opacity: 1;
+}

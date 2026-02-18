@@ -1,5 +1,7 @@
 import { Component } from '@angular/core';
-import { Platform } from '@ionic/angular';
+import { AlertController, Platform } from '@ionic/angular';
+import { Capacitor } from '@capacitor/core';
+import { App } from '@capacitor/app';
 
 @Component({
   selector: 'app-tabs',
@@ -16,24 +18,51 @@ export class TabsPage {
   aplicaciones: string;
   logo: string;
 
-  constructor(platform: Platform) {
-    this.home = '../../assets/tab-icons/btnHome.png';
-    this.temperaturas = '../../assets/tab-icons/btnTemperaturas.png';
-    this.lluvias = '../../assets/tab-icons/btnLluvias.png';
-    this.heladas = '../../assets/tab-icons/btnHeladas.png';
+  constructor(private alertCtrl: AlertController,
+    private platform: Platform) {
     // Reutilizamos el ícono existente de Eventos para la nueva pestaña.
     // Si más adelante agregás un ícono propio, cambiá la ruta.
-    this.aplicaciones = '../../assets/tab-icons/btnEventos.png';
     this.publicidad = 'https://agromet.eeaoc.gob.ar/android/prop1.gif';
     this.logo = '../../assets/logo-agromet.png';
   }
-  salir(){
-    console.log('Salir');
-    localStorage.setItem('home', '1');
-    localStorage.setItem('temperatura', '1');
-    localStorage.setItem('lluvia', '1');
-    localStorage.setItem('helada', '1');
-    // tslint:disable-next-line: no-string-literal
-    navigator['app'].exitApp();
+
+  async confirmSalir() {
+    const alert = await this.alertCtrl.create({
+      header: 'Salir',
+      message: '¿Querés cerrar la aplicación?',
+      buttons: [
+        { text: 'Cancelar', role: 'cancel' },
+        {
+          text: 'Salir',
+          role: 'destructive',
+          handler: () => this.salir()
+        }
+      ]
+    });
+
+    await alert.present();
+  }
+
+  async salir() {
+    // Solo tiene sentido en nativo
+    if (!Capacitor.isNativePlatform()) {
+      // En web no se puede cerrar “bien”
+      window.close();
+      return;
+    }
+
+    // Android: OK
+    if (this.platform.is('android')) {
+      App.exitApp();
+      return;
+    }
+
+    // iOS: no se debe cerrar programáticamente
+    const alert = await this.alertCtrl.create({
+      header: 'iOS',
+      message: 'En iPhone/iPad no se puede cerrar la app desde un botón. Usá el gesto Home o el selector de apps.',
+      buttons: ['OK']
+    });
+    await alert.present();
   }
 }

@@ -280,9 +280,9 @@ export class HomePage implements OnInit, OnDestroy {
     const windDiff = (stWind != null && oWind != null) ? Math.abs(stWind - oWind) : null;
     const presDiff = (stPres != null && oPresStation != null) ? Math.abs(stPres - oPresStation) : null;
 
-    const suspiciousTemp = tempDiff != null && tempDiff >= 7;
+    const suspiciousTemp = tempDiff != null && tempDiff >= 15;
     const suspiciousHum = humDiff != null && humDiff >= 25;
-    const suspiciousWind = windDiff != null && windDiff >= 35;
+    const suspiciousWind = windDiff != null && windDiff >= 5;
     const suspiciousPres = presDiff != null && presDiff >= 18;
 
     // Aplicar reemplazos (solo si hay valor OWM)

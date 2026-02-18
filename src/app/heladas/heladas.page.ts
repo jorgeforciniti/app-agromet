@@ -310,4 +310,8 @@ export class HeladasPage implements OnInit {
     if (!value) return null;
     try { return JSON.parse(value); } catch { return null; }
   }
+
+  goLocalidades() {
+    this.router.navigate(['/localidades']);
+  }
 }

@@ -1,13 +1,16 @@
-<ion-content [fullscreen]="true" class="contenido grad">
-  <ion-header class="topbar ion-no-border">
-    <ion-toolbar class="topbar">
-      <ion-title class="title">LLUVIAS</ion-title>
-    </ion-toolbar>
-  </ion-header>
+<ion-header translucent="true">
+  <ion-toolbar class="topbar">
+    <ion-title class="title">LLUVIAS</ion-title>
 
-  <div class="stationName">
-    {{ dato?.nombre }}
-  </div>
+    <ion-buttons slot="end">
+      <ion-button fill="clear" (click)="goLocalidades()">
+        <ion-icon name="location-outline" slot="start"></ion-icon>
+        <span class="stationName">{{ dato?.nombre }}</span>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+<ion-content [fullscreen]="true" class="contenido grad">
 
   <!-- RESUMEN -->
   <div class="summary">
@@ -68,29 +71,23 @@
   <div class="card">
     <div class="cardHeader">
       <div class="cardTitle">
-        {{ selectedRange === '1' ? 'Lluvia por intervalo (hoy)' : (selectedRange === '2' ? 'Lluvia diaria (últimos 30 días)' : 'Lluvia mensual (año)') }}
+        {{ selectedRange === '1' ? 'Lluvia por intervalo (hoy)' : (selectedRange === '2' ? 'Lluvia diaria (últimos 30
+        días)' : 'Lluvia mensual (año)') }}
       </div>
       <div class="cardHint">mm</div>
     </div>
 
-    <div class="chartWrap" *ngIf="!isLoading; else loadingTpl">
-      <canvas
-        baseChart
-        [datasets]="barChartData"
-        [labels]="barChartLabels"
-        [options]="barChartOptions"
-        [legend]="barChartLegend"
-        [colors]="barChartColors"
-        [chartType]="barChartType">
+    <div class="chartWrap">
+      <canvas baseChart [datasets]="barChartData" [labels]="barChartLabels" [options]="barChartOptions"
+        [legend]="barChartLegend" [colors]="barChartColors" [chartType]="barChartType">
       </canvas>
-    </div>
 
-    <ng-template #loadingTpl>
-      <div class="loadingBox">
+      <div class="loadingOverlay" *ngIf="isLoading">
         <ion-spinner name="bubbles"></ion-spinner>
         <div class="loadingText">Cargando datos...</div>
       </div>
-    </ng-template>
+    </div>
+
   </div>
 
   <div id="fechayhora">

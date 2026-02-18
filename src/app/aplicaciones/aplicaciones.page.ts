@@ -4,7 +4,8 @@ import { EstacionesService } from '../services/estaciones.service';
 import { SprayAdvisorService, MetodoAplicacion, Prioridad, Cultivo, EvaluacionAplicacion } from '../services/spray-advisor.service';
 import { KpService } from '../services/kp.service';
 import { InfoModalComponent } from './info-modal.component';
-
+import { Capacitor } from '@capacitor/core';
+import { Geolocation } from '@capacitor/geolocation';
 
 @Component({
   selector: 'app-aplicaciones',
@@ -32,10 +33,12 @@ export class AplicacionesPage implements OnInit {
   usandoGps = false;
   origenUbicacion: 'ESTACION' | 'GPS' = 'ESTACION';
   estacionNombre: string | null = null;
+  lugarNombre: string | null = null; // nombre devuelto por OWM para la coordenada actual
 
   // datos
   climaActual: any = null;
   pronostico: any[] = [];
+  gpsNombre: string | null = null;
 
   evalActual: EvaluacionAplicacion | null = null;
   evalPronostico: Array<{ dt: number; dtTxt: string; eval: EvaluacionAplicacion; tC: number; rh: number; windMs: number; pop: number }> = [];
@@ -71,6 +74,7 @@ export class AplicacionesPage implements OnInit {
       const lat = Number(datos?.lat);
       const lon = Number(datos?.lon);
       const nombre = datos?.nombre ?? datos?.name ?? null;
+      this.gpsNombre = null;
       if (Number.isFinite(lat) && Number.isFinite(lon)) {
         this.lat = lat;
         this.lon = lon;
@@ -85,41 +89,6 @@ export class AplicacionesPage implements OnInit {
   async toast(msg: string) {
     const t = await this.toastCtrl.create({ message: msg, duration: 2200, position: 'bottom' });
     await t.present();
-  }
-
-  async tomarUbicacion() {
-    if (!navigator.geolocation) {
-      await this.toast('Este dispositivo no permite geolocalización.');
-      return;
-    }
-
-    this.usandoGps = true;
-    const loading = await this.loadingCtrl.create({
-      spinner: 'bubbles',
-      translucent: true,
-      cssClass: 'custom-class custom-loading',
-      showBackdrop: false,
-      message: 'Obteniendo ubicación...',
-    });
-    await loading.present();
-
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        this.lat = pos.coords.latitude;
-        this.lon = pos.coords.longitude;
-        this.origenUbicacion = 'GPS';
-        loading.dismiss();
-        this.usandoGps = false;
-        await this.cargarTodo();
-      },
-      async (err) => {
-        console.error(err);
-        loading.dismiss();
-        this.usandoGps = false;
-        await this.toast('No se pudo obtener la ubicación. Revisá permisos de GPS.');
-      },
-      { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
-    );
   }
 
   async cargarTodo() {
@@ -182,6 +151,8 @@ export class AplicacionesPage implements OnInit {
     return new Promise<void>((resolve) => {
       this.estaciones.getClimaActual(this.lat!, this.lon!).subscribe((json) => {
         this.climaActual = json;
+        this.gpsNombre = (json?.name ?? null);
+        this.lugarNombre = (json?.name ?? null);
         this.evalActual = this.evaluarDesdeOWMActual(json);
         resolve();
       }, _ => resolve());
@@ -214,14 +185,20 @@ export class AplicacionesPage implements OnInit {
     const tz = Number(json?.timezone ?? 0);
     const sunrise = Number(json?.sys?.sunrise ?? 0);
     const sunset = Number(json?.sys?.sunset ?? 0);
-
-    return this.advisor.evaluar(
-      { tC, rh, windMs, gustMs, pop: 0, dtUtc, tzSeconds: tz, sunriseUtc: sunrise, sunsetUtc: sunset },
+    const weather = Array.isArray(json?.weather)
+      ? json.weather.map((w: any) => ({
+        id: Number(w?.id),
+        main: w?.main,
+        description: w?.description,
+      }))
+      : undefined;
+    return this.advisor.evaluar({ tC, rh, windMs, gustMs, pop: 0, dtUtc, tzSeconds: tz, sunriseUtc: sunrise, sunsetUtc: sunset, weather },
       this.metodo,
       this.cultivo,
       this.prioridad,
       this.extrasDecision()
     );
+
   }
 
   private evaluarPronostico(list: any[], city: any): Array<{ dt: number; dtTxt: string; eval: EvaluacionAplicacion; tC: number; rh: number; windMs: number; pop: number }> {
@@ -240,8 +217,16 @@ export class AplicacionesPage implements OnInit {
         const dtUtc = Number(it?.dt ?? 0);
         const dtTxt = it?.dt_txt ?? new Date((dtUtc + tz) * 1000).toISOString();
 
+        const weather = Array.isArray(it?.weather)
+          ? it.weather.map((w: any) => ({
+            id: Number(w?.id),
+            main: w?.main,
+            description: w?.description,
+          }))
+          : undefined;
+
         const ev = this.advisor.evaluar(
-          { tC, rh, windMs, gustMs, pop, dtUtc, tzSeconds: tz, sunriseUtc: sunrise, sunsetUtc: sunset },
+          { tC, rh, windMs, gustMs, pop, dtUtc, tzSeconds: tz, sunriseUtc: sunrise, sunsetUtc: sunset, weather },
           this.metodo,
           this.cultivo,
           this.prioridad,
@@ -257,9 +242,10 @@ export class AplicacionesPage implements OnInit {
     return 'danger';
   }
 
-  formatWindMsToKmh(ms: number): string {
-    const kmh = (ms ?? 0) * 3.6;
-    return `${kmh.toFixed(0)} km/h`;
+  formatWindMsToKmh(ms: any): string {
+    const n = Number(ms);
+    if (!Number.isFinite(n)) return '— km/h';
+    return `${Math.round(n * 3.6)} km/h`;
   }
 
   private usarGnssEnDecision(): boolean {
@@ -377,183 +363,332 @@ export class AplicacionesPage implements OnInit {
     if (!ev) {
       return [
         'Todavía no hay evaluación disponible.',
-        'Cuando se carguen las condiciones, acá vas a ver qué variables empujaron el semáforo y qué acciones lo mejoran.'
+        'Actualizá condiciones y volvé a intentar.'
       ];
     }
 
-    // IMPORTANTE:
-    // Esto asume que EvaluacionAplicacion trae al menos semaforo y, si existen, scores o flags.
-    // Si tu EvaluacionAplicacion NO trae esos campos, no se rompe: solo muestra lo básico.
-
     const lines: string[] = [];
 
-    // Lo mínimo: contexto
+    // Contexto
     lines.push(`Método: ${this.metodo} · Cultivo: ${this.cultivo} · Prioridad: ${this.prioridad}`);
+    lines.push(`Semáforo: ${ev.semaforo}`);
 
-    // Semáforo (si existe)
-    const sem = (ev as any)?.semaforo;
-    if (sem) lines.push(`Resultado: ${sem}`);
-
-    // Si tenés scores (muchos advisors devuelven algo así)
-    const deriva = (ev as any)?.scoreDeriva;
-    const eficacia = (ev as any)?.scoreEficacia;
-    if (deriva != null || eficacia != null) {
-      lines.push('—');
-      if (deriva != null) lines.push(`Deriva (score): ${deriva}`);
-      if (eficacia != null) lines.push(`Eficacia (score): ${eficacia}`);
-    }
-
-    // Si tu EvaluacionAplicacion trae “motivos/razones” (ideal)
-    const reasons = (ev as any)?.reasons as Array<any> | undefined;
-    if (Array.isArray(reasons) && reasons.length) {
-      lines.push('—');
-      lines.push('Factores que influyeron:');
-      for (const r of reasons) {
-        const t = r?.title ?? r?.code ?? 'Factor';
-        const d = r?.detail ?? r?.desc ?? '';
-        lines.push(`• ${t}${d ? ': ' + d : ''}`);
-      }
-    } else {
-      // Fallback: explicaciones genéricas coherentes con lo que estás mostrando en UI
-      lines.push('—');
-      lines.push('Interpretación:');
-      lines.push('• El semáforo combina riesgo de deriva y riesgo de pérdida de eficacia.');
-      lines.push('• “ROJO” suele indicar que al menos un factor crítico está fuera de rango para tu método/prioridad.');
-      lines.push('• Los consejos proponen acciones típicas para reducir deriva (gota/altura/bordes) o mejorar eficacia (horario/evaporación/lluvia).');
-    }
-
-    // Si tu EvaluacionAplicacion trae “acciones recomendadas” (ideal)
-    const tips = (ev as any)?.tips as string[] | undefined;
-    if (Array.isArray(tips) && tips.length) {
-      lines.push('—');
-      lines.push('Qué podés cambiar para mejorar:');
-      for (const t of tips) lines.push(`• ${t}`);
-    }
-
+    // Scores (existen en tu interface)
     lines.push('—');
-    lines.push('Nota: este consejo es operativo y puede ajustarse según etiqueta del producto, tamaño de gota y sensibilidad del entorno.');
+    lines.push(`Deriva (score): ${ev.scoreDeriva}`);
+    lines.push(`Eficacia (score): ${ev.scoreEficacia}`);
+
+    // Variables clave (existen)
+    lines.push('—');
+    lines.push(`ΔT: ${ev.deltaT.toFixed(1)} °C`);
+    lines.push(`Inversión probable: ${ev.inversionProbable ? 'Sí' : 'No'}`);
+
+    // Razones (existen)
+    lines.push('—');
+    lines.push('Factores que empujaron la decisión:');
+    if (ev.razones?.length) {
+      for (const r of ev.razones) lines.push(`• ${r}`);
+    } else {
+      lines.push('• (No se registraron razones)');
+    }
+
+    // Recomendaciones (existen)
+    lines.push('—');
+    lines.push('Qué podés hacer:');
+    if (ev.recomendaciones?.length) {
+      for (const r of ev.recomendaciones) lines.push(`• ${r}`);
+    } else {
+      lines.push('• (No se registraron recomendaciones)');
+    }
+
+    // Extras reales que estás usando
+    lines.push('—');
+    lines.push(`Extras: Kp=${this.kpIndex.toFixed(1)} · Satélites=${this.sats}`);
 
     return lines;
   }
 
+
   async openConsejosFor(ev: EvaluacionAplicacion) {
-  const modal = await this.modalCtrl.create({
-    component: InfoModalComponent,
-    componentProps: {
-      title: 'Por qué el sistema recomienda esto',
-      body: this.buildConsejosExplainBody(ev)
+    const modal = await this.modalCtrl.create({
+      component: InfoModalComponent,
+      componentProps: {
+        title: 'Por qué el sistema recomienda esto',
+        body: this.buildConsejosExplainBody(ev)
+      }
+    });
+    await modal.present();
+  }
+
+  // --- EXPLICACIÓN DEL SEMÁFORO (por qué sale ROJO/AMARILLO/VERDE) ---
+
+  get resumenPorQueAhora(): string[] {
+    // Para mostrar 2-3 líneas en la UI (sin modal)
+    if (!this.evalActual) return [];
+    const r = this.evalActual.razones ?? [];
+    const rec = this.evalActual.recomendaciones ?? [];
+    // Prioridad: razones (2) + 1 recomendación principal
+    const out: string[] = [];
+    for (const x of r.slice(0, 2)) out.push(x);
+    if (rec.length) out.push(rec[0]);
+    return out;
+  }
+
+  private buildWhyBody(ev: EvaluacionAplicacion | null): { title: string; body: string[] } {
+    if (!ev) {
+      return {
+        title: 'Por qué se recomienda esto',
+        body: ['Todavía no hay evaluación disponible. Actualizá condiciones e intentá de nuevo.']
+      };
     }
-  });
-  await modal.present();
-}
 
-// --- EXPLICACIÓN DEL SEMÁFORO (por qué sale ROJO/AMARILLO/VERDE) ---
+    // Valores actuales (para “explicar con números”)
+    const tC = Number(this.climaActual?.main?.temp ?? NaN);
+    const rh = Number(this.climaActual?.main?.humidity ?? NaN);
+    const windMs = Number(this.climaActual?.wind?.speed ?? NaN);
+    const gustMs = this.climaActual?.wind?.gust != null ? Number(this.climaActual.wind.gust) : null;
+    const pop = 0; // en "actual" no hay PoP (solo en forecast)
+    const windKmh = Number.isFinite(windMs) ? windMs * 3.6 : NaN;
+    const gustKmh = gustMs != null && Number.isFinite(gustMs) ? gustMs * 3.6 : NaN;
 
-get resumenPorQueAhora(): string[] {
-  // Para mostrar 2-3 líneas en la UI (sin modal)
-  if (!this.evalActual) return [];
-  const r = this.evalActual.razones ?? [];
-  const rec = this.evalActual.recomendaciones ?? [];
-  // Prioridad: razones (2) + 1 recomendación principal
-  const out: string[] = [];
-  for (const x of r.slice(0, 2)) out.push(x);
-  if (rec.length) out.push(rec[0]);
-  return out;
-}
+    const title = `Por qué el semáforo está en ${ev.semaforo}`;
 
-private buildWhyBody(ev: EvaluacionAplicacion | null): { title: string; body: string[] } {
-  if (!ev) {
-    return {
-      title: 'Por qué se recomienda esto',
-      body: ['Todavía no hay evaluación disponible. Actualizá condiciones e intentá de nuevo.']
-    };
+    const body: string[] = [];
+
+    // Contexto
+    body.push(`Método: ${this.metodo} · Cultivo: ${this.cultivo} · Prioridad: ${this.prioridad}`);
+    body.push(`Deriva (score): ${ev.scoreDeriva} · Eficacia (score): ${ev.scoreEficacia}`);
+
+    body.push('—');
+    body.push('Factores que empujaron la decisión:');
+    if (ev.razones?.length) {
+      for (const x of ev.razones) body.push(`• ${x}`);
+    } else {
+      body.push('• (No se generaron razones en esta evaluación)');
+    }
+
+    body.push('—');
+    body.push('Recomendaciones operativas:');
+    if (ev.recomendaciones?.length) {
+      for (const x of ev.recomendaciones) body.push(`• ${x}`);
+    } else {
+      body.push('• (No se generaron recomendaciones en esta evaluación)');
+    }
+
+    body.push('—');
+    body.push('Valores usados:');
+    if (Number.isFinite(tC)) body.push(`• Temp: ${tC.toFixed(1)} °C`);
+    if (Number.isFinite(rh)) body.push(`• HR: ${rh.toFixed(0)} %`);
+    if (Number.isFinite(windKmh)) body.push(`• Viento: ${windKmh.toFixed(0)} km/h`);
+    if (Number.isFinite(gustKmh)) body.push(`• Ráfaga: ${gustKmh.toFixed(0)} km/h`);
+    body.push(`• ΔT: ${ev.deltaT.toFixed(1)} °C`);
+    body.push(`• Inversión probable: ${ev.inversionProbable ? 'Sí' : 'No'}`);
+    body.push(`• PoP: ${Math.round(pop * 100)} %`);
+
+    // Extras (si se usan)
+    body.push('—');
+    body.push(`Extras: Kp=${this.kpIndex.toFixed(1)} · GNSS satélites=${this.sats}`);
+
+    return { title, body };
   }
 
-  // Valores actuales (para “explicar con números”)
-  const tC = Number(this.climaActual?.main?.temp ?? NaN);
-  const rh = Number(this.climaActual?.main?.humidity ?? NaN);
-  const windMs = Number(this.climaActual?.wind?.speed ?? NaN);
-  const gustMs = this.climaActual?.wind?.gust != null ? Number(this.climaActual.wind.gust) : null;
-  const pop = 0; // en "actual" no hay PoP (solo en forecast)
-  const windKmh = Number.isFinite(windMs) ? windMs * 3.6 : NaN;
-  const gustKmh = gustMs != null && Number.isFinite(gustMs) ? gustMs * 3.6 : NaN;
+  async openPorQueAhora() {
+    const { title, body } = this.buildWhyBody(this.evalActual);
 
-  const title = `Por qué el semáforo está en ${ev.semaforo}`;
-
-  const body: string[] = [];
-
-  // Contexto
-  body.push(`Método: ${this.metodo} · Cultivo: ${this.cultivo} · Prioridad: ${this.prioridad}`);
-  body.push(`Deriva (score): ${ev.scoreDeriva} · Eficacia (score): ${ev.scoreEficacia}`);
-
-  body.push('—');
-  body.push('Factores que empujaron la decisión:');
-  if (ev.razones?.length) {
-    for (const x of ev.razones) body.push(`• ${x}`);
-  } else {
-    body.push('• (No se generaron razones en esta evaluación)');
+    const modal = await this.modalCtrl.create({
+      component: InfoModalComponent,
+      componentProps: { title, body }
+    });
+    await modal.present();
   }
 
-  body.push('—');
-  body.push('Recomendaciones operativas:');
-  if (ev.recomendaciones?.length) {
-    for (const x of ev.recomendaciones) body.push(`• ${x}`);
-  } else {
-    body.push('• (No se generaron recomendaciones en esta evaluación)');
+  private buildWhyBodyForecast(item: { eval: EvaluacionAplicacion; tC: number; rh: number; windMs: number; pop: number; dtTxt: string }) {
+    const ev = item.eval;
+    const title = `Por qué ${item.dtTxt} está en ${ev.semaforo}`;
+    const body: string[] = [];
+
+    body.push(`Temp: ${item.tC.toFixed(1)} °C · HR: ${item.rh.toFixed(0)} % · Viento: ${(item.windMs * 3.6).toFixed(0)} km/h · PoP: ${(item.pop * 100).toFixed(0)} %`);
+    body.push(`ΔT: ${ev.deltaT.toFixed(1)} °C · Inversión probable: ${ev.inversionProbable ? 'Sí' : 'No'}`);
+    body.push('—');
+    body.push('Razones:');
+    for (const x of (ev.razones ?? [])) body.push(`• ${x}`);
+    body.push('—');
+    body.push('Recomendaciones:');
+    for (const x of (ev.recomendaciones ?? [])) body.push(`• ${x}`);
+
+    return { title, body };
   }
 
-  body.push('—');
-  body.push('Valores usados:');
-  if (Number.isFinite(tC)) body.push(`• Temp: ${tC.toFixed(1)} °C`);
-  if (Number.isFinite(rh)) body.push(`• HR: ${rh.toFixed(0)} %`);
-  if (Number.isFinite(windKmh)) body.push(`• Viento: ${windKmh.toFixed(0)} km/h`);
-  if (Number.isFinite(gustKmh)) body.push(`• Ráfaga: ${gustKmh.toFixed(0)} km/h`);
-  body.push(`• ΔT: ${ev.deltaT.toFixed(1)} °C`);
-  body.push(`• Inversión probable: ${ev.inversionProbable ? 'Sí' : 'No'}`);
-  body.push(`• PoP: ${Math.round(pop * 100)} %`);
+  async openPorQueForecast(item: any) {
+    const { title, body } = this.buildWhyBodyForecast(item);
+    const modal = await this.modalCtrl.create({
+      component: InfoModalComponent,
+      componentProps: { title, body }
+    });
+    await modal.present();
+  }
 
-  // Extras (si se usan)
-  body.push('—');
-  body.push(`Extras: Kp=${this.kpIndex.toFixed(1)} · GNSS satélites=${this.sats}`);
+  private async ensureLocationPermission(): Promise<boolean> {
+    try {
+      // En web, el browser gestiona el prompt; esto igual funciona.
+      const status = await Geolocation.checkPermissions();
 
-  return { title, body };
+      // Capacitor v6 devuelve algo tipo: { location: 'granted' | 'denied' | 'prompt' | ... }
+      if (status.location === 'granted') return true;
+
+      const req = await Geolocation.requestPermissions();
+      return req.location === 'granted';
+    } catch (e) {
+      console.warn('[GPS] check/request permissions error', e);
+      return false;
+    }
+  }
+
+  async tomarUbicacion() {
+    // En web (ionic serve), Geolocation de Capacitor puede no comportarse igual.
+    // Usamos navigator.geolocation como fallback.
+    const isNative = Capacitor.isNativePlatform();
+
+    if (!isNative) {
+      if (!navigator.geolocation) {
+        await this.toast('Este navegador no permite geolocalización.');
+        return;
+      }
+      this.usandoGps = true;
+      this.estacionNombre = null;
+      this.lugarNombre = null;
+
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          this.lat = pos.coords.latitude;
+          this.lon = pos.coords.longitude;
+          this.origenUbicacion = 'GPS';
+          this.usandoGps = false;
+          await this.cargarTodo();
+        },
+        async () => {
+          this.usandoGps = false;
+          await this.toast('No se pudo obtener la ubicación. Revisá permisos del navegador.');
+        },
+        { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
+      );
+      return;
+    }
+
+    // ===== Native (Android / iOS) con Capacitor =====
+    this.usandoGps = true;
+
+    const loading = await this.loadingCtrl.create({
+      spinner: 'bubbles',
+      translucent: true,
+      cssClass: 'custom-class custom-loading',
+      showBackdrop: false,
+      message: 'Obteniendo ubicación...',
+    });
+
+    await loading.present();
+
+    try {
+      // 1) Ver permisos actuales
+      const perm = await Geolocation.checkPermissions();
+
+      // 2) Pedir si hace falta
+      if (perm.location !== 'granted') {
+        const req = await Geolocation.requestPermissions({
+          permissions: ['location']
+        });
+
+        if (req.location !== 'granted') {
+          throw new Error('PERMISO_DENEGADO');
+        }
+      }
+
+      // 3) Obtener posición
+      const pos = await Geolocation.getCurrentPosition({
+        enableHighAccuracy: true,
+        timeout: 12000,
+        maximumAge: 0,
+      });
+
+      this.lat = pos.coords.latitude;
+      this.lon = pos.coords.longitude;
+      this.origenUbicacion = 'GPS';
+
+      await loading.dismiss();
+      this.usandoGps = false;
+
+      await this.cargarTodo();
+
+    } catch (e: any) {
+      await loading.dismiss();
+      this.usandoGps = false;
+
+      if (String(e?.message || '').includes('PERMISO_DENEGADO')) {
+        await this.toast('Permiso de ubicación denegado. Activá “Ubicación” para esta app en Ajustes.');
+      } else {
+        console.error('[GPS] Error:', e);
+        await this.toast('No se pudo obtener la ubicación. Revisá GPS/Permisos y volvé a intentar.');
+      }
+    }
+  }
+
+  get kpTimeShort(): string | null {
+    const tag = this.kpTimeTag;
+    if (!tag) return null;
+
+    // 1) Intento: parse como fecha (si viene tipo ISO o similar)
+    try {
+      // Normalizo cosas típicas: "YYYY-MM-DD HH:MM:SS.000 UTC" -> ISO UTC
+      let s = tag.trim();
+
+      // Si viene con " UTC" al final, lo saco y fuerzo Z
+      const hasUTC = /\bUTC\b/i.test(s);
+      s = s.replace(/\s*UTC\s*$/i, '');
+
+      // Si viene con espacio entre fecha y hora, lo paso a 'T'
+      if (/^\d{4}-\d{2}-\d{2}\s+\d/.test(s)) s = s.replace(' ', 'T');
+
+      // Si no tiene zona, lo fuerzo a UTC
+      if (!/[zZ]|[+\-]\d{2}:?\d{2}$/.test(s)) s += 'Z';
+
+      const d = new Date(s);
+      if (!isNaN(d.getTime())) {
+        const fmt = new Intl.DateTimeFormat('es-AR', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false,
+          timeZone: hasUTC ? 'UTC' : undefined, // si decía UTC, lo fijo en UTC
+        });
+        return fmt.format(d).replace(',', '');
+      }
+    } catch {
+      // sigo al fallback
+    }
+
+    // 2) Fallback: recortar "YYYY-MM-DD HH:MM"
+    const m = tag.match(/(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2})/);
+    if (m) return `${m[1]} ${m[2]}`;
+
+    // 3) Último recurso: devolver algo cortado
+    return tag.slice(0, 16);
+  }
+
+  windIconRotate(deg: any): number {
+    const n = Number(deg);
+    if (!Number.isFinite(n)) return 0;
+    return n - 45;
+  }
+
+  /** Convierte grados meteorológicos (0=N, 90=E) a punto cardinal (N, NNE, ...). */
+  windDirLabel(deg: any): string {
+    const n = Number(deg);
+    if (!Number.isFinite(n)) return '—';
+    const dirs = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+    const idx = Math.round(((n % 360) / 22.5)) % 16;
+    return dirs[idx];
+  }
+  
 }
-
-async openPorQueAhora() {
-  const { title, body } = this.buildWhyBody(this.evalActual);
-
-  const modal = await this.modalCtrl.create({
-    component: InfoModalComponent,
-    componentProps: { title, body }
-  });
-  await modal.present();
-}
-
-private buildWhyBodyForecast(item: { eval: EvaluacionAplicacion; tC: number; rh: number; windMs: number; pop: number; dtTxt: string }) {
-  const ev = item.eval;
-  const title = `Por qué ${item.dtTxt} está en ${ev.semaforo}`;
-  const body: string[] = [];
-
-  body.push(`Temp: ${item.tC.toFixed(1)} °C · HR: ${item.rh.toFixed(0)} % · Viento: ${(item.windMs * 3.6).toFixed(0)} km/h · PoP: ${(item.pop * 100).toFixed(0)} %`);
-  body.push(`ΔT: ${ev.deltaT.toFixed(1)} °C · Inversión probable: ${ev.inversionProbable ? 'Sí' : 'No'}`);
-  body.push('—');
-  body.push('Razones:');
-  for (const x of (ev.razones ?? [])) body.push(`• ${x}`);
-  body.push('—');
-  body.push('Recomendaciones:');
-  for (const x of (ev.recomendaciones ?? [])) body.push(`• ${x}`);
-
-  return { title, body };
-}
-
-async openPorQueForecast(item: any) {
-  const { title, body } = this.buildWhyBodyForecast(item);
-  const modal = await this.modalCtrl.create({
-    component: InfoModalComponent,
-    componentProps: { title, body }
-  });
-  await modal.present();
-}
-
-}
-

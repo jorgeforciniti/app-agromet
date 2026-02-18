@@ -47,5 +47,12 @@
 	<true/>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Necesitamos tu ubicación para calcular condiciones de aplicación (viento, ΔT, lluvia) en tu posición.</string>
+
+	<!-- Opcional (solo si vas a pedir "Siempre") -->
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Necesitamos tu ubicación para calcular condiciones de aplicación incluso si la app no está en primer plano.</string>
+
 </dict>
 </plist>

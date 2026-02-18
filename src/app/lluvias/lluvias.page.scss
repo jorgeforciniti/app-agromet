@@ -39,14 +39,12 @@ ion-content.contenido.grad::part(scroll) {
 }
 
 .stationName {
-  margin-top: 8px;
   font-family: helveticaNBC;
   color: var(--accent);
   font-size: 0.85rem;
   letter-spacing: 0.5px;
   text-transform: uppercase;
 }
-
 /* RESUMEN */
 .summary {
   display: grid;
@@ -176,7 +174,6 @@ ion-segment-button {
 }
 
 .chartWrap {
-  height: 320px;
   width: 100%;
 }
 
@@ -206,4 +203,23 @@ ion-segment-button {
   color: var(--accent);
   font-family: helveticaNBC;
   font-size: 1.3rem;
+}
+
+canvas {
+  display: block; // 👈 ayuda a que no quede con baseline raro
+}
+
+.chartWrap {
+  position: relative;
+  height: 260px; // o el alto que ya uses
+}
+
+.loadingOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(2px);
 }

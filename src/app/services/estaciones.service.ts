@@ -25,7 +25,7 @@ export class EstacionesService {
   getSelectedStation(): string | null {
     return localStorage.getItem('estacion');
   }
-  
+
   dato: any;
   private agrometBase = 'https://agromet.eeaoc.gob.ar/android/';
   private servicesBase = 'https://agromet.eeaoc.gob.ar/services/';
@@ -39,26 +39,26 @@ export class EstacionesService {
   }
 
   getPosts() {
-  console.log('[SERVICE] getPosts() → pidiendo estaciones');
-  return this.http.get<any[]>(`${this.agrometBase}io_estaciones.php?habilitada=2`).pipe(
-    tap(res => console.log('[SERVICE] getPosts() OK:', res?.length, res?.[0])),
-    catchError(err => {
-      console.error('[SERVICE] getPosts() ERROR:', err);
-      return of([]);
-    })
-  );
-}
+    console.log('[SERVICE] getPosts() → pidiendo estaciones');
+    return this.http.get<any[]>(`${this.agrometBase}io_estaciones.php?habilitada=2`).pipe(
+      tap(res => console.log('[SERVICE] getPosts() OK:', res?.length, res?.[0])),
+      catchError(err => {
+        console.error('[SERVICE] getPosts() ERROR:', err);
+        return of([]);
+      })
+    );
+  }
 
   getDatos(estacion: string | number) {
-  console.log('[SERVICE] getDatosByEstacion() → estacion =', estacion);
-  return this.http.get<any>(`${this.agrometBase}io_datos.php?estacion=${estacion}`).pipe(
-    tap(res => console.log('[SERVICE] getDatos() OK:', res)),
-    catchError(err => {
-      console.error('[SERVICE] getDatos() ERROR:', err);
-      return of(null);
-    })
-  );
-}
+    console.log('[SERVICE] getDatosByEstacion() → estacion =', estacion);
+    return this.http.get<any>(`${this.agrometBase}io_datos.php?estacion=${estacion}`).pipe(
+      tap(res => console.log('[SERVICE] getDatos() OK:', res)),
+      catchError(err => {
+        console.error('[SERVICE] getDatos() ERROR:', err);
+        return of(null);
+      })
+    );
+  }
 
   getTemperaturas(estacion: number): Observable<any> {
     const params = new HttpParams().set('estacion', String(estacion));
@@ -88,8 +88,15 @@ export class EstacionesService {
 
   getSmnAlertByArea(area: number, tipo = 1): Observable<any> {
     const params = new HttpParams().set('area', String(area)).set('tipo', String(tipo));
-    return this.http.get(`${this.servicesBase}pronosticos/smn-alerta-area.php`, { params })
-      .pipe(catchError(() => of(null)));
+    return this.http
+      .get(`${this.servicesBase}pronosticos/smn-alerta-area.php`, { params })
+      .pipe(
+        tap(res => console.log('[SMN] OK area', area, res)),
+        catchError(err => {
+          console.error('[SMN] ERROR area', area, err);
+          return of(null);
+        })
+      );
   }
 
   getClimaActual(lat: number, lon: number): Observable<any> {
@@ -106,5 +113,5 @@ export class EstacionesService {
   getTemperatura24(estacion: string | number): Observable<any> {
     return this.getTemperaturas(Number(estacion));
   }
-  
+
 }

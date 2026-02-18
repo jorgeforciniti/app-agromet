@@ -1,0 +1,20 @@
+{
+  "version": 3,
+  "artifactType": {
+    "type": "APK",
+    "kind": "Directory"
+  },
+  "applicationId": "appinventor.ai_jorgeforciniti.Agromet2",
+  "variantName": "debug",
+  "elements": [
+    {
+      "type": "SINGLE",
+      "filters": [],
+      "attributes": [],
+      "versionCode": 20208,
+      "versionName": "2.2.8",
+      "outputFile": "app-debug.apk"
+    }
+  ],
+  "elementType": "File"
+}

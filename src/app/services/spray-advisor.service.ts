@@ -106,6 +106,93 @@ function evalThreshold(x: number, rule: any): Semaforo {
   return 'AMARILLO';
 }
 
+// === OpenWeatherMap: weather.id -> descripción amigable (ES) ===
+function owmWeatherDesc(id: number): string {
+  if (!Number.isFinite(id)) return 'Condición meteorológica (desconocida)';
+
+  const explicit: Record<number, string> = {
+    // 2xx Tormenta
+    200: 'Tormenta eléctrica con lluvia ligera',
+    201: 'Tormenta eléctrica con lluvia',
+    202: 'Tormenta eléctrica con fuertes lluvias',
+    210: 'Tormenta ligera',
+    211: 'Tormenta',
+    212: 'Fuerte tormenta eléctrica',
+    221: 'Tormenta eléctrica irregular',
+    230: 'Tormenta eléctrica con llovizna ligera',
+    231: 'Tormenta eléctrica con llovizna',
+    232: 'Tormenta eléctrica con llovizna intensa',
+
+    // 3xx Llovizna
+    300: 'Llovizna de intensidad ligera',
+    301: 'Llovizna',
+    302: 'Llovizna de fuerte intensidad',
+    310: 'Lluvia ligera y llovizna',
+    311: 'Llovizna',
+    312: 'Lluvia lloviznosa de fuerte intensidad',
+    313: 'Chubascos de lluvia y llovizna',
+    314: 'Fuertes lluvias y lloviznas',
+    321: 'Llovizna de ducha',
+
+    // 5xx Lluvia
+    500: 'Lluvia ligera',
+    501: 'Lluvia moderada',
+    502: 'Lluvia de fuerte intensidad',
+    503: 'Lluvia muy fuerte',
+    504: 'Lluvia extrema',
+    511: 'Lluvia helada',
+    520: 'Lluvia ligera de intensidad baja',
+    521: 'Lluvia de chaparrón',
+    522: 'Lluvia de fuerte intensidad',
+    531: 'Lluvia torrencial',
+
+    // 6xx Nieve
+    600: 'Nieve ligera',
+    601: 'Nieve',
+    602: 'Fuertes nevadas',
+    611: 'Aguanieve',
+    612: 'Chubasco ligero de aguanieve',
+    613: 'Aguanieve',
+    615: 'Lluvia ligera y nieve',
+    616: 'Lluvia y nieve',
+    620: 'Chubasco ligero de nieve',
+    621: 'Lluvia de nieve',
+    622: 'Fuertes nevadas',
+
+    // 7xx Atmósfera
+    701: 'Neblina',
+    711: 'Humo',
+    721: 'Bruma',
+    731: 'Remolinos de arena/polvo',
+    741: 'Niebla',
+    751: 'Arena',
+    761: 'Polvo',
+    762: 'Ceniza volcánica',
+    771: 'Borrascas',
+    781: 'Tornado',
+
+    // 800+ Cielo/nubes
+    800: 'Cielo despejado',
+    801: 'Pocas nubes',
+    802: 'Nubes dispersas',
+    803: 'Nubes dispersas',
+    804: 'Nubes cubiertas',
+  };
+
+  if (explicit[id]) return explicit[id];
+
+  const group = Math.floor(id / 100);
+  switch (group) {
+    case 2: return 'Tormenta eléctrica';
+    case 3: return 'Llovizna';
+    case 5: return 'Lluvia';
+    case 6: return 'Nieve';
+    case 7: return 'Fenómeno de baja visibilidad (niebla/bruma/polvo)';
+    case 8: return id === 800 ? 'Cielo despejado' : 'Nubosidad';
+    default: return 'Condición meteorológica';
+  }
+}
+
 @Injectable({ providedIn: 'root' })
 export class SprayAdvisorService {
 
@@ -164,6 +251,8 @@ export class SprayAdvisorService {
       tzSeconds?: number;
       sunriseUtc?: number;
       sunsetUtc?: number;
+      weatherId?: number;
+      weather?: Array<{ id: number; main?: string; description?: string }>;
     },
     metodo: MetodoAplicacion,
     cultivo: Cultivo,
@@ -191,6 +280,38 @@ export class SprayAdvisorService {
     }
 
     let lRain: Semaforo = 'VERDE';
+
+    let lWx: Semaforo = 'VERDE';
+    let wxText: string | null = null;
+
+    const wxList =
+      Array.isArray(meteo.weather) && meteo.weather.length
+        ? meteo.weather
+        : (Number.isFinite(meteo.weatherId as number) ? [{ id: meteo.weatherId as number }] : []);
+
+    if (wxList.length) {
+      wxText = wxList
+        .map(w => (w?.description || w?.main || '').trim())
+        .filter(Boolean)
+        .map(s => s.charAt(0).toUpperCase() + s.slice(1))
+        .join(' + ') || null;
+
+      for (const w of wxList) {
+        const id = Number(w?.id);
+        if (!Number.isFinite(id)) continue;
+
+        let sev: Semaforo = 'VERDE';
+        if ((id >= 200 && id <= 232) || (id >= 300 && id <= 321) || (id >= 500 && id <= 531) || (id >= 600 && id <= 622) || id === 771 || id === 781) {
+          sev = 'ROJO';
+        } else if (id >= 700 && id <= 762) {
+          sev = 'AMARILLO';
+        }
+
+        if (sev === 'ROJO') { lWx = 'ROJO'; break; }
+        if (sev === 'AMARILLO' && lWx === 'VERDE') lWx = 'AMARILLO';
+      }
+    }
+
     const pop = meteo.pop ?? 0;
     if (pop >= rules.popRed) lRain = 'ROJO';
     else if (pop >= rules.popYellow) lRain = 'AMARILLO';
@@ -233,6 +354,7 @@ export class SprayAdvisorService {
     // Reglas duras
     sem = worst(sem, worst(lWind, worst(lGust, worst(lDT, lRain))));
     sem = worst(sem, lInv);
+    sem = worst(sem, lWx);
     // Extras: solo afectan si son malos
     sem = worst(sem, lKp);
     sem = worst(sem, lSats);
@@ -248,12 +370,18 @@ export class SprayAdvisorService {
     if (lRain !== 'VERDE') push(razones, `Prob. precipitación ${(pop * 100).toFixed(0)}% (${lRain}).`);
     if (lKp !== 'VERDE') push(razones, `Kp ${kp} (${lKp}) → posible degradación GNSS/compás.`);
     if (lSats !== 'VERDE') push(razones, `Satélites ${sats} (${lSats}) → precisión GNSS baja.`);
+    if (lWx !== 'VERDE') {
+      const desc = wxText ? wxText : 'Condición atmosférica adversa';
+      push(razones, `Condición actual: ${desc} (${lWx}).`);
+    }
 
     // Recomendaciones por método (conservadoras)
     if (sem === 'ROJO') push(recs, 'Evitar la aplicación en estas condiciones.');
     if (lInv !== 'VERDE') push(recs, 'Esperar ruptura de inversión: más mezcla (viento >5 km/h) y/o mayor radiación.');
     if (lDT === 'ROJO') push(recs, 'Reprogramar a ΔT 2–8 °C o usar gota muy gruesa + antievaporante.');
     if (lWind === 'ROJO' || lGust === 'ROJO') push(recs, 'Si es imprescindible: bajar altura, aumentar tamaño de gota y alejarse de bordes sensibles.');
+    if (lWx === 'ROJO') push(recs, 'Hay precipitación/tormenta ahora: evitar la aplicación por lavado y seguridad.');
+    if (lWx === 'AMARILLO') push(recs, 'Condición atmosférica (niebla/bruma/polvo): revisar visibilidad/deriva antes de aplicar.');
 
     // Consejos de operación (genéricos; se pueden ajustar)
     if (metodo === 'DRON') {
@@ -276,4 +404,5 @@ export class SprayAdvisorService {
       recomendaciones: recs,
     };
   }
+
 }
