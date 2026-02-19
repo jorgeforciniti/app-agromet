@@ -1,10 +1,18 @@
 {
   "appId": "com.agromet.eeaoc",
-  "appName": "com.agromet.eeaoc",
+  "appName": "Agromet EEAOC",
   "webDir": "www",
+
+  "android": {
+    "versionName": "2.3.5",
+    "versionCode": 20305
+  },
+
   "ios": {
-  "buildNumber": "2",
-  "version": "2.3.1",
+    "version": "2.3.5",
+    "buildNumber": "20305"
+  },
+
   "plugins": {
     "SplashScreen": {
       "launchShowDuration": 3000,
@@ -14,16 +22,5 @@
       "splashFullScreen": true,
       "splashImmersive": true
     }
-  },
-  "preferences": {
-    "ScrollEnabled": false,
-    "android-minSdkVersion": 24,
-    "BackupWebStorage": "none",
-    "SplashMaintainAspectRatio": true,
-    "FadeSplashScreenDuration": 300,
-    "SplashShowOnlyFirstTime": false,
-    "SplashScreen": "screen",
-    "SplashScreenDelay": 3000
   }
-}
 }
