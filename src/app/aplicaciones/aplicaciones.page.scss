@@ -355,3 +355,14 @@ ion-button[fill="outline"] {
   font-size: 12px;
   opacity: .75;
 }
+
+.metric-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.info-icon {
+  font-size: 16px;
+  opacity: 0.85;
+}

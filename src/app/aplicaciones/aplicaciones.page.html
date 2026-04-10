@@ -194,7 +194,8 @@
                 <div class="metric-label">
                   <ion-icon name="contrast-outline"></ion-icon>
                   ΔT
-                  <ion-icon class="info-icon" name="information-circle-outline" (click)="openInfo('DELTA_T')"></ion-icon>
+                  <ion-icon class="info-icon" name="information-circle-outline"
+                    (click)="openInfo('DELTA_T')"></ion-icon>
                 </div>
                 <div class="metric-value">{{ evalActual.deltaT | number:'1.1-1' }} °C</div>
               </div>
@@ -205,7 +206,8 @@
                 <div class="metric-label">
                   <ion-icon name="layers-outline"></ion-icon>
                   Inversión
-                  <ion-icon class="info-icon" name="information-circle-outline" (click)="openInfo('INVERSION')"></ion-icon>
+                  <ion-icon class="info-icon" name="information-circle-outline"
+                    (click)="openInfo('INVERSION')"></ion-icon>
                 </div>
                 <div class="metric-value">{{ evalActual.inversionProbable ? 'Probable' : 'No' }}</div>
               </div>
@@ -214,13 +216,24 @@
           <ion-row>
             <ion-col size="6">
               <div class="metric">
-                <div class="metric-label">Deriva (score)</div>
+                <div class="metric-label">
+                  Deriva (score)
+                  <ion-icon class="info-icon" name="information-circle-outline"
+                    (click)="openInfo('SCORES'); $event.stopPropagation()">
+                  </ion-icon>
+                </div>
                 <div class="metric-value">{{ evalActual.scoreDeriva }}</div>
               </div>
             </ion-col>
+
             <ion-col size="6">
               <div class="metric">
-                <div class="metric-label">Eficacia (score)</div>
+                <div class="metric-label">
+                  Eficacia (score)
+                  <ion-icon class="info-icon" name="information-circle-outline"
+                    (click)="openInfo('SCORES'); $event.stopPropagation()">
+                  </ion-icon>
+                </div>
                 <div class="metric-value">{{ evalActual.scoreEficacia }}</div>
               </div>
             </ion-col>

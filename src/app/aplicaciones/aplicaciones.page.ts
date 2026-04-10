@@ -400,6 +400,15 @@ export class AplicacionesPage implements OnInit {
         title = 'Por qué el sistema recomienda esto';
         body = this.buildConsejosExplainBody(this.evalActual);
         break;
+ 
+      case 'SCORES':
+        title = 'Riesgos';
+        body = [
+          '0–34: bajo (bueno)',
+          '35–65: medio (precaución)',
+          '>65: alto (riesgo)'
+        ];
+        break;
     }
 
     const modal = await this.modalCtrl.create({
