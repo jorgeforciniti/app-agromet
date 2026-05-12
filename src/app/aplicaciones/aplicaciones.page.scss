@@ -15,8 +15,8 @@
   --border: rgba(128, 227, 211, 0.35);
 }
 
-/* Toolbar igual a las otras pantallas */
-ion-header ion-toolbar {
+
+.topbar {
   --background: rgba(0, 0, 0, 0.35);
   --border-color: transparent;
   backdrop-filter: blur(10px);

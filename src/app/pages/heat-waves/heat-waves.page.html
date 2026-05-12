@@ -1,0 +1,178 @@
+<ion-header translucent="true">
+  <ion-toolbar class="topbar">
+    <ion-title class="title">Salud</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content fullscreen class="health-page">
+  <ion-list *ngIf="loading">
+    <ion-item>
+      <ion-label>Cargando pantalla de salud...</ion-label>
+    </ion-item>
+  </ion-list>
+
+  <ion-list *ngIf="!loading && error">
+    <ion-item>
+      <ion-label color="danger">{{ error }}</ion-label>
+    </ion-item>
+  </ion-list>
+
+  <div class="health-wrapper" *ngIf="!loading && !error">
+    <ion-card class="hero-card">
+      <ion-card-header>
+        <ion-card-title>Salud meteorológica</ion-card-title>
+        <ion-card-subtitle>{{ locationName }}</ion-card-subtitle>
+      </ion-card-header>
+
+      <ion-card-content>
+        <div class="hero-grid">
+          <div class="metric">
+            <span class="label">Temperatura actual</span>
+            <strong>{{ currentData?.temp_af }} °C</strong>
+          </div>
+          <div class="metric">
+            <span class="label">Humedad</span>
+            <strong>{{ currentData?.hum_af }} %</strong>
+          </div>
+          <div class="metric">
+            <span class="label">Lluvia del día</span>
+            <strong>{{ currentData?.RR_dia }} mm</strong>
+          </div>
+          <div class="metric">
+            <span class="label">Última actualización</span>
+            <strong>{{ currentData?.fecha_I }}</strong>
+          </div>
+        </div>
+      </ion-card-content>
+    </ion-card>
+
+    <ion-card class="event-card" [ngClass]="getRiskClass(activeHeatWave ? 'alto' : 'bajo')">
+      <ion-card-header>
+        <ion-card-title>Calor extremo</ion-card-title>
+        <ion-card-subtitle>{{ getHeatWaveStatusText() }}</ion-card-subtitle>
+      </ion-card-header>
+      <ion-card-content>
+        <div class="info-grid">
+          <div><span>Tmax de hoy</span><strong>{{ getTodayTmax() | number:'1.1-1' }} °C</strong></div>
+          <div><span>P90 Tmax</span><strong>{{ thresholdsToday?.p90Max | number:'1.1-1' }} °C</strong></div>
+        </div>
+
+        <p>
+          <strong>Criterio del evento:</strong>
+          temperatura máxima diaria superior al percentil 90 durante al menos 3 días consecutivos.
+        </p>
+
+        <div *ngIf="activeHeatWave" class="detail-box">
+          <strong>Evento actual:</strong>
+          {{ formatDate(activeHeatWave.startDate) }} - {{ formatDate(activeHeatWave.endDate) }}
+          ({{ activeHeatWave.consecutiveDays }} días)
+        </div>
+      </ion-card-content>
+    </ion-card>
+
+    <ion-card [ngClass]="getRiskClass(heatStressRisk?.level)">
+      <ion-card-header>
+        <ion-card-title>Estrés por calor</ion-card-title>
+        <ion-card-subtitle>Evaluación sanitaria</ion-card-subtitle>
+      </ion-card-header>
+      <ion-card-content>
+        <div class="info-grid">
+          <div><span>Tmax de hoy</span><strong>{{ getTodayTmax() | number:'1.1-1' }} °C</strong></div>
+          <div><span>P90 Tmax</span><strong>{{ thresholdsToday?.p90Max | number:'1.1-1' }} °C</strong></div>
+          <div><span>Tmin de hoy</span><strong>{{ getTodayTmin() | number:'1.1-1' }} °C</strong></div>
+          <div><span>P90 Tmin</span><strong>{{ thresholdsToday?.p90Min | number:'1.1-1' }} °C</strong></div>
+        </div>
+
+        <p class="status-text"><strong>Nivel:</strong> {{ heatStressRisk?.label }}</p>
+        <p>{{ heatStressRisk?.message }}</p>
+        <p><strong>Factores:</strong> {{ getHeatStressTriggersText() }}</p>
+      </ion-card-content>
+    </ion-card>
+
+    <ion-card class="warm-night-card">
+      <ion-card-header>
+        <ion-card-title>Noches cálidas</ion-card-title>
+        <ion-card-subtitle>{{ getWarmNightStatusText() }}</ion-card-subtitle>
+      </ion-card-header>
+      <ion-card-content>
+        <p>
+          En los últimos 30 días se detectaron
+          <strong>{{ warmNights.length }}</strong> noches con Tmin superior al percentil 90 diario.
+        </p>
+      </ion-card-content>
+    </ion-card>
+
+    <ion-card class="event-card" [ngClass]="getRiskClass(activeColdWave ? 'alto' : 'bajo')">
+      <ion-card-header>
+        <ion-card-title>Frío extremo</ion-card-title>
+        <ion-card-subtitle>{{ getColdWaveStatusText() }}</ion-card-subtitle>
+      </ion-card-header>
+      <ion-card-content>
+        <div class="info-grid">
+          <div><span>Tmin de hoy</span><strong>{{ getTodayTmin() | number:'1.1-1' }} °C</strong></div>
+          <div><span>P10 Tmin</span><strong>{{ thresholdsToday?.p10Min | number:'1.1-1' }} °C</strong></div>
+        </div>
+
+        <p>
+          <strong>Criterio del evento:</strong>
+          temperatura mínima diaria inferior al percentil 10 durante al menos 3 días consecutivos.
+        </p>
+
+        <div *ngIf="activeColdWave" class="detail-box">
+          <strong>Evento actual:</strong>
+          {{ formatDate(activeColdWave.startDate) }} - {{ formatDate(activeColdWave.endDate) }}
+          ({{ activeColdWave.consecutiveDays }} días)
+        </div>
+      </ion-card-content>
+    </ion-card>
+
+    <ion-card [ngClass]="getRiskClass(coldStressRisk?.level)">
+      <ion-card-header>
+        <ion-card-title>Estrés por frío</ion-card-title>
+        <ion-card-subtitle>Evaluación sanitaria</ion-card-subtitle>
+      </ion-card-header>
+      <ion-card-content>
+        <div class="info-grid">
+          <div><span>Tmin de hoy</span><strong>{{ getTodayTmin() | number:'1.1-1' }} °C</strong></div>
+          <div><span>P10 Tmin</span><strong>{{ thresholdsToday?.p10Min | number:'1.1-1' }} °C</strong></div>
+          <div><span>Temperatura actual</span><strong>{{ currentData?.temp_af }} °C</strong></div>
+        </div>
+
+        <p class="status-text"><strong>Nivel:</strong> {{ coldStressRisk?.label }}</p>
+        <p>{{ coldStressRisk?.message }}</p>
+        <p><strong>Factores:</strong> {{ getColdStressTriggersText() }}</p>
+      </ion-card-content>
+    </ion-card>
+
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>Humedad y confort</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <div class="info-grid">
+          <div><span>Humedad actual</span><strong>{{ currentData?.hum_af }} %</strong></div>
+          <div><span>Categoría</span><strong>{{ humidityCategory }}</strong></div>
+          <div><span>Viento medio</span><strong>{{ currentData?.viento_medio }} km/h</strong></div>
+          <div><span>Ráfaga 24 h</span><strong>{{ currentData?.rafaga24 }} km/h</strong></div>
+        </div>
+      </ion-card-content>
+    </ion-card>
+
+    <ion-card [ngClass]="getRiskClass(vectorRisk?.level)">
+      <ion-card-header>
+        <ion-card-title>Vectores</ion-card-title>
+        <ion-card-subtitle>Favorabilidad ambiental</ion-card-subtitle>
+      </ion-card-header>
+      <ion-card-content>
+        <p class="status-text"><strong>{{ vectorRisk?.label }}</strong></p>
+        <p>{{ vectorRisk?.message }}</p>
+
+        <div class="info-grid">
+          <div><span>Lluvia de hoy</span><strong>{{ currentData?.RR_dia }} mm</strong></div>
+          <div><span>Lluvia próxima 24 h</span><strong>{{ forecastRainNext24h | number:'1.1-1' }} mm</strong></div>
+        </div>
+      </ion-card-content>
+    </ion-card>
+
+  </div>
+</ion-content>

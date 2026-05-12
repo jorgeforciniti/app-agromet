@@ -1,0 +1,260 @@
+:host {
+  --bg-top: #07141b;
+  --bg-mid: #031f2b;
+  --bg-bottom: #02131c;
+
+  --card-bg: linear-gradient(90deg, rgba(8, 23, 31, 0.96) 0%, rgba(1, 16, 25, 0.96) 100%);
+  --card-border: rgba(84, 207, 214, 0.38);
+  --card-border-soft: rgba(84, 207, 214, 0.18);
+
+  --text-main: #e9f7f8;
+  --text-soft: #a9c7cc;
+  --text-muted: #7ca0a8;
+  --accent: #7ee8ea;
+  --accent-strong: #8ff7ff;
+
+  --risk-low: #2dbb8a;
+  --risk-moderate: #d8b24d;
+  --risk-high: #e88b3a;
+  --risk-very-high: #c94b48;
+}
+
+ion-content.health-page {
+  --background:
+    linear-gradient(
+      180deg,
+      var(--bg-top) 0%,
+      var(--bg-mid) 42%,
+      var(--bg-bottom) 100%
+    );
+}
+
+.health-wrapper {
+  padding: 12px;
+  display: grid;
+  gap: 12px;
+}
+
+ion-card {
+  margin: 0;
+  border-radius: 16px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  box-shadow: none;
+  overflow: hidden;
+  position: relative;
+}
+
+ion-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(126, 232, 234, 0.04) 0%,
+    rgba(126, 232, 234, 0.01) 40%,
+    rgba(126, 232, 234, 0) 100%
+  );
+  pointer-events: none;
+}
+
+ion-card-header,
+ion-card-content {
+  position: relative;
+  z-index: 1;
+}
+
+ion-card-title {
+  color: var(--text-main);
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+ion-card-subtitle {
+  color: var(--text-soft);
+  font-size: 0.92rem;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+.hero-card {
+  background:
+    linear-gradient(90deg, rgba(5, 23, 32, 0.98) 0%, rgba(0, 37, 52, 0.95) 100%);
+}
+
+.hero-card ion-card-title {
+  text-transform: uppercase;
+  font-size: 1.35rem;
+  letter-spacing: 0.04em;
+}
+
+.hero-card ion-card-subtitle {
+  color: var(--accent-strong);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.hero-grid,
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.metric,
+.info-grid > div {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--card-border-soft);
+  border-radius: 12px;
+  padding: 10px 12px;
+  min-height: 70px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.label,
+.info-grid span {
+  display: block;
+  color: var(--text-soft);
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 6px;
+}
+
+.metric strong,
+.info-grid strong {
+  color: var(--accent);
+  font-size: 1.35rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.hero-card .metric strong {
+  color: #9afcff;
+}
+
+.status-text,
+p,
+li {
+  color: var(--text-main);
+}
+
+p {
+  margin: 0 0 10px;
+  line-height: 1.45;
+  font-size: 0.96rem;
+}
+
+.status-text {
+  margin-top: 10px;
+  margin-bottom: 6px;
+}
+
+.detail-box,
+.note {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--card-border-soft);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-main);
+  font-size: 0.92rem;
+}
+
+.warm-night-card ion-card-subtitle {
+  color: var(--accent);
+}
+
+.event-card {
+  background:
+    linear-gradient(90deg, rgba(10, 24, 30, 0.98) 0%, rgba(7, 20, 26, 0.98) 100%);
+}
+
+.forecast-list {
+  display: grid;
+  gap: 10px;
+}
+
+.forecast-day {
+  border: 1px solid var(--card-border-soft);
+  border-radius: 12px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  display: grid;
+  gap: 4px;
+  color: var(--text-main);
+}
+
+.forecast-date {
+  color: var(--accent);
+  font-weight: 800;
+  margin-bottom: 4px;
+  letter-spacing: 0.03em;
+}
+
+.risk-low {
+  border-left: 4px solid var(--risk-low);
+}
+
+.risk-moderate {
+  border-left: 4px solid var(--risk-moderate);
+}
+
+.risk-high {
+  border-left: 4px solid var(--risk-high);
+}
+
+.risk-very-high {
+  border-left: 4px solid var(--risk-very-high);
+}
+
+.risk-low ion-card-subtitle {
+  color: #77d8b9;
+}
+
+.risk-moderate ion-card-subtitle {
+  color: #e6ca79;
+}
+
+.risk-high ion-card-subtitle {
+  color: #ffb06a;
+}
+
+.risk-very-high ion-card-subtitle {
+  color: #ff8f8b;
+}
+
+strong {
+  font-weight: 800;
+}
+
+ion-card-content p strong,
+.detail-box strong,
+.note strong {
+  color: var(--accent);
+}
+
+ion-title {
+  font-family: helveticaNBC;
+  letter-spacing: 1px;
+  color: var(--text);
+}
+
+@media (min-width: 768px) {
+  .health-wrapper {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .hero-card {
+    grid-column: 1 / -1;
+  }
+
+  .hero-grid,
+  .info-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
