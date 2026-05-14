@@ -43,12 +43,17 @@ const routes: Routes = [
         path: 'aplicaciones',
         loadChildren: () => import('../aplicaciones/aplicaciones.module').then(m => m.AplicacionesPageModule)
       },
-//      {
-//        path: 'heat-waves',
-//        loadChildren: () =>
-//          import('../pages/heat-waves/heat-waves.module').then((m) => m.HeatWavesPageModule),
-//      },
-     {
+      {
+        path: 'notificaciones',
+        loadChildren: () =>
+          import('../notificaciones/notificaciones.module').then(m => m.NotificacionesPageModule)
+      },
+      //      {
+      //        path: 'heat-waves',
+      //        loadChildren: () =>
+      //          import('../pages/heat-waves/heat-waves.module').then((m) => m.HeatWavesPageModule),
+      //      },
+      {
         path: '',
         redirectTo: '/tabs/home',
         pathMatch: 'full'

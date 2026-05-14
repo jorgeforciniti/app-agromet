@@ -30,6 +30,12 @@ export class HomePage implements OnInit, OnDestroy {
   private lastStation: string | null = null;
   private refresh$ = new Subject<void>();
 
+  iconFallback = '../../assets/w-icons/na.png';
+
+  private readonly MINUTOS_DATO_DEMORADO = 30;
+  private readonly MINUTOS_DATO_DESACTUALIZADO = 90;
+  private readonly MINUTOS_USAR_ESTIMACION_TOTAL = 45;
+
   // ====== DATA ======
   dato: any = {};
   mensajes: any = {}; // forecast OWM
@@ -63,8 +69,6 @@ export class HomePage implements OnInit, OnDestroy {
     rain: false,
   };
 
-  // icon fallback
-  iconFallback = '../../assets/w-icons/na.png';
 
   constructor(
     private pronostico: EstacionesService,
@@ -200,8 +204,13 @@ export class HomePage implements OnInit, OnDestroy {
 
                   this.reconcileStationWithOWM(this.msj);
 
+                  // Después de estimar o corregir datos, recalculamos fondo
+                  this.cargarImagen();
+
                   const owmIcon = this.msj?.weather?.[0]?.icon;
-                  this.icono = owmIcon ? ('../../assets/w-icons/' + owmIcon + '.png') : (this.icono || this.iconFallback);
+                  this.icono = owmIcon
+                    ? ('../../assets/w-icons/' + owmIcon + '.png')
+                    : (this.icono || this.iconFallback);
 
                   this.datosH = (this.mensajes?.list && this.mensajes?.cnt) ? this.buildDatosH(this.mensajes) : [];
 
@@ -241,11 +250,14 @@ export class HomePage implements OnInit, OnDestroy {
   }
 
   // ====== VALIDACIÓN + REEMPLAZO POR ESTIMACIÓN (OWM) ======
+  // ====== VALIDACIÓN + REEMPLAZO POR ESTIMACIÓN (OWM) ======
   private reconcileStationWithOWM(climaOWM: any) {
     // reset flags
     this.estimated = { temp: false, hum: false, wind: false, pres: false, rain: false };
 
     if (!climaOWM?.main) return;
+
+    const usarEstimacionTotal = this.debeUsarEstimacionTotal;
 
     const alt = this.toNum(this.dato?.alt ?? this.dato?.altura ?? null);
 
@@ -253,28 +265,42 @@ export class HomePage implements OnInit, OnDestroy {
     const stTemp = this.toNum(this.dato?.temp_af);
     const stHum = this.toNum(this.dato?.hum_af);
     const stWind = this.toNum(this.dato?.viento_medio);
+    const stWindMax = this.toNum(this.dato?.viento_max);
     const stPres = this.toNum(this.dato?.presion);
 
-    // OWM
+    // OpenWeatherMap
     const oTemp = this.toNum(climaOWM?.main?.temp);
     const oHum = this.toNum(climaOWM?.main?.humidity);
-    const oWind = this.toNum(climaOWM?.wind?.speed) != null ? (Number(climaOWM.wind.speed) * 3.6) : null; // m/s→km/h
+
+    const oWind =
+      this.toNum(climaOWM?.wind?.speed) != null
+        ? Number(climaOWM.wind.speed) * 3.6
+        : null; // m/s → km/h
+
+    const oWindGust =
+      this.toNum(climaOWM?.wind?.gust) != null
+        ? Number(climaOWM.wind.gust) * 3.6
+        : null; // m/s → km/h
+
+    const oWindDeg = this.toNum(climaOWM?.wind?.deg);
+
     const seaLevel = this.toNum(climaOWM?.main?.sea_level ?? climaOWM?.main?.pressure);
     const grndLevel = this.toNum(climaOWM?.main?.grnd_level);
 
-    // presión estación desde OWM
+    // Presión estimada a altura de estación
     const oPresStation =
       alt != null
         ? this.pressureAtStationFromSeaLevel(seaLevel, alt)
-        : (grndLevel ?? null);
+        : (grndLevel ?? seaLevel ?? null);
 
-    // Reglas plausibilidad “duro”
+    // Reglas de plausibilidad dura
     const badTemp = stTemp == null || stTemp < -15 || stTemp > 55;
     const badHum = stHum == null || stHum < 2 || stHum > 100;
     const badWind = stWind == null || stWind < 0 || stWind > 220;
+    const badWindMax = stWindMax == null || stWindMax < 0 || stWindMax > 260;
     const badPres = stPres == null || stPres < 500 || stPres > 1100;
 
-    // Reglas “comparativas” (si difiere demasiado, tomar OWM)
+    // Reglas comparativas
     const tempDiff = (stTemp != null && oTemp != null) ? Math.abs(stTemp - oTemp) : null;
     const humDiff = (stHum != null && oHum != null) ? Math.abs(stHum - oHum) : null;
     const windDiff = (stWind != null && oWind != null) ? Math.abs(stWind - oWind) : null;
@@ -285,30 +311,77 @@ export class HomePage implements OnInit, OnDestroy {
     const suspiciousWind = windDiff != null && windDiff >= 5;
     const suspiciousPres = presDiff != null && presDiff >= 18;
 
-    // Aplicar reemplazos (solo si hay valor OWM)
-    if ((badTemp || suspiciousTemp) && oTemp != null) {
-      this.dato.temp_af = oTemp;
+    /*
+      Criterio:
+      - Si la estación está reciente, solo reemplazamos valores absurdos o muy sospechosos.
+      - Si la estación está atrasada más de MINUTOS_USAR_ESTIMACION_TOTAL,
+        reemplazamos variables principales por OWM.
+    */
+
+    if ((usarEstimacionTotal || badTemp || suspiciousTemp) && oTemp != null) {
+      this.dato.temp_af = Number(oTemp.toFixed(1));
       this.estimated.temp = true;
     }
-    if ((badHum || suspiciousHum) && oHum != null) {
+
+    if ((usarEstimacionTotal || badHum || suspiciousHum) && oHum != null) {
       this.dato.hum_af = Math.round(oHum);
       this.estimated.hum = true;
     }
-    if ((badWind || suspiciousWind) && oWind != null) {
+
+    if ((usarEstimacionTotal || badWind || suspiciousWind) && oWind != null) {
       this.dato.viento_medio = Math.round(oWind);
       this.estimated.wind = true;
     }
-    if ((badPres || suspiciousPres) && oPresStation != null) {
+
+    /*
+      Viento máximo:
+      - Si OWM informa gust, lo usamos como ráfaga estimada.
+      - Si no informa gust y el dato está desactualizado, usamos al menos el viento medio OWM,
+        para evitar que el semáforo de aplicaciones trabaje con una ráfaga vieja.
+    */
+    if ((usarEstimacionTotal || badWindMax) && (oWindGust != null || oWind != null)) {
+      this.dato.viento_max = Math.round(oWindGust ?? oWind ?? 0);
+      this.estimated.wind = true;
+    }
+
+    /*
+      Dirección del viento:
+      - No tiene flag propio, pero queda incluida dentro de estimated.wind.
+      - Usamos el mismo campo que ya consume tu getter vientoDeg/vientoDirText.
+    */
+    if (usarEstimacionTotal && oWindDeg != null) {
+      this.dato.viento_deg = Math.round(oWindDeg);
+      this.dato.viento_dir = Math.round(oWindDeg);
+      this.estimated.wind = true;
+    }
+
+    if ((usarEstimacionTotal || badPres || suspiciousPres) && oPresStation != null) {
       this.dato.presion = Math.round(oPresStation);
       this.estimated.pres = true;
     }
 
-    // lluvia diaria: si falta o es absurda, no hay “daily rain” confiable en current-weather.
-    // Lo dejamos en estación, pero marcamos si está fuera de rango.
+    /*
+      Lluvia:
+      No reemplazamos RR_dia ni rr_15 por OWM current, porque no son equivalentes directos.
+      Si la estación está desactualizada o el valor es absurdo, la marcamos como revisada/no confiable.
+    */
     const stRain = this.toNum(this.dato?.RR_dia);
-    if (stRain == null || stRain < 0 || stRain > 250) {
-      // no reemplazamos por OWM (no equivalente directo)
-      this.estimated.rain = true; // solo para avisar “dato no fiable”
+    const stRain15 = this.toNum(this.dato?.rr_15);
+
+    if (
+      usarEstimacionTotal ||
+      stRain == null ||
+      stRain < 0 ||
+      stRain > 250 ||
+      stRain15 == null ||
+      stRain15 < 0 ||
+      stRain15 > 80
+    ) {
+      this.estimated.rain = true;
+
+      if (usarEstimacionTotal) {
+        this.dato.rr_15 = 0;
+      }
     }
   }
 
@@ -370,15 +443,32 @@ export class HomePage implements OnInit, OnDestroy {
   cargarImagen() {
     if (!this.dato) return;
 
-    if (this.dato.temp_af < 30) {
-      if (this.dato.temp_af < 0) this.imagen = '../../assets/fondos/inicio-heladas.jpg';
-      else this.imagen = '../../assets/fondos/inicio-soleado.jpg';
+    const temp = Number(this.dato?.temp_af);
+    const lluviaDia = Number(this.dato?.RR_dia);
+
+    // Base por temperatura
+    if (Number.isFinite(temp)) {
+      if (temp < 0) {
+        this.imagen = '../../assets/fondos/inicio-heladas.jpg';
+      } else if (temp >= 30) {
+        this.imagen = '../../assets/fondos/inicio-temperatura-alta.jpg';
+      } else {
+        this.imagen = '../../assets/fondos/inicio-soleado.jpg';
+      }
     } else {
-      this.imagen = '../../assets/fondos/inicio-temperatura-alta.jpg';
+      this.imagen = '../../assets/fondos/inicio-soleado.jpg';
     }
 
-    if (this.dato.RR_dia > 1) this.imagen = '../../assets/fondos/inicio-rr.jpg';
+    /*
+      Lluvia:
+      Solo usamos fondo de lluvia si el dato NO está marcado como revisado/desactualizado.
+      Si estimated.rain = true, no conviene que una lluvia vieja condicione el fondo.
+    */
+    if (!this.estimated?.rain && Number.isFinite(lluviaDia) && lluviaDia > 1) {
+      this.imagen = '../../assets/fondos/inicio-rr.jpg';
+    }
   }
+
 
   // ====== PRONÓSTICO ======
   private buildDatosH(mensajes: any): any[] {
@@ -505,6 +595,67 @@ export class HomePage implements OnInit, OnDestroy {
     this.showForecastAll = !this.showForecastAll;
   }
 
+  async verDetallePronostico(r: any) {
+    if (!r) return;
+
+    const hora = r?.[1] ?? '—';
+    const temp = r?.[3] ?? '—';
+    const humedad = r?.[4] ?? '—';
+    const viento = r?.[5] ?? '—';
+    const descripcion = r?.[6] ?? '—';
+
+    const alert = await this.alertCtrl.create({
+      header: `Pronóstico ${hora}`,
+      message:
+        `<strong>${descripcion}</strong><br><br>` +
+        `Temperatura: ${temp} °C<br>` +
+        `Humedad relativa: ${humedad} %<br>` +
+        `Viento: ${viento} km/h<br><br>` +
+        `<small>Fuente: OpenWeather.</small>`,
+      buttons: ['Cerrar'],
+      cssClass: 'alert-glass',
+    });
+
+    await alert.present();
+  }
+
+  async verDetalleActualizacion() {
+    const fecha = this.dato?.fecha_I || '—';
+    const estacion = this.localidadLabel || '—';
+    const estado = this.estadoDatoActualTexto;
+
+    const estimados: string[] = [];
+
+    if (this.estimated?.temp) estimados.push('Temperatura');
+    if (this.estimated?.hum) estimados.push('Humedad relativa');
+    if (this.estimated?.wind) estimados.push('Viento');
+    if (this.estimated?.pres) estimados.push('Presión');
+    if (this.estimated?.rain) estimados.push('Lluvia revisada/no actual');
+
+    const fuente =
+      this.debeUsarEstimacionTotal
+        ? 'La estación está desactualizada. Se usan estimaciones externas para las variables principales.'
+        : 'La estación está reciente. Solo se estiman valores faltantes, dudosos o fuera de rango.';
+
+    const msg =
+      `<strong>Estación</strong><br>${estacion}<br><br>` +
+      `<strong>Último registro recibido</strong><br>${fecha}<br><br>` +
+      `<strong>Estado</strong><br>${estado}<br><br>` +
+      `<strong>Criterio aplicado</strong><br>${fuente}<br><br>` +
+      `<strong>Variables estimadas/revisadas</strong><br>` +
+      `${estimados.length ? estimados.join(' · ') : 'No se marcaron datos estimados.'}<br><br>` +
+      `<small>Las estimaciones se usan para mantener operativo el resumen actual y la recomendación rápida. La lluvia puntual no se reemplaza por OpenWeather porque puede variar mucho espacialmente.</small>`;
+
+    const al = await this.alertCtrl.create({
+      header: 'Actualización del dato',
+      message: msg,
+      buttons: ['Cerrar'],
+      cssClass: 'alert-glass',
+    });
+
+    await al.present();
+  }
+
   imgError(ev: Event) {
     const img = ev.target as HTMLImageElement;
     if (!img) return;
@@ -516,6 +667,133 @@ export class HomePage implements OnInit, OnDestroy {
   get alertasVisibles(): any[] {
     if (!Array.isArray(this.alertas)) return [];
     return this.showAlertsAll ? this.alertas : this.alertas.slice(0, 2);
+  }
+
+  get tieneAlertasSmn(): boolean {
+    return Array.isArray(this.alertas) && this.alertas.length > 0;
+  }
+
+  get alertaAreaLabel(): string {
+    const primera = this.alertasVisibles && this.alertasVisibles.length > 0
+      ? this.alertasVisibles[0]
+      : null;
+
+    return primera?.area || 'Tucumán';
+  }
+
+  get alertaNivelMaximo(): number {
+    if (!this.tieneAlertasSmn) {
+      return 0;
+    }
+
+    if (this.maxAlertLevel && this.maxAlertLevel > 0) {
+      return this.maxAlertLevel;
+    }
+
+    let max = 0;
+    for (const a of this.alertas) {
+      max = Math.max(max, Number(a?.nivel ?? 0));
+    }
+
+    return max;
+  }
+
+  get alertaSmnClase(): string {
+    if (!this.tieneAlertasSmn) {
+      return 'smn-section--normal';
+    }
+
+    switch (this.alertaNivelMaximo) {
+      case 5:
+        return 'smn-section--rojo';
+      case 4:
+        return 'smn-section--naranja';
+      case 3:
+        return 'smn-section--amarillo';
+      default:
+        return 'smn-section--vigente';
+    }
+  }
+
+  get alertaSmnIcono(): string {
+    if (!this.tieneAlertasSmn) {
+      return 'checkmark-circle-outline';
+    }
+
+    switch (this.alertaNivelMaximo) {
+      case 5:
+        return 'warning';
+      case 4:
+        return 'alert-circle';
+      case 3:
+        return 'alert-circle-outline';
+      default:
+        return 'notifications-outline';
+    }
+  }
+
+  get alertaSmnTitulo(): string {
+    if (!this.tieneAlertasSmn) {
+      return 'Sin alertas vigentes';
+    }
+
+    const total = this.alertas.length;
+    const nivel = this.alertaNivelMaximo;
+
+    if (total === 1) {
+      return `Alerta vigente · Nivel ${nivel}`;
+    }
+
+    return `${total} alertas vigentes · Nivel máximo ${nivel}`;
+  }
+
+  get alertaSmnDescripcion(): string {
+    if (!this.tieneAlertasSmn) {
+      return 'No se registran alertas oficiales para el área consultada.';
+    }
+
+    const primera = this.alertas[0];
+
+    return primera?.descripcion || 'Consultar el detalle de la alerta vigente.';
+  }
+
+  async verResumenAlertasSmn() {
+    if (!this.tieneAlertasSmn) {
+      const al = await this.alertCtrl.create({
+        header: 'SMN',
+        message: 'No se registran alertas vigentes para el área consultada.',
+        buttons: ['Cerrar'],
+        cssClass: 'alert-glass',
+      });
+
+      await al.present();
+      return;
+    }
+
+    if (this.alertas.length === 1) {
+      await this.verDetalleAlerta(this.alertas[0]);
+      return;
+    }
+
+    const resumen = this.alertas
+      .slice(0, 4)
+      .map((a, i) =>
+        `<strong>${i + 1}. Nivel ${a?.nivel ?? '—'} · ${a?.fecha ?? ''}</strong><br>` +
+        `${a?.descripcion ?? '—'}`
+      )
+      .join('<br><br>');
+
+    const al = await this.alertCtrl.create({
+      header: 'Alertas SMN',
+      message:
+        `<strong>${this.alertas.length} alertas vigentes</strong><br><br>` +
+        resumen +
+        `<br><br><small>Usá “Ver completo” para desplegarlas en la pantalla.</small>`,
+      buttons: ['Cerrar'],
+      cssClass: 'alert-glass',
+    });
+
+    await al.present();
   }
 
   private parseAlertasPorArea(area: string, data: any): any[] {
@@ -576,44 +854,172 @@ export class HomePage implements OnInit, OnDestroy {
   }
 
   // ====== RECOMENDACIÓN AGRO ======
-  get aplicarOk(): boolean {
+
+  get motivosNoAplicar(): string[] {
     const d = this.dato || {};
-    return !(d.temp_af >= 30 || d.hum_af <= 55 || d.rr_15 > 0 || d.viento_max > 10);
+    const out: string[] = [];
+
+    const temp = Number(d.temp_af);
+    const hum = Number(d.hum_af);
+    const rr15 = Number(d.rr_15);
+    const vientoMedio = Number(d.viento_medio);
+    const vientoMax = Number(d.viento_max);
+
+    if (Number.isFinite(temp) && temp >= 30) {
+      out.push('Temperatura alta');
+    }
+
+    if (Number.isFinite(hum) && hum <= 55) {
+      out.push('Humedad baja');
+    }
+
+    if (!this.estimated?.rain && Number.isFinite(rr15) && rr15 > 0) {
+      out.push('Lluvia reciente');
+    }
+
+    if (Number.isFinite(vientoMedio) && vientoMedio > 10) {
+      out.push('Viento fuerte');
+    } else if (Number.isFinite(vientoMax) && vientoMax > 10) {
+      out.push('Ráfagas fuertes');
+    }
+
+    return out;
+  }
+
+  get motivosPrecaucion(): string[] {
+    const d = this.dato || {};
+    const out: string[] = [];
+
+    const temp = Number(d.temp_af);
+    const hum = Number(d.hum_af);
+    const vientoMedio = Number(d.viento_medio);
+    const vientoMax = Number(d.viento_max);
+
+    if (Number.isFinite(temp) && temp >= 28 && temp < 30) {
+      out.push('Temperatura elevada');
+    }
+
+    if (Number.isFinite(hum) && hum > 55 && hum <= 65) {
+      out.push('Humedad algo baja');
+    }
+
+    if (Number.isFinite(vientoMedio) && vientoMedio >= 6 && vientoMedio <= 10) {
+      out.push('Viento moderado');
+    } else if (Number.isFinite(vientoMax) && vientoMax >= 8 && vientoMax <= 10) {
+      out.push('Ráfagas moderadas');
+    }
+
+    return out;
+  }
+
+  get aplicacionEstado(): 'ok' | 'warn' | 'bad' {
+    if (this.motivosNoAplicar.length > 0) {
+      return 'bad';
+    }
+
+    if (this.motivosPrecaucion.length > 0) {
+      return 'warn';
+    }
+
+    return 'ok';
+  }
+
+  get aplicacionTitulo(): string {
+    switch (this.aplicacionEstado) {
+      case 'bad':
+        return 'No recomendable';
+      case 'warn':
+        return 'Con precaución';
+      default:
+        return 'Condiciones aceptables';
+    }
+  }
+
+  get aplicacionSubtitulo(): string {
+    const sufijoEstimado = this.debeUsarEstimacionTotal ? ' · valores estimados' : '';
+    const sufijoLluvia = this.estimated?.rain ? ' · lluvia no actual' : '';
+
+    if (this.motivosNoAplicar.length > 0) {
+      return this.motivosNoAplicar.join(' · ') + sufijoEstimado + sufijoLluvia;
+    }
+
+    if (this.motivosPrecaucion.length > 0) {
+      return this.motivosPrecaucion.join(' · ') + sufijoEstimado + sufijoLluvia;
+    }
+
+    return 'Sin restricciones importantes' + sufijoEstimado + sufijoLluvia;
+  }
+
+  get aplicacionIcono(): string {
+    switch (this.aplicacionEstado) {
+      case 'bad':
+        return 'warning';
+      case 'warn':
+        return 'alert-circle-outline';
+      default:
+        return 'checkmark-circle';
+    }
+  }
+
+  // Compatibilidad con el código que ya existía
+  get aplicarOk(): boolean {
+    return this.aplicacionEstado !== 'bad';
   }
 
   get aplicarTexto(): string {
-    return this.aplicarOk ? 'Aplicación posible (con precaución)' : 'No aplicar agroquímicos';
+    if (this.aplicacionEstado === 'bad') {
+      return 'No aplicar agroquímicos';
+    }
+
+    if (this.aplicacionEstado === 'warn') {
+      return 'Aplicar solo con precaución';
+    }
+
+    return 'Aplicación posible';
   }
 
   get aplicarMotivos(): string[] {
-    const d = this.dato || {};
-    const out: string[] = [];
-    if (d.temp_af >= 30) out.push('Temperatura alta');
-    if (d.hum_af <= 55) out.push('Humedad baja');
-    if (d.rr_15 > 0) out.push('Lluvia reciente');
-    if (d.viento_medio > 10) out.push('Viento fuerte');
-    else if (d.viento_max > 10) out.push('Ráfagas fuertes');
-    return out;
+    return this.motivosNoAplicar.length > 0
+      ? this.motivosNoAplicar
+      : this.motivosPrecaucion;
   }
 
   async verDetalleAplicacion() {
     const motivos =
-      this.aplicarMotivos?.length ? this.aplicarMotivos.join(' · ') : 'Condiciones dentro de rangos habituales.';
+      this.aplicarMotivos.length > 0
+        ? this.aplicarMotivos.join(' · ')
+        : 'Condiciones dentro de rangos habituales.';
 
     const msg =
       `<strong>${this.aplicarTexto}</strong><br><br>` +
-      `Motivos: ${motivos}<br><br>` +
-      `Temp: ${this.dato?.temp_af ?? '—'} °C<br>` +
-      `HR: ${this.dato?.hum_af ?? '—'} %<br>` +
-      `Viento: ${this.dato?.viento_medio ?? '—'} km/h (máx ${this.dato?.viento_max ?? '—'})<br>` +
-      `Lluvia 15’: ${this.dato?.rr_15 ?? '—'} mm`;
+      `<strong>Motivos</strong><br>${motivos}<br><br>` +
+      `<strong>${this.debeUsarEstimacionTotal ? 'Datos estimados' : 'Datos observados/revisados'}</strong><br>` +
+      `Temperatura: ${this.dato?.temp_af ?? '—'} °C<br>` +
+      `Humedad relativa: ${this.dato?.hum_af ?? '—'} %<br>` +
+      `Viento medio: ${this.dato?.viento_medio ?? '—'} km/h<br>` +
+      `Viento máximo: ${this.dato?.viento_max ?? '—'} km/h<br>` +
+      `Lluvia últimos 15 min: ${this.estimated?.rain ? 'no actual / revisar estación' : (this.dato?.rr_15 ?? '—') + ' mm'
+      }<br><br>` +
+      `<small>Esta es una recomendación rápida basada en los datos actuales o estimados. Para un análisis completo usar la pestaña Aplicaciones.</small>`;
 
     const a = await this.alertCtrl.create({
-      header: 'Recomendación',
+      header: 'Aplicación de agroquímicos',
       message: msg,
-      buttons: ['Cerrar'],
+      buttons: [
+        {
+          text: 'Cerrar',
+          role: 'cancel',
+        },
+        {
+          text: 'Ver Aplicaciones',
+          handler: () => {
+            this.router.navigate(['/tabs/aplicaciones']);
+          },
+        },
+      ],
       cssClass: 'alert-glass',
     });
+
     await a.present();
   }
 
@@ -699,6 +1105,143 @@ export class HomePage implements OnInit, OnDestroy {
     // normalizo 0..360 por las dudas
     const rot = (deg + this.WIND_ICON_OFFSET_DEG) % 360;
     return (rot + 360) % 360;
+  }
+
+  // ---------- ESTADO DEL DATO ACTUAL ----------
+  get fechaDatoActual(): Date | null {
+    const raw = this.dato?.fecha_I;
+
+    if (!raw || typeof raw !== 'string') {
+      return null;
+    }
+
+    // Formato esperado: 2026-05-12 09:45:00
+    const normalizada = raw.replace(' ', 'T');
+    const dt = new Date(normalizada);
+
+    if (isNaN(dt.getTime())) {
+      return null;
+    }
+
+    return dt;
+  }
+
+  get minutosDesdeDatoActual(): number | null {
+    const dt = this.fechaDatoActual;
+
+    if (!dt) {
+      return null;
+    }
+
+    const diffMs = Date.now() - dt.getTime();
+    const diffMin = Math.floor(diffMs / 60000);
+
+    if (!Number.isFinite(diffMin) || diffMin < 0) {
+      return null;
+    }
+
+    return diffMin;
+  }
+
+  get datoDemorado(): boolean {
+    const min = this.minutosDesdeDatoActual;
+    return min != null && min > this.MINUTOS_DATO_DEMORADO;
+  }
+
+  get datoDesactualizado(): boolean {
+    const min = this.minutosDesdeDatoActual;
+    return min == null || min > this.MINUTOS_DATO_DESACTUALIZADO;
+  }
+
+  get debeUsarEstimacionTotal(): boolean {
+    const min = this.minutosDesdeDatoActual;
+    return min == null || min > this.MINUTOS_USAR_ESTIMACION_TOTAL;
+  }
+
+  get estadoDatoActual(): 'ok' | 'warn' | 'bad' {
+    const min = this.minutosDesdeDatoActual;
+
+    if (min == null) {
+      return 'bad';
+    }
+
+    if (min <= this.MINUTOS_DATO_DEMORADO) {
+      return 'ok';
+    }
+
+    if (min <= this.MINUTOS_DATO_DESACTUALIZADO) {
+      return 'warn';
+    }
+
+    return 'bad';
+  }
+
+  get estadoDatoActualClase(): string {
+    switch (this.estadoDatoActual) {
+      case 'ok':
+        return 'data-status--ok';
+      case 'warn':
+        return 'data-status--warn';
+      default:
+        return 'data-status--bad';
+    }
+  }
+
+  get estadoDatoActualIcono(): string {
+    switch (this.estadoDatoActual) {
+      case 'ok':
+        return 'checkmark-circle-outline';
+      case 'warn':
+        return 'time-outline';
+      default:
+        return 'alert-circle-outline';
+    }
+  }
+
+  get estadoDatoActualTexto(): string {
+    const min = this.minutosDesdeDatoActual;
+
+    if (min == null) {
+      return 'Sin fecha de actualización · usando estimaciones';
+    }
+
+    const tiempo = this.formatearAntiguedadDato(min);
+
+    if (min <= this.MINUTOS_DATO_DEMORADO) {
+      return `Actualizado hace ${tiempo}`;
+    }
+
+    if (min <= this.MINUTOS_USAR_ESTIMACION_TOTAL) {
+      return `Dato demorado · hace ${tiempo}`;
+    }
+
+    if (min <= this.MINUTOS_DATO_DESACTUALIZADO) {
+      return `Dato atrasado · valores estimados`;
+    }
+
+    return `Dato desactualizado · valores estimados`;
+  }
+
+  private formatearAntiguedadDato(minutos: number): string {
+    if (minutos < 1) {
+      return 'menos de 1 min';
+    }
+
+    if (minutos < 60) {
+      return `${minutos} min`;
+    }
+
+    const horas = Math.floor(minutos / 60);
+    const resto = minutos % 60;
+
+    if (horas < 24) {
+      return resto > 0 ? `${horas} h ${resto} min` : `${horas} h`;
+    }
+
+    const dias = Math.floor(horas / 24);
+    const horasResto = horas % 24;
+
+    return horasResto > 0 ? `${dias} d ${horasResto} h` : `${dias} d`;
   }
 
 }

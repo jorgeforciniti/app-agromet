@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { AlertController, Platform } from '@ionic/angular';
 import { Capacitor } from '@capacitor/core';
 import { App } from '@capacitor/app';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-tabs',
@@ -15,7 +16,8 @@ export class TabsPage {
 
   constructor(
     private alertCtrl: AlertController,
-    private platform: Platform
+    private platform: Platform,
+    private router: Router
   ) {
     this.publicidad = 'https://agromet.eeaoc.gob.ar/android/prop1.gif';
     this.logo = 'assets/logo-agromet.png';
@@ -60,4 +62,9 @@ export class TabsPage {
 
     await alert.present();
   }
+
+  goNotificaciones() {
+    this.router.navigate(['/tabs/notificaciones']);
+  }
+
 }

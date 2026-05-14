@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "602955071340",
+    "firebase_url": "https://agromet-eeaoc.firebaseio.com",
+    "project_id": "agromet-eeaoc",
+    "storage_bucket": "agromet-eeaoc.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:602955071340:android:406c130ba68f5bd03d7d49",
+        "android_client_info": {
+          "package_name": "appinventor.ai_jorgeforciniti.Agromet2"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBrqnratsQl2SG3wZl4MWp58jRCVOzD64w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

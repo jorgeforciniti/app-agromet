@@ -110,8 +110,15 @@ export class EstacionesService {
   getPronostico(lat: number, lon: number): Observable<any> {
     return this.http.get(`https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&lang=es&units=metric&appid=${this.apiKey}`);
   }
+
   getTemperatura24(estacion: string | number): Observable<any> {
     return this.getTemperaturas(Number(estacion));
   }
 
+  getDatosCampaniaLluvia(mes: number, anio: number) {
+    const url =
+      `https://agromet.eeaoc.gob.ar/services/datos-campania.php?mes=${mes}&anio=${anio}&tipo=2`;
+
+    return this.http.get<any>(url);
+  }
 }

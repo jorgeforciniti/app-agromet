@@ -55,32 +55,68 @@
   </div>
 
   <!-- SELECTOR -->
+  <!-- SELECTOR -->
+  <!-- SELECTOR -->
   <ion-segment class="seg" [value]="selectedRange" (ionChange)="onRangeChange($event)">
     <ion-segment-button value="1">
       <ion-label>Hoy</ion-label>
     </ion-segment-button>
+
     <ion-segment-button value="2">
       <ion-label>30 días</ion-label>
     </ion-segment-button>
+
     <ion-segment-button value="3">
       <ion-label>Año</ion-label>
     </ion-segment-button>
   </ion-segment>
 
+  <!-- SELECTOR DE AÑO -->
+  <div class="year-picker card" *ngIf="selectedRange === '3'">
+    <div class="year-picker__label">
+      Año pluviométrico
+      <small *ngIf="campaniaHastaTexto">{{ campaniaHastaTexto }}</small>
+    </div>
+
+    <button class="year-button" type="button" (click)="abrirSelectorAnio($event)">
+
+      <span>{{ anioSeleccionado }}</span>
+      <ion-icon name="chevron-down-outline"></ion-icon>
+
+    </button>
+  </div>
+
   <!-- CARD GRÁFICO -->
   <div class="card">
     <div class="cardHeader">
-      <div class="cardTitle">
-        {{ selectedRange === '1' ? 'Lluvia por intervalo (hoy)' : (selectedRange === '2' ? 'Lluvia diaria (últimos 30
-        días)' : 'Lluvia mensual (año)') }}
-      </div>
-      <div class="cardHint">mm</div>
+      <div class="cardTitle">{{ chartTitle }}</div>
+      <div class="cardHint">{{ chartHint }}</div>
     </div>
 
     <div class="chartWrap">
-      <canvas baseChart [datasets]="barChartData" [labels]="barChartLabels" [options]="barChartOptions"
-        [legend]="barChartLegend" [colors]="barChartColors" [chartType]="barChartType">
-      </canvas>
+
+      <ng-container *ngIf="tieneDatosRangoActual; else sinDatosChart">
+        <canvas *ngIf="showChart" baseChart [datasets]="barChartData" [labels]="barChartLabels"
+          [options]="barChartOptions" [legend]="barChartLegend" [colors]="barChartColors" [chartType]="barChartType">
+        </canvas>
+      </ng-container>
+
+      <ng-template #sinDatosChart>
+        <div class="empty-state">
+          <div class="empty-state__icon">
+            <ion-icon name="rainy-outline"></ion-icon>
+          </div>
+
+          <div class="empty-state__title">Sin datos disponibles</div>
+          <div class="empty-state__text">{{ mensajeSinDatos }}</div>
+          <div class="empty-state__hint">Probá otro período o seleccioná otro año.</div>
+        </div>
+      </ng-template>
+
+      <div class="no-rain-note" *ngIf="tieneDatosRangoActual && !tieneLluviaRangoActual && !isLoading">
+        <ion-icon name="information-circle-outline"></ion-icon>
+        <span>{{ mensajeSinLluvia }}</span>
+      </div>
 
       <div class="loadingOverlay" *ngIf="isLoading">
         <ion-spinner name="bubbles"></ion-spinner>
@@ -88,9 +124,30 @@
       </div>
     </div>
 
+    <div class="missing-months-note" *ngIf="selectedRange === '3' && campaniaMesesSinDatoTexto">
+      <ion-icon name="alert-circle-outline"></ion-icon>
+      <span>{{ campaniaMesesSinDatoTexto }}</span>
+    </div>
+
   </div>
 
-  <div id="fechayhora">
-    <span>{{ hora }} hs</span>
+  <div class="card range-summary" *ngIf="tieneDatosRangoActual && resumenItems?.length">
+    <div class="range-summary__head">
+      <div class="range-summary__title">{{ resumenTitulo }}</div>
+    </div>
+
+    <div class="range-summary__grid">
+      <div class="range-summary__item" *ngFor="let item of resumenItems" [ngClass]="{
+        'tone-rain': item.tone === 'rain' || item.tone === 'estado--rain',
+        'tone-warn': item.tone === 'warn' || item.tone === 'estado--deficit',
+        'tone-normal': item.tone === 'estado--normal'
+      }">
+
+        <span>{{ item.label }}</span>
+        <strong>{{ item.value }}</strong>
+        <small *ngIf="item.hint">{{ item.hint }}</small>
+      </div>
+    </div>
   </div>
+
 </ion-content>

@@ -43,11 +43,11 @@
       <div class="summaryRight">
         <div class="metricGrid">
           <div class="metric">
-            <div class="k">FPH</div>
+            <div class="k">Primera local</div>
             <div class="v">{{ fmtDate(fphSel) }}</div>
           </div>
           <div class="metric">
-            <div class="k">FUH</div>
+            <div class="k">Última local</div>
             <div class="v">{{ fmtDate(fuhSel) }}</div>
           </div>
           <div class="metric">
@@ -100,7 +100,29 @@
       </div>
 
       <div class="legend" *ngIf="modo === 'anio'">
-        <span class="legendHint">Temperatura mínima y métricas por estación</span>
+        <span class="legendHint">
+          Comparación entre año actual y año anterior por estación.
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Resumen del período -->
+  <section class="periodSummaryCard" *ngIf="resumenPeriodoItems?.length">
+    <div class="periodSummaryTitle">
+       Resumen provincial del período
+    </div>
+
+    <div class="periodSummaryGrid">
+      <div class="periodSummaryItem" *ngFor="let item of resumenPeriodoItems" [ngClass]="{
+        'tone-cold': item.tone === 'cold' || item.tone === 'reddark' || item.tone === 'red' || item.tone === 'orange',
+        'tone-warn': item.tone === 'warn'
+      }">
+
+        <span>{{ item.label }}</span>
+        <strong>{{ item.value }}</strong>
+        <small *ngIf="item.hint">{{ item.hint }}</small>
+
       </div>
     </div>
   </section>
@@ -112,7 +134,7 @@
         {{ modo === 'anio' ? ('Comparación anual (' + anioActual + ' / ' + anioPrev + ')') : 'Heladas registradas' }}
       </div>
       <div class="thint" *ngIf="modo === 'anio'">
-        En “Días c/hel” y “Reg.” se muestra {{ anioActual }}/{{ anioPrev }}
+        En días con helada y días evaluados se muestra {{ anioActual }}/{{ anioPrev }}.
       </div>
     </div>
 
@@ -124,7 +146,7 @@
         <div class="c y">{{ anioActual }}</div>
         <div class="c y">{{ anioPrev }}</div>
         <div class="c dr">DÍAS c/hel</div>
-        <div class="c dr">REG.</div>
+        <div class="c dr">DÍAS eval.</div>
       </ng-container>
 
       <ng-template #headerDiaMes>
@@ -132,7 +154,7 @@
         <div class="c hs">HS MÁX.</div>
         <div class="c hs">HS TOT.</div>
         <div class="c dr">DÍAS c/hel</div>
-        <div class="c dr">REG.</div>
+        <div class="c dr">DÍAS eval.</div>
       </ng-template>
     </div>
 
@@ -146,14 +168,12 @@
       <!-- AÑO -->
       <ng-container *ngIf="modo === 'anio'; else rowDiaMes">
         <!-- Año actual -->
-        <div class="cell badge"
-             [ngClass]="nivelPorTemp(item?.cur?.temperatura)">
+        <div class="cell badge" [ngClass]="nivelPorTemp(item?.cur?.temperatura)">
           <div class="val">{{ fmtTemp(item?.cur?.temperatura) }}</div>
         </div>
 
         <!-- Año previo -->
-        <div class="cell badge"
-             [ngClass]="nivelPorTemp(item?.prev?.temperatura)">
+        <div class="cell badge" [ngClass]="nivelPorTemp(item?.prev?.temperatura)">
           <div class="val">{{ fmtTemp(item?.prev?.temperatura) }}</div>
         </div>
 
@@ -194,13 +214,9 @@
     <section class="emptyCard">
       <div class="emptyTitle">Sin heladas registradas</div>
       <div class="emptyText">
-        Para el período seleccionado no hay estaciones con FPH (heladas) disponibles.
+        Para el período seleccionado no se registraron estaciones con temperatura mínima igual o inferior a 0 °C.
       </div>
     </section>
   </ng-template>
 
-  <!-- Hora -->
-  <div id="fechayhora">
-    {{ hora }} <span>HS</span>
-  </div>
 </ion-content>

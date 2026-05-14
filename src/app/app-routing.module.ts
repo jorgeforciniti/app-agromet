@@ -29,6 +29,10 @@ const routes: Routes = [
     path: 'eventos',
     loadChildren: () => import('./eventos/eventos.module').then( m => m.EventosPageModule)
   },
+  {
+    path: 'notificaciones',
+    loadChildren: () => import('./notificaciones/notificaciones.module').then( m => m.NotificacionesPageModule)
+  },
 //  {
 //    path: 'heat-waves',
 //    loadChildren: () => import('./pages/heat-waves/heat-waves.module').then( m => m.HeatWavesPageModule)

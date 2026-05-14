@@ -13,7 +13,7 @@ export class LocalidadesPage implements OnInit {
   constructor(
     private estacionesService: EstacionesService,
     private navCtrl: NavController
-  ) {}
+  ) { }
 
   ngOnInit() {
     this.mensajes = JSON.parse(localStorage.getItem('estaciones') || '[]');
@@ -23,19 +23,10 @@ export class LocalidadesPage implements OnInit {
     const id = estacion?.Identificacion ?? estacion?.identificacion ?? estacion?.id;
     if (!id) return;
 
-    // 1) set estación + emitir cambio
     this.estacionesService.setSelectedStation(id);
 
-    // 2) limpiar cache de datos para evitar “mostrar lo viejo”
     localStorage.removeItem('datos');
 
-    // 3) flags como ya hacías
-    localStorage.setItem('temperatura', '1');
-    localStorage.setItem('home', '1');
-    localStorage.setItem('lluvia', '1');
-    localStorage.setItem('helada', '1');
-
-    // 4) volver al tab home (1 sola navegación)
     this.navCtrl.navigateBack('/tabs/home');
   }
 }

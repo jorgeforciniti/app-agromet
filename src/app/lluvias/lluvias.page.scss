@@ -173,10 +173,6 @@ ion-segment-button {
   font-size: 0.8rem;
 }
 
-.chartWrap {
-  width: 100%;
-}
-
 /* LOADING */
 .loadingBox {
   height: 320px;
@@ -211,7 +207,8 @@ canvas {
 
 .chartWrap {
   position: relative;
-  height: 260px; // o el alto que ya uses
+  width: 100%;
+  height: 260px;
 }
 
 .loadingOverlay {
@@ -222,4 +219,234 @@ canvas {
   align-items: center;
   justify-content: center;
   backdrop-filter: blur(2px);
+}
+
+.year-picker {
+  margin-top: 12px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.year-picker__label {
+  display: grid;
+  gap: 3px;
+
+  color: var(--text);
+  font-family: helveticaNBC;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  font-size: 0.86rem;
+
+  small {
+    color: var(--muted);
+    font-family: helveticaNR;
+    text-transform: none;
+    letter-spacing: 0;
+    font-size: 0.74rem;
+  }
+}
+
+.empty-state {
+  min-height: 240px;
+
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 8px;
+
+  padding: 26px 18px;
+  text-align: center;
+}
+
+.empty-state__icon {
+  width: 54px;
+  height: 54px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 18px;
+  background: rgba(128, 227, 211, 0.08);
+  border: 1px solid rgba(128, 227, 211, 0.18);
+
+  ion-icon {
+    font-size: 30px;
+    color: var(--accent);
+  }
+}
+
+.empty-state__title {
+  margin-top: 4px;
+  color: var(--text);
+  font-family: helveticaNBC;
+  font-size: 1rem;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.empty-state__text {
+  max-width: 260px;
+  color: var(--muted);
+  font-family: helveticaNR;
+  font-size: 0.86rem;
+  line-height: 1.35;
+}
+
+.empty-state__hint {
+  max-width: 260px;
+  color: rgba(215, 215, 215, 0.52);
+  font-family: helveticaNR;
+  font-size: 0.78rem;
+  line-height: 1.3;
+}
+
+.no-rain-note {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 10px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+
+  padding: 7px 10px;
+  border-radius: 999px;
+
+  background: rgba(128, 227, 211, 0.08);
+  border: 1px solid rgba(128, 227, 211, 0.18);
+  color: rgba(128, 227, 211, 0.94);
+
+  font-family: helveticaNBC;
+  font-size: 0.76rem;
+
+  ion-icon {
+    font-size: 16px;
+  }
+}
+
+.range-summary {
+  margin-top: 12px;
+}
+
+.range-summary__head {
+  margin-bottom: 10px;
+}
+
+.range-summary__title {
+  color: var(--text);
+  font-family: helveticaNBC;
+  font-size: 0.95rem;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+
+.range-summary__grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.range-summary__item {
+  padding: 10px;
+  border-radius: 13px;
+
+  background: rgba(0, 0, 0, 0.20);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+
+  display: grid;
+  gap: 4px;
+}
+
+.range-summary__item span {
+  color: var(--muted);
+  font-family: helveticaNBC;
+  font-size: 0.68rem;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+}
+
+.range-summary__item strong {
+  color: var(--text);
+  font-family: helveticaNBC;
+  font-size: 1.05rem;
+  line-height: 1.15;
+}
+
+.range-summary__item small {
+  color: rgba(215, 215, 215, 0.58);
+  font-family: helveticaNR;
+  font-size: 0.72rem;
+  line-height: 1.15;
+}
+
+.range-summary__item.tone-rain {
+  border-color: rgba(128, 227, 211, 0.34);
+  background: rgba(128, 227, 211, 0.08);
+}
+
+.range-summary__item.tone-warn {
+  border-color: rgba(242, 201, 76, 0.34);
+  background: rgba(242, 201, 76, 0.08);
+}
+
+.range-summary__item.tone-normal {
+  border-color: rgba(120, 227, 255, 0.26);
+  background: rgba(120, 227, 255, 0.06);
+}
+
+.missing-months-note {
+  margin-top: 10px;
+
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+
+  padding: 8px 10px;
+  border-radius: 12px;
+
+  background: rgba(245, 158, 11, 0.10);
+  border: 1px solid rgba(245, 158, 11, 0.24);
+  color: rgba(253, 230, 138, 0.94);
+
+  font-family: helveticaNR;
+  font-size: 0.78rem;
+  line-height: 1.3;
+
+  ion-icon {
+    flex: 0 0 auto;
+    margin-top: 1px;
+    font-size: 16px;
+  }
+}
+
+.year-button {
+  min-width: 88px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+
+  padding: 8px 10px;
+  border-radius: 999px;
+
+  background: rgba(128, 227, 211, 0.08);
+  border: 1px solid rgba(128, 227, 211, 0.24);
+  color: var(--accent);
+
+  font-family: helveticaNBC;
+  font-size: 0.86rem;
+
+  ion-icon {
+    font-size: 15px;
+  }
+}
+
+.year-button:active {
+  transform: scale(0.98);
 }

@@ -22,6 +22,16 @@ export class TemperaturaPage implements OnInit, OnDestroy {
   tActualTexto = 'S/D';
   tMinTexto = 'S/D';
   tMaxTexto = 'S/D';
+  tMinHoraTexto = '';
+  tMaxHoraTexto = '';
+  amplitudTexto = 'S/D';
+
+  tendenciaTexto = 'Sin tendencia';
+  tendenciaClase = 'trend--flat';
+  tendenciaIcono = 'remove-outline';
+
+  resumenTitulo = 'Resumen';
+  resumenItems: Array<{ label: string; value: string; hint?: string; tone?: string }> = [];
 
   range: 'day' | 'days30' | 'year' = 'day';
   chartReady = false;
@@ -76,7 +86,7 @@ export class TemperaturaPage implements OnInit, OnDestroy {
     private estacionesService: EstacionesService,
     private router: Router,
     private cdr: ChangeDetectorRef
-  ) {}
+  ) { }
 
   ngOnInit() {
     this.load();
@@ -137,6 +147,7 @@ export class TemperaturaPage implements OnInit, OnDestroy {
 
         this.updateSummaryFromDaySeries();
         this.buildChart(this.range);
+        this.updateResumen(this.range);
 
         this.chartReady = true;
         this.cdr.markForCheck();
@@ -147,6 +158,7 @@ export class TemperaturaPage implements OnInit, OnDestroy {
     const v = ev?.detail?.value;
     this.range = (v === 'days30' || v === 'year' || v === 'day') ? v : 'day';
     this.buildChart(this.range);
+    this.updateResumen(this.range);
     this.cdr.markForCheck();
   }
 
@@ -201,21 +213,249 @@ export class TemperaturaPage implements OnInit, OnDestroy {
   }
 
   private updateSummaryFromDaySeries() {
-    const vals = this.serieDia.map(x => this.toNum(x.temperatura)).filter(v => Number.isFinite(v));
-    if (!vals.length) {
+    const puntos = this.serieDia
+      .map(x => ({
+        hora: x.hora,
+        temp: this.toNum(x.temperatura),
+      }))
+      .filter(x => Number.isFinite(x.temp));
+
+    if (!puntos.length) {
       this.tActualTexto = 'S/D';
       this.tMinTexto = 'S/D';
       this.tMaxTexto = 'S/D';
+      this.tMinHoraTexto = '';
+      this.tMaxHoraTexto = '';
+      this.amplitudTexto = 'S/D';
+      this.tendenciaTexto = 'Sin tendencia';
+      this.tendenciaClase = 'trend--flat';
+      this.tendenciaIcono = 'remove-outline';
       return;
     }
 
-    const last = vals[vals.length - 1];
-    const min = Math.min(...vals);
-    const max = Math.max(...vals);
+    const ultimo = puntos[puntos.length - 1];
+    const minP = puntos.reduce((acc, p) => p.temp < acc.temp ? p : acc, puntos[0]);
+    const maxP = puntos.reduce((acc, p) => p.temp > acc.temp ? p : acc, puntos[0]);
 
-    this.tActualTexto = `${last.toFixed(1)}°`;
-    this.tMinTexto = `${min.toFixed(1)}°`;
-    this.tMaxTexto = `${max.toFixed(1)}°`;
+    const amplitud = maxP.temp - minP.temp;
+
+    this.tActualTexto = `${ultimo.temp.toFixed(1)}°`;
+    this.tMinTexto = `${minP.temp.toFixed(1)}°`;
+    this.tMaxTexto = `${maxP.temp.toFixed(1)}°`;
+
+    this.tMinHoraTexto = minP.hora || '';
+    this.tMaxHoraTexto = maxP.hora || '';
+    this.amplitudTexto = `${amplitud.toFixed(1)}°`;
+
+    this.updateTendencia(puntos);
+  }
+
+  private updateTendencia(puntos: Array<{ hora: string; temp: number }>) {
+    if (!puntos || puntos.length < 2) {
+      this.tendenciaTexto = 'Sin tendencia';
+      this.tendenciaClase = 'trend--flat';
+      this.tendenciaIcono = 'remove-outline';
+      return;
+    }
+
+    const ultimo = puntos[puntos.length - 1];
+
+    /*
+      Tomamos una referencia de aproximadamente una hora atrás.
+      Si no hay suficientes puntos, usamos el primero disponible de los últimos registros.
+    */
+    const refIndex = Math.max(0, puntos.length - 5);
+    const ref = puntos[refIndex];
+
+    const delta = ultimo.temp - ref.temp;
+
+    if (Math.abs(delta) < 0.4) {
+      this.tendenciaTexto = 'Estable';
+      this.tendenciaClase = 'trend--flat';
+      this.tendenciaIcono = 'remove-outline';
+      return;
+    }
+
+    if (delta > 0) {
+      this.tendenciaTexto = `Subiendo +${delta.toFixed(1)}°`;
+      this.tendenciaClase = 'trend--up';
+      this.tendenciaIcono = 'trending-up-outline';
+      return;
+    }
+
+    this.tendenciaTexto = `Bajando ${delta.toFixed(1)}°`;
+    this.tendenciaClase = 'trend--down';
+    this.tendenciaIcono = 'trending-down-outline';
+  }
+
+  private updateResumen(range: 'day' | 'days30' | 'year') {
+    if (range === 'day') {
+      this.updateResumenDia();
+      return;
+    }
+
+    if (range === 'days30') {
+      this.updateResumen30Dias();
+      return;
+    }
+
+    this.updateResumenAnio();
+  }
+
+  private updateResumenDia() {
+    this.resumenTitulo = 'Resumen del día';
+
+    this.resumenItems = [
+      {
+        label: 'Mínima',
+        value: this.tMinTexto,
+        hint: this.tMinHoraTexto ? `a las ${this.tMinHoraTexto}` : '',
+        tone: this.toNum(this.tMinTexto.replace('°', '')) <= 3 ? 'cold' : '',
+      },
+      {
+        label: 'Máxima',
+        value: this.tMaxTexto,
+        hint: this.tMaxHoraTexto ? `a las ${this.tMaxHoraTexto}` : '',
+        tone: this.toNum(this.tMaxTexto.replace('°', '')) >= 30 ? 'hot' : '',
+      },
+      {
+        label: 'Amplitud',
+        value: this.amplitudTexto,
+        hint: 'diferencia diaria',
+        tone: this.toNum(this.amplitudTexto.replace('°', '')) >= 15 ? 'warn' : '',
+      },
+      {
+        label: 'Tendencia',
+        value: this.tendenciaTexto,
+        hint: 'últimos registros',
+        tone: this.tendenciaClase === 'trend--up'
+          ? 'hot'
+          : this.tendenciaClase === 'trend--down'
+            ? 'cold'
+            : '',
+      },
+    ];
+  }
+
+  private updateResumen30Dias() {
+    this.resumenTitulo = 'Resumen últimos 30 días';
+
+    const rows = this.serie30
+      .map(x => ({
+        fecha: x.fecha,
+        tmin: this.toNum(x.t_min),
+        tmax: this.toNum(x.t_max),
+      }))
+      .filter(x => Number.isFinite(x.tmin) || Number.isFinite(x.tmax));
+
+    if (!rows.length) {
+      this.resumenItems = [
+        { label: 'Datos', value: 'S/D', hint: 'sin información disponible' },
+      ];
+      return;
+    }
+
+    const tmins = rows.map(x => x.tmin).filter(v => Number.isFinite(v));
+    const tmaxs = rows.map(x => x.tmax).filter(v => Number.isFinite(v));
+
+    const minAbs = tmins.length ? Math.min(...tmins) : NaN;
+    const maxAbs = tmaxs.length ? Math.max(...tmaxs) : NaN;
+
+    const diasHelada = rows.filter(x => Number.isFinite(x.tmin) && x.tmin <= 0).length;
+    const diasCalidos = rows.filter(x => Number.isFinite(x.tmax) && x.tmax >= 30).length;
+
+    const promMin = this.promedio(tmins);
+    const promMax = this.promedio(tmaxs);
+
+    this.resumenItems = [
+      {
+        label: 'Mínima absoluta',
+        value: Number.isFinite(minAbs) ? `${minAbs.toFixed(1)}°` : 'S/D',
+        hint: 'menor mínima',
+        tone: Number.isFinite(minAbs) && minAbs <= 0 ? 'cold' : '',
+      },
+      {
+        label: 'Máxima absoluta',
+        value: Number.isFinite(maxAbs) ? `${maxAbs.toFixed(1)}°` : 'S/D',
+        hint: 'mayor máxima',
+        tone: Number.isFinite(maxAbs) && maxAbs >= 30 ? 'hot' : '',
+      },
+      {
+        label: 'Promedio mín/máx',
+        value: `${Number.isFinite(promMin) ? promMin.toFixed(1) : 'S/D'}° / ${Number.isFinite(promMax) ? promMax.toFixed(1) : 'S/D'}°`,
+        hint: 'últimos 30 días',
+      },
+      {
+        label: 'Heladas',
+        value: `${diasHelada}`,
+        hint: 'días con Tmin ≤ 0°C',
+        tone: diasHelada > 0 ? 'cold' : '',
+      },
+      {
+        label: 'Días cálidos',
+        value: `${diasCalidos}`,
+        hint: 'días con Tmax ≥ 30°C',
+        tone: diasCalidos > 0 ? 'hot' : '',
+      },
+    ];
+  }
+  private updateResumenAnio() {
+    this.resumenTitulo = 'Resumen anual';
+
+    const rows = this.serieMes
+      .map(x => ({
+        mes: x.mes,
+        tmin: this.toNum(x.t_min),
+        tmax: this.toNum(x.t_max),
+      }))
+      .filter(x => Number.isFinite(x.tmin) || Number.isFinite(x.tmax));
+
+    if (!rows.length) {
+      this.resumenItems = [
+        { label: 'Datos', value: 'S/D', hint: 'sin información disponible' },
+      ];
+      return;
+    }
+
+    const tmins = rows.map(x => x.tmin).filter(v => Number.isFinite(v));
+    const tmaxs = rows.map(x => x.tmax).filter(v => Number.isFinite(v));
+
+    const minMedia = tmins.length ? Math.min(...tmins) : NaN;
+    const maxMedia = tmaxs.length ? Math.max(...tmaxs) : NaN;
+
+    const promMin = this.promedio(tmins);
+    const promMax = this.promedio(tmaxs);
+
+    this.resumenItems = [
+      {
+        label: 'Media mín/máx',
+        value: `${Number.isFinite(promMin) ? promMin.toFixed(1) : 'S/D'}° / ${Number.isFinite(promMax) ? promMax.toFixed(1) : 'S/D'}°`,
+        hint: 'promedio mensual',
+      },
+      {
+        label: 'Menor media mínima',
+        value: Number.isFinite(minMedia) ? `${minMedia.toFixed(1)}°` : 'S/D',
+        hint: 'entre meses disponibles',
+        tone: Number.isFinite(minMedia) && minMedia <= 5 ? 'cold' : '',
+      },
+      {
+        label: 'Mayor media máxima',
+        value: Number.isFinite(maxMedia) ? `${maxMedia.toFixed(1)}°` : 'S/D',
+        hint: 'entre meses disponibles',
+        tone: Number.isFinite(maxMedia) && maxMedia >= 30 ? 'hot' : '',
+      },
+      {
+        label: 'Meses cargados',
+        value: `${rows.length}`,
+        hint: 'con datos disponibles',
+      },
+    ];
+  }
+
+  private promedio(vals: number[]): number {
+    const xs = vals.filter(v => Number.isFinite(v));
+    if (!xs.length) return NaN;
+    return xs.reduce((a, b) => a + b, 0) / xs.length;
   }
 
   private setHeaderDateFromDatos(datos: any) {
@@ -263,7 +503,7 @@ export class TemperaturaPage implements OnInit, OnDestroy {
 
   private mesNombre(m: any): string {
     const n = Number(m);
-    const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
     if (!Number.isFinite(n) || n < 1 || n > 12) return String(m ?? '');
     return meses[n - 1];
   }
@@ -286,6 +526,47 @@ export class TemperaturaPage implements OnInit, OnDestroy {
   openMapaHoy() {
     // poné tu URL real
     this.router.navigate(['tabs/mapathoy']);
+  }
+
+  get tieneDatosHoy(): boolean {
+    return Array.isArray(this.serieDia) && this.serieDia.some(x => {
+      const v = this.toNum(x?.temperatura);
+      return Number.isFinite(v);
+    });
+  }
+
+  get tieneDatos30Dias(): boolean {
+    return Array.isArray(this.serie30) && this.serie30.some(x => {
+      const tmin = this.toNum(x?.t_min);
+      const tmax = this.toNum(x?.t_max);
+      return Number.isFinite(tmin) || Number.isFinite(tmax);
+    });
+  }
+
+  get tieneDatosAnio(): boolean {
+    return Array.isArray(this.serieMes) && this.serieMes.some(x => {
+      const tmin = this.toNum(x?.t_min);
+      const tmax = this.toNum(x?.t_max);
+      return Number.isFinite(tmin) || Number.isFinite(tmax);
+    });
+  }
+
+  get tieneDatosRangoActual(): boolean {
+    if (this.range === 'day') return this.tieneDatosHoy;
+    if (this.range === 'days30') return this.tieneDatos30Dias;
+    return this.tieneDatosAnio;
+  }
+
+  get mensajeSinDatos(): string {
+    if (this.range === 'day') {
+      return 'La estación no informó registros de temperatura para hoy.';
+    }
+
+    if (this.range === 'days30') {
+      return 'No hay datos suficientes para mostrar los últimos 30 días.';
+    }
+
+    return 'No hay datos suficientes para mostrar el resumen anual.';
   }
 
 }

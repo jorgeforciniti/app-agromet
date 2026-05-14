@@ -1,14 +1,13 @@
 <ion-header class="ion-no-border header-glass">
     <ion-toolbar>
         <ion-buttons slot="start">
-            <ion-button (click)="onClick()">
+            <ion-button class="location-button" (click)="onClick()">
                 <ion-icon name="location-outline"></ion-icon>
                 <ion-label class="btn-label">Seleccionar localidad</ion-label>
             </ion-button>
         </ion-buttons>
-
         <ion-buttons slot="end">
-            <ion-button fill="clear" (click)="onClick()">
+            <ion-button fill="clear" (click)="onClick()" aria-label="Cambiar localidad">
                 <ion-icon name="chevron-forward-outline"></ion-icon>
             </ion-button>
         </ion-buttons>
@@ -49,6 +48,13 @@
                     <div class="date">
                         {{ diaSemana | uppercase }} {{ dia }} DE {{ nombreMes | uppercase }} {{ anio }}
                     </div>
+                    <button class="data-status" type="button" [ngClass]="estadoDatoActualClase"
+                        (click)="verDetalleActualizacion()">
+
+                        <ion-icon [name]="estadoDatoActualIcono"></ion-icon>
+                        <span>{{ estadoDatoActualTexto }}</span>
+
+                    </button>
                 </div>
 
                 <div class="hero__pin" aria-hidden="true">
@@ -103,32 +109,41 @@
                 </div>
             </div>
 
-            <!-- 👇 SOLO aparece si ALGÚN dato es estimado -->
-            <div class="stat__value"
+            <!-- Nota de estimación -->
+            <div class="estimation-note"
                 *ngIf="estimated?.temp || estimated?.hum || estimated?.wind || estimated?.pres || estimated?.rain">
-                <span class="est-dot">•(e): estimada por falta de datos</span>
+
+                <span>
+                    •(e): valor estimado por dato faltante, dudoso o desactualizado.
+                    <ng-container *ngIf="estimated?.rain">
+                        Lluvia marcada como revisada/no actual.
+                    </ng-container>
+                </span>
+
             </div>
         </div>
 
         <!-- Recommendation -->
-        <button class="card reco" type="button" (click)="verDetalleAplicacion()">
+        <button class="card reco" type="button" (click)="verDetalleAplicacion()" [ngClass]="{
+    'reco--ok': aplicacionEstado === 'ok',
+    'reco--warn': aplicacionEstado === 'warn',
+    'reco--bad': aplicacionEstado === 'bad'
+  }">
+
             <div class="reco__left">
-                <div class="reco__icon" [class.ok]="aplicarOk" [class.bad]="!aplicarOk">
-                    <ion-icon [name]="aplicarOk ? 'checkmark-circle' : 'warning'"></ion-icon>
+                <div class="reco__icon">
+                    <ion-icon [name]="aplicacionIcono"></ion-icon>
                 </div>
 
                 <div class="reco__text">
-                    <div class="reco__title">{{ aplicarTexto }}</div>
-                    <div class="reco__sub">
-                        <ng-container *ngIf="aplicarMotivos?.length; else okText">
-                            {{ aplicarMotivos.join(' · ') }}
-                        </ng-container>
-                        <ng-template #okText>Condiciones dentro de rangos permitidos.</ng-template>
-                    </div>
+                    <div class="reco__kicker">Aplicaciones</div>
+                    <div class="reco__title">{{ aplicacionTitulo }}</div>
+                    <div class="reco__sub">{{ aplicacionSubtitulo }}</div>
                 </div>
             </div>
 
-            <div class="reco__chev" aria-hidden="true">
+            <div class="reco__right">
+                <span>Detalle</span>
                 <ion-icon name="chevron-forward-outline"></ion-icon>
             </div>
         </button>
@@ -137,29 +152,52 @@
         <div class="clock">{{ hora }} HS</div>
 
         <!-- Alerts -->
-        <div class="card section">
+        <div class="card section smn-section" [ngClass]="alertaSmnClase">
+
             <div class="section__head">
                 <div class="section__title alert-title">
-                    <span>ALERTA SMN · {{ alertasVisibles?.[0]?.area || 'Tucumán' }}</span>
+                    <span>ALERTA SMN · {{ alertaAreaLabel }}</span>
 
-                    <a class="smn-link" href="https://www.smn.gob.ar/" target="_blank" rel="noopener">
+                    <a class="smn-link" href="https://www.smn.gob.ar/" target="_blank" rel="noopener"
+                        (click)="$event.stopPropagation()">
                         <img src="../../assets/images/smn.png" alt="SMN" />
                     </a>
                 </div>
 
-                <button class="link" type="button" (click)="showAlertsAll = !showAlertsAll" *ngIf="alertas?.length">
+                <button class="link" type="button" (click)="showAlertsAll = !showAlertsAll" *ngIf="tieneAlertasSmn">
                     {{ showAlertsAll ? 'Ver menos' : 'Ver completo' }}
                     <ion-icon name="chevron-forward-outline"></ion-icon>
                 </button>
             </div>
 
-            <div class="alerts" *ngIf="alertas?.length; else noAlerts">
+            <button class="smn-summary" type="button" (click)="verResumenAlertasSmn()">
+                <div class="smn-summary__icon">
+                    <ion-icon [name]="alertaSmnIcono"></ion-icon>
+                </div>
+
+                <div class="smn-summary__body">
+                    <div class="smn-summary__title">
+                        {{ alertaSmnTitulo }}
+                    </div>
+
+                    <div class="smn-summary__desc">
+                        {{ alertaSmnDescripcion }}
+                    </div>
+                </div>
+
+                <div class="smn-summary__chev">
+                    <ion-icon name="chevron-forward-outline"></ion-icon>
+                </div>
+            </button>
+
+            <div class="alerts" *ngIf="tieneAlertasSmn && showAlertsAll">
                 <div class="alert" *ngFor="let a of alertasVisibles" (click)="verDetalleAlerta(a)" role="button"
                     tabindex="0" [ngClass]="{
             'lvl-3': a?.nivel == 3,
             'lvl-4': a?.nivel == 4,
             'lvl-5': a?.nivel == 5
           }">
+
                     <div class="alert__rail"></div>
 
                     <div class="alert__flag">
@@ -181,9 +219,6 @@
                 </div>
             </div>
 
-            <ng-template #noAlerts>
-                <div class="empty">Sin alertas vigentes.</div>
-            </ng-template>
         </div>
 
         <!-- Forecast -->
@@ -203,23 +238,27 @@
                 </button>
             </div>
 
-            <!-- Vista corta (hoy completo) -->
-            <div class="forecast" *ngIf="!showForecastAll">
-                <div class="forecast__row" *ngFor="let r of datosHShort">
-                    <div class="forecast__time">{{ r[1] }}</div>
+            <!-- Vista corta -->
+            <div class="forecast-strip" *ngIf="!showForecastAll">
+                <button class="forecast-card" type="button" *ngFor="let r of datosHShort"
+                    (click)="verDetallePronostico(r)">
 
-                    <div class="forecast__icon">
+                    <div class="forecast-card__time">{{ r[1] }}</div>
+
+                    <div class="forecast-card__icon">
                         <img [src]="r[2]" (error)="imgError($event)" />
                     </div>
 
-                    <div class="forecast__temp">{{ r[3] }}°</div>
+                    <div class="forecast-card__temp">{{ r[3] }}°</div>
 
-                    <div class="forecast__meta">
-                        <span class="pill">{{ r[4] }}%</span>
-                        <span class="pill">{{ r[5] }} km/h</span>
-                        <span class="forecast__descInline">{{ r[6] }}</span>
+                    <div class="forecast-card__desc">{{ r[6] }}</div>
+
+                    <div class="forecast-card__meta">
+                        <span>HR {{ r[4] }}%</span>
+                        <span>{{ r[5] }} km/h</span>
                     </div>
-                </div>
+
+                </button>
             </div>
 
             <!-- Vista completa -->

@@ -1,5 +1,35 @@
-<ion-tabs>
-  <ion-tab-bar slot="bottom">
+<div class="app-top-strip">
+
+  <div class="ad-row">
+    <ion-img [src]="publicidad"></ion-img>
+  </div>
+
+  <div class="brand-row">
+    <div class="brand-spacer"></div>
+
+    <div class="brand-logo">
+      <ion-img [src]="logo"></ion-img>
+    </div>
+
+    <div class="brand-exit">
+      <ion-button class="exit-btn" fill="outline" color="medium" shape="round" (click)="goNotificaciones()"
+        aria-label="Configuración de notificaciones">
+
+        <ion-icon name="notifications-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+
+      <ion-button class="exit-btn" fill="outline" color="danger" shape="round" (click)="confirmSalir()"
+        aria-label="Salir">
+
+        <ion-icon name="power-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </div>
+  </div>
+
+</div>
+
+<ion-tabs class="main-tabs">
+  <ion-tab-bar slot="bottom" class="main-tab-bar">
 
     <ion-tab-button tab="home">
       <ion-icon name="home-outline"></ion-icon>
@@ -8,7 +38,7 @@
 
     <ion-tab-button tab="temperatura">
       <ion-icon name="thermometer-outline"></ion-icon>
-      <ion-label>Temperaturas</ion-label>
+      <ion-label>Temperatura</ion-label>
     </ion-tab-button>
 
     <ion-tab-button tab="lluvias">
@@ -25,32 +55,13 @@
       <ion-icon name="leaf-outline"></ion-icon>
       <ion-label>Aplicaciones</ion-label>
     </ion-tab-button>
-<!--
+
+    <!--
     <ion-tab-button tab="heat-waves">
       <ion-icon name="medkit-outline"></ion-icon>
       <ion-label>Salud</ion-label>
     </ion-tab-button>
--->
+    -->
 
   </ion-tab-bar>
-
-  <ion-row>
-    <ion-col size="12" class="ion-no-padding">
-      <ion-img [src]="publicidad"></ion-img>
-    </ion-col>
-  </ion-row>
-  <ion-row>
-    <ion-col size="2"></ion-col>
-
-    <ion-col size="7">
-      <ion-img [src]="logo"></ion-img>
-    </ion-col>
-    <ion-col size="1"></ion-col>
-    <ion-col size="2" class="ion-no-padding">
-      <ion-button class="exit-btn" fill="solid" color="danger" shape="round" (click)="confirmSalir()"
-        aria-label="Salir">
-        <ion-icon name="power-outline" slot="icon-only"></ion-icon>
-      </ion-button>
-    </ion-col>
-  </ion-row>
 </ion-tabs>

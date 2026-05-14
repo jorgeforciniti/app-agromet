@@ -3,17 +3,24 @@ import { EstacionesService } from 'src/app/services/estaciones.service';
 import { ChartOptions, ChartType, ChartDataSets } from 'chart.js';
 import { Color, Label, BaseChartDirective } from 'ng2-charts';
 import { LoadingController } from '@ionic/angular';
-import { Component, DoCheck, OnInit, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Subscription } from 'rxjs';
+import { AlertController } from '@ionic/angular';
 
 @Component({
   selector: 'app-lluvias',
   templateUrl: 'lluvias.page.html',
   styleUrls: ['lluvias.page.scss']
 })
-export class LluviasPage implements DoCheck, OnInit {
+export class LluviasPage implements OnInit, OnDestroy {
 
   public showChart = false;   // 👈 canvas se crea cuando yo quiero
   private firstLoadDone = false;
+  private estacionActualId: string | null = null;
+  private stationSub?: Subscription;
+
+  campaniaDistanciaKm: number | null = null;
+  campaniaMesesSinDatoTexto = '';
   dato: any;
   dia: string;
   nombreMes: string;
@@ -33,6 +40,36 @@ export class LluviasPage implements DoCheck, OnInit {
 
   selectedRange: '1' | '2' | '3' = '1';
   isLoading = false;
+
+  chartTitle = 'Lluvia por intervalo (hoy)';
+  chartHint = 'mm';
+
+  resumenTitulo = 'Resumen del día';
+  resumenItems: Array<{ label: string; value: string; hint?: string; tone?: string }> = [];
+
+  anioSeleccionado = new Date().getFullYear();
+  aniosDisponibles: number[] = [];
+
+  campaniaLocalidad: any = null;
+  campaniaDataset: Array<{
+    year: number;
+    month: string;
+    monthNumber: number;
+    value: number | null;
+    normal: number | null;
+    pending: boolean;
+  }> = [];
+
+  campaniaReferencePeriod = '';
+  campaniaZone = '';
+
+  campaniaObsTexto = 'S/D';
+  campaniaNormalTexto = 'S/D';
+  campaniaPorcentajeTexto = 'S/D';
+  campaniaDiferenciaTexto = 'S/D';
+  campaniaEstadoTexto = 'Sin datos';
+  campaniaEstadoClase = 'estado--sd';
+  campaniaHastaTexto = '';
 
   @ViewChild(BaseChartDirective) chart?: BaseChartDirective;
 
@@ -83,6 +120,7 @@ export class LluviasPage implements DoCheck, OnInit {
     private datosLluvias: EstacionesService,
     private router: Router,
     public loadingCtrl: LoadingController,
+    private alertCtrl: AlertController
   ) {
     this.cargarDatos();
     this.cargarImagen();
@@ -97,21 +135,55 @@ export class LluviasPage implements DoCheck, OnInit {
   }
 
   ngOnInit() {
-    // Carga inicial SIEMPRE (resuelve el caso F5)
+    this.inicializarAniosDisponibles();
+
+    this.estacionActualId = localStorage.getItem('estacion');
+
     this.cargarDatos();
     this.cargarImagen();
     this.traerRRMes();
     this.firstLoadDone = true;
+
+    this.stationSub = this.datosLluvias.stationChanged$.subscribe(estacion => {
+      if (!estacion) return;
+
+      const cambioLocalidad =
+        this.estacionActualId !== null &&
+        this.estacionActualId !== estacion;
+
+      this.estacionActualId = estacion;
+
+      if (!cambioLocalidad && this.firstLoadDone) {
+        return;
+      }
+
+      this.resetAnioCampaniaAlActual();
+
+      this.cargarDatos();
+      this.cargarImagen();
+
+      if (this.selectedRange === '3') {
+        this.cargarCampaniaAnual();
+      } else {
+        this.traerRRMes();
+      }
+    });
   }
 
-  ngDoCheck() {
-  if (localStorage.getItem('lluvia') === '1') {
-    this.cargarDatos();
-    this.traerRRMes();
-    localStorage.setItem('lluvia', '0');
-    this.cargarImagen();
+  ngOnDestroy() {
+    this.stationSub?.unsubscribe();
   }
-}
+
+  private inicializarAniosDisponibles() {
+    const actual = new Date().getFullYear();
+    this.aniosDisponibles = [];
+
+    for (let y = actual; y >= 2012; y--) {
+      this.aniosDisponibles.push(y);
+    }
+
+    this.anioSeleccionado = actual;
+  }
 
   cargarDatos() {
     this.dato = JSON.parse(localStorage.getItem('datos') || 'null');
@@ -157,10 +229,15 @@ export class LluviasPage implements DoCheck, OnInit {
         this.mensajes2 = posts?.[1] || [];
         this.mensajes3 = posts?.[2] || [];
 
-        this.selectedRange = '1';
+        if (this.selectedRange === '3') {
+          this.cargarCampaniaAnual();
+        } else {
+          const rango = this.selectedRange || '1';
 
-        // 1) armá datos/labels primero
-        this.traerRR('1');
+          this.traerRR(rango);
+          this.updateChartTexts(rango);
+          this.updateResumen(rango);
+        }
 
         // 2) recién ahora creá el canvas (recreación)
         this.recrearCanvas();
@@ -178,7 +255,15 @@ export class LluviasPage implements DoCheck, OnInit {
   onRangeChange(ev: any) {
     const v = String(ev?.detail?.value || '1') as '1' | '2' | '3';
     this.selectedRange = v;
+
+    if (v === '3') {
+      this.cargarCampaniaAnual();
+      return;
+    }
+
     this.traerRR(v);
+    this.updateChartTexts(v);
+    this.updateResumen(v);
     this.recrearCanvas();
   }
 
@@ -229,9 +314,19 @@ export class LluviasPage implements DoCheck, OnInit {
       }
     }
 
+    this.barChartLegend = false;
+    this.barChartColors = [{
+      backgroundColor: 'rgba(128, 227, 211, 0.65)',
+      borderColor: 'rgba(128, 227, 211, 1)'
+    }];
+
     // ⚠️ claves: nuevas referencias SIEMPRE
     this.barChartData = [{ data: this.auxRR, label: 'Lluvia' }];
     this.barChartLabels = [...this.auxD];
+
+    this.updateChartTexts(tipoR);
+    this.updateResumen(tipoR);
+
     this.recrearCanvas();
   }
 
@@ -249,6 +344,78 @@ export class LluviasPage implements DoCheck, OnInit {
 
   goLocalidades() {
     this.router.navigate(['/localidades']);
+  }
+
+  private toNum(v: any): number {
+    if (v === null || v === undefined || v === '') return NaN;
+    const n = Number(v);
+    return Number.isFinite(n) ? n : NaN;
+  }
+
+  private normalizarValorCampania(v: any): number | null {
+    const n = Number(v);
+
+    if (!Number.isFinite(n)) {
+      return null;
+    }
+
+    // Cubre -999.9, -99.9 u otros códigos negativos de faltante
+    if (n <= -99) {
+      return null;
+    }
+
+    return n;
+  }
+
+  private fmtMm(v: any, digits = 1): string {
+    const n = this.toNum(v);
+    if (!Number.isFinite(n)) return 'S/D';
+    return `${n.toFixed(digits)} mm`;
+  }
+
+  private fmtPct(v: any): string {
+    const n = this.toNum(v);
+    if (!Number.isFinite(n)) return 'S/D';
+    return `${n.toFixed(0)} %`;
+  }
+
+  private mesNumeroDesdeTexto(mes: string): number {
+    const m = String(mes || '').trim().toUpperCase();
+
+    const map: any = {
+      ENE: 1,
+      FEB: 2,
+      MAR: 3,
+      ABR: 4,
+      MAY: 5,
+      JUN: 6,
+      JUL: 7,
+      AGO: 8,
+      SEP: 9,
+      OCT: 10,
+      NOV: 11,
+      DIC: 12,
+    };
+
+    return map[m] || 0;
+  }
+
+  private esMesPendiente(year: number, monthNumber: number): boolean {
+    const hoy = new Date();
+    const y = hoy.getFullYear();
+    const m = hoy.getMonth() + 1;
+
+    return year > y || (year === y && monthNumber >= m);
+  }
+
+  private normalizarTexto(s: string): string {
+    return String(s || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/\./g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
   }
 
   private recrearCanvas() {
@@ -271,4 +438,629 @@ export class LluviasPage implements DoCheck, OnInit {
     }, 0);
   }
 
+  get tieneDatosHoy(): boolean {
+    return Array.isArray(this.mensajes) && this.mensajes.some(x => {
+      const v = this.toNum(x?.lluvia);
+      return Number.isFinite(v);
+    });
+  }
+
+  get tieneLluviaHoy(): boolean {
+    return Array.isArray(this.mensajes) && this.mensajes.some(x => {
+      const v = this.toNum(x?.lluvia);
+      return Number.isFinite(v) && v > 0;
+    });
+  }
+
+  get tieneDatos30Dias(): boolean {
+    return Array.isArray(this.mensajes2) && this.mensajes2.some(x => {
+      const v = this.toNum(x?.lluvia);
+      return Number.isFinite(v);
+    });
+  }
+
+  get tieneDatosAnio(): boolean {
+    if (this.campaniaDataset?.length) {
+      return this.campaniaDataset.some(x => x.value !== null || x.normal !== null);
+    }
+
+    return Array.isArray(this.mensajes3) && this.mensajes3.some(x => {
+      const v = this.toNum(x?.lluvia);
+      return Number.isFinite(v);
+    });
+  }
+
+  get tieneDatosRangoActual(): boolean {
+    if (this.selectedRange === '1') return this.tieneDatosHoy;
+    if (this.selectedRange === '2') return this.tieneDatos30Dias;
+    return this.tieneDatosAnio;
+  }
+
+  get tieneLluviaRangoActual(): boolean {
+    if (this.selectedRange === '1') return this.tieneLluviaHoy;
+
+    if (this.selectedRange === '2') {
+      return this.mensajes2.some(x => {
+        const v = this.toNum(x?.lluvia);
+        return Number.isFinite(v) && v > 0;
+      });
+    }
+
+    if (this.campaniaDataset?.length) {
+      return this.campaniaDataset.some(x => x.value !== null && x.value > 0);
+    }
+
+    return this.mensajes3.some(x => {
+      const v = this.toNum(x?.lluvia);
+      return Number.isFinite(v) && v > 0;
+    });
+  }
+
+  get mensajeSinDatos(): string {
+    if (this.selectedRange === '1') {
+      return 'No hay registros de lluvia por intervalo para hoy.';
+    }
+
+    if (this.selectedRange === '2') {
+      return 'No hay datos suficientes para mostrar los últimos 30 días.';
+    }
+
+    return 'No hay datos de campaña para la localidad seleccionada.';
+  }
+
+  get mensajeSinLluvia(): string {
+    if (this.selectedRange === '1') {
+      return 'Sin lluvia registrada hoy.';
+    }
+
+    if (this.selectedRange === '2') {
+      return 'No se registraron lluvias en los últimos 30 días.';
+    }
+
+    return 'No se registraron lluvias en los meses cerrados del año seleccionado.';
+  }
+
+  private cargarCampaniaAnual() {
+    this.isLoading = true;
+
+    this.datosLluvias.getDatosCampaniaLluvia(1, this.anioSeleccionado).subscribe({
+      next: (resp: any) => {
+        const rows = Array.isArray(resp?.data) ? resp.data : [];
+        const localidad = this.buscarLocalidadCampania(rows);
+
+        this.campaniaLocalidad = localidad;
+        this.campaniaReferencePeriod = localidad?.reference_period || '';
+        this.campaniaZone = localidad?.zone || '';
+
+        this.campaniaDataset = this.normalizarCampaniaDataset(localidad);
+
+        this.armarGraficoCampania();
+        this.updateResumenCampania();
+        this.recrearCanvas();
+      },
+      error: () => {
+        this.campaniaLocalidad = null;
+        this.campaniaDataset = [];
+        this.armarGraficoCampania();
+        this.updateResumenCampania();
+      },
+      complete: () => {
+        this.isLoading = false;
+      }
+    });
+  }
+
+  private buscarLocalidadCampania(rows: any[]): any {
+    if (!rows?.length) return null;
+
+    const nombreEstacion = this.normalizarTexto(this.dato?.nombre || '');
+
+    const latEstacion = this.toNum(
+      this.dato?.lat ??
+      this.dato?.Lat ??
+      this.dato?.latitud ??
+      this.dato?.Latitud
+    );
+
+    const lonEstacion = this.toNum(
+      this.dato?.lon ??
+      this.dato?.Lon ??
+      this.dato?.longitud ??
+      this.dato?.Longitud
+    );
+
+    // Si no tenemos coordenadas, recién ahí intentamos por nombre.
+    if (!Number.isFinite(latEstacion) || !Number.isFinite(lonEstacion)) {
+      const exacta = rows.find(r =>
+        this.normalizarTexto(r?.name) === nombreEstacion
+      );
+
+      if (exacta) return exacta;
+
+      const parcial = rows.find(r => {
+        const rn = this.normalizarTexto(r?.name);
+        return rn && nombreEstacion && (
+          rn.includes(nombreEstacion) ||
+          nombreEstacion.includes(rn)
+        );
+      });
+
+      return parcial || null;
+    }
+
+    // Con coordenadas, buscamos la estación pluviométrica más cercana.
+    const cercana = this.buscarMasCercanaPorCoordenadas(
+      rows,
+      latEstacion,
+      lonEstacion
+    );
+
+    const distancia = this.distanciaKm(
+      latEstacion,
+      lonEstacion,
+      this.toNum(cercana?.lat),
+      this.toNum(cercana?.lon)
+    );
+
+    // Guardamos la distancia para mostrarla en pantalla.
+    this.campaniaDistanciaKm = Number.isFinite(distancia) ? distancia : null;
+
+    // Umbral máximo automático.
+    // Podemos cambiar 20 km por 15 km si querés ser más estricto.
+    if (Number.isFinite(distancia) && distancia <= 20) {
+      return cercana;
+    }
+
+    return null;
+  }
+
+  private normalizarCampaniaDataset(localidad: any): Array<{
+    year: number;
+    month: string;
+    monthNumber: number;
+    value: number | null;
+    normal: number | null;
+    pending: boolean;
+  }> {
+    const ds = Array.isArray(localidad?.dataset) ? localidad.dataset : [];
+
+    return ds.map((x: any) => {
+      const year = Number(x?.year);
+      const month = String(x?.month || '');
+      const monthNumber = this.mesNumeroDesdeTexto(month);
+
+      return {
+        year,
+        month,
+        monthNumber,
+        value: this.normalizarValorCampania(x?.value),
+        normal: this.normalizarValorCampania(x?.normal),
+        pending: this.esMesPendiente(year, monthNumber),
+      };
+    });
+  }
+
+  private armarGraficoCampania() {
+    this.chartTitle = `Lluvia mensual vs normal · ${this.anioSeleccionado}`;
+    this.chartHint = 'mm';
+
+    if (!this.campaniaDataset?.length) {
+      this.barChartLabels = [];
+      this.barChartData = [{ data: [], label: 'Lluvia' }];
+      return;
+    }
+
+    const mesesSinDato = this.campaniaDataset
+      .filter(x => x.value === null && !x.pending)
+      .map(x => x.month);
+
+    this.campaniaMesesSinDatoTexto = mesesSinDato.length
+      ? `Meses sin dato: ${mesesSinDato.join(', ')}`
+      : '';
+
+    this.barChartLabels = this.campaniaDataset.map(x => {
+      if (x.value === null && !x.pending) {
+        return [x.month, 'S/D'];
+      }
+
+      if (x.pending) {
+        return [x.month, 'pend.'];
+      }
+
+      return x.month;
+    });
+
+    const observado = this.campaniaDataset.map(x =>
+      x.value !== null ? Number(x.value.toFixed(1)) : null
+    );
+
+    const normal = this.campaniaDataset.map(x =>
+      x.normal !== null ? Number(x.normal.toFixed(1)) : null
+    );
+
+    this.barChartData = [
+      {
+        data: observado,
+        label: 'Observado',
+        type: 'bar',
+      } as any,
+      {
+        data: normal,
+        label: 'Normal',
+        type: 'line',
+        fill: false,
+        lineTension: 0.25,
+        pointRadius: 3,
+        borderWidth: 2,
+      } as any,
+    ];
+
+    this.barChartLegend = true;
+
+    this.barChartColors = [
+      {
+        backgroundColor: 'rgba(128, 227, 211, 0.65)',
+        borderColor: 'rgba(128, 227, 211, 1)'
+      },
+      {
+        backgroundColor: 'rgba(255, 176, 32, 0.10)',
+        borderColor: 'rgba(255, 176, 32, 0.95)',
+        pointBackgroundColor: 'rgba(255, 176, 32, 0.95)',
+        pointBorderColor: 'rgba(255, 176, 32, 0.95)'
+      } as any
+    ];
+  }
+
+  private updateResumenCampania() {
+    this.resumenTitulo = `Resumen ${this.anioSeleccionado}`;
+
+    if (!this.campaniaDataset?.length || !this.campaniaLocalidad) {
+      this.campaniaObsTexto = 'S/D';
+      this.campaniaNormalTexto = 'S/D';
+      this.campaniaPorcentajeTexto = 'S/D';
+      this.campaniaDiferenciaTexto = 'S/D';
+      this.campaniaEstadoTexto = 'Sin datos';
+      this.campaniaEstadoClase = 'estado--sd';
+      this.campaniaHastaTexto = '';
+
+      this.resumenItems = [];
+      return;
+    }
+
+    const validos = this.campaniaDataset.filter(x =>
+      x.value !== null &&
+      x.normal !== null &&
+      !x.pending
+    );
+
+    const obs = validos.reduce((acc, x) => acc + (x.value || 0), 0);
+    const normal = validos.reduce((acc, x) => acc + (x.normal || 0), 0);
+    const diff = obs - normal;
+    const pct = normal > 0 ? (obs / normal) * 100 : NaN;
+
+    const ultimo = validos.length ? validos[validos.length - 1] : null;
+
+    this.campaniaObsTexto = this.fmtMm(obs);
+    this.campaniaNormalTexto = this.fmtMm(normal);
+    this.campaniaPorcentajeTexto = this.fmtPct(pct);
+    this.campaniaDiferenciaTexto = `${diff >= 0 ? '+' : ''}${diff.toFixed(1)} mm`;
+    this.campaniaHastaTexto = ultimo ? `datos cerrados hasta ${ultimo.month}` : '';
+
+    const estado = this.clasificarPorcentajeNormal(pct);
+    this.campaniaEstadoTexto = estado.texto;
+    this.campaniaEstadoClase = estado.clase;
+
+    const conValor = this.campaniaDataset.filter(x => x.value !== null);
+    const mesMasLluvioso = conValor.length
+      ? conValor.reduce((acc, x) => (x.value || 0) > (acc.value || 0) ? x : acc, conValor[0])
+      : null;
+
+    const conPct = this.campaniaDataset
+      .filter(x => x.value !== null && x.normal !== null && x.normal > 0)
+      .map(x => ({
+        ...x,
+        pct: ((x.value || 0) / (x.normal || 1)) * 100
+      }));
+
+    const mayorExceso = conPct.length
+      ? conPct.reduce((acc, x) => x.pct > acc.pct ? x : acc, conPct[0])
+      : null;
+
+    const mayorDeficit = conPct.length
+      ? conPct.reduce((acc, x) => x.pct < acc.pct ? x : acc, conPct[0])
+      : null;
+
+    this.resumenItems = [
+      {
+        label: 'Observado',
+        value: this.campaniaObsTexto,
+        hint: this.campaniaHastaTexto || 'meses válidos',
+        tone: 'rain',
+      },
+      {
+        label: 'Normal comparable',
+        value: this.campaniaNormalTexto,
+        hint: this.campaniaReferencePeriod ? `Ref. ${this.campaniaReferencePeriod}` : '',
+      },
+      {
+        label: '% normal',
+        value: this.campaniaPorcentajeTexto,
+        hint: this.campaniaEstadoTexto,
+        tone: this.campaniaEstadoClase,
+      },
+      {
+        label: 'Diferencia',
+        value: this.campaniaDiferenciaTexto,
+        hint: 'observado - normal',
+        tone: diff >= 0 ? 'rain' : 'warn',
+      },
+      {
+        label: 'Mes más lluvioso',
+        value: mesMasLluvioso ? this.fmtMm(mesMasLluvioso.value) : 'S/D',
+        hint: mesMasLluvioso?.month || '',
+        tone: 'rain',
+      },
+      {
+        label: 'Mayor exceso',
+        value: mayorExceso ? this.fmtPct(mayorExceso.pct) : 'S/D',
+        hint: mayorExceso?.month || '',
+        tone: 'rain',
+      },
+      {
+        label: 'Mayor déficit',
+        value: mayorDeficit ? this.fmtPct(mayorDeficit.pct) : 'S/D',
+        hint: mayorDeficit?.month || '',
+        tone: 'warn',
+      },
+      {
+        label: 'Zona',
+        value: this.campaniaZone || 'S/D',
+        hint: this.campaniaLocalidad?.name || '',
+      },
+      {
+        label: 'Serie usada',
+        value: this.campaniaLocalidad?.name || 'S/D',
+        hint: this.campaniaDistanciaKm != null
+          ? `${this.campaniaDistanciaKm.toFixed(1)} km de la estación automática`
+          : 'sin distancia calculada',
+      },
+      {
+        label: 'Referencia',
+        value: this.campaniaReferencePeriod || 'S/D',
+        hint: this.campaniaZone ? `Zona ${this.campaniaZone}` : '',
+      },
+    ];
+  }
+
+  private clasificarPorcentajeNormal(pct: number): { texto: string; clase: string } {
+    if (!Number.isFinite(pct)) {
+      return { texto: 'Sin datos', clase: 'estado--sd' };
+    }
+
+    if (pct < 50) {
+      return { texto: 'Muy deficitario', clase: 'estado--deficit' };
+    }
+
+    if (pct < 80) {
+      return { texto: 'Deficitario', clase: 'estado--deficit' };
+    }
+
+    if (pct <= 120) {
+      return { texto: 'Normal', clase: 'estado--normal' };
+    }
+
+    if (pct <= 160) {
+      return { texto: 'Superior a lo normal', clase: 'estado--rain' };
+    }
+
+    return { texto: 'Muy superior', clase: 'estado--rain' };
+  }
+
+  private updateChartTexts(tipoR: '1' | '2' | '3') {
+    if (tipoR === '1') {
+      this.chartTitle = 'Lluvia por intervalo (hoy)';
+      this.chartHint = 'mm';
+      return;
+    }
+
+    if (tipoR === '2') {
+      this.chartTitle = 'Lluvia diaria (últimos 30 días)';
+      this.chartHint = 'mm/día';
+      return;
+    }
+
+    this.chartTitle = `Lluvia mensual vs normal · ${this.anioSeleccionado}`;
+    this.chartHint = 'mm/mes';
+  }
+
+  private updateResumen(tipoR: '1' | '2' | '3') {
+    if (tipoR === '1') {
+      this.updateResumenHoy();
+      return;
+    }
+
+    if (tipoR === '2') {
+      this.updateResumen30Dias();
+      return;
+    }
+
+    this.updateResumenCampania();
+  }
+
+  private updateResumenHoy() {
+    this.resumenTitulo = 'Resumen del día';
+
+    const rows = (this.mensajes || [])
+      .map(x => ({ hora: x?.hora || '', lluvia: this.toNum(x?.lluvia) }))
+      .filter(x => Number.isFinite(x.lluvia));
+
+    if (!rows.length) {
+      this.resumenItems = [];
+      return;
+    }
+
+    const total = this.toNum(this.dato?.RR_dia);
+    const conLluvia = rows.filter(r => r.lluvia > 0);
+    const max = rows.reduce((acc, r) => r.lluvia > acc.lluvia ? r : acc, rows[0]);
+
+    this.resumenItems = [
+      { label: 'Acumulado hoy', value: this.fmtMm(total), hint: 'registro diario', tone: total > 0 ? 'rain' : '' },
+      { label: 'Máx. intervalo', value: this.fmtMm(max.lluvia), hint: max.hora || '', tone: max.lluvia > 0 ? 'rain' : '' },
+      { label: 'Intervalos con lluvia', value: `${conLluvia.length}`, hint: 'registros > 0 mm', tone: conLluvia.length ? 'rain' : '' },
+      { label: 'Última lluvia', value: conLluvia.length ? conLluvia[conLluvia.length - 1].hora : 'Sin lluvia', hint: 'hoy' },
+    ];
+  }
+
+  private updateResumen30Dias() {
+    this.resumenTitulo = 'Resumen últimos 30 días';
+
+    const rows = (this.mensajes2 || [])
+      .map(x => ({ dia: x?.dia || '', lluvia: this.toNum(x?.lluvia) }))
+      .filter(x => Number.isFinite(x.lluvia));
+
+    if (!rows.length) {
+      this.resumenItems = [];
+      return;
+    }
+
+    const total = rows.reduce((acc, r) => acc + r.lluvia, 0);
+    const conLluvia = rows.filter(r => r.lluvia > 0);
+    const max = rows.reduce((acc, r) => r.lluvia > acc.lluvia ? r : acc, rows[0]);
+
+    this.resumenItems = [
+      { label: 'Total 30 días', value: this.fmtMm(total), hint: 'acumulado', tone: total > 0 ? 'rain' : '' },
+      { label: 'Días con lluvia', value: `${conLluvia.length}`, hint: 'días > 0 mm', tone: conLluvia.length ? 'rain' : '' },
+      { label: 'Máximo diario', value: this.fmtMm(max.lluvia), hint: max.dia ? `${max.dia.substr(8, 2)}/${max.dia.substr(5, 2)}` : '', tone: max.lluvia > 0 ? 'rain' : '' },
+      { label: 'Promedio diario', value: this.fmtMm(total / rows.length), hint: `${rows.length} días disponibles` },
+    ];
+  }
+
+  private buscarMasCercanaPorCoordenadas(rows: any[], lat: number, lon: number): any {
+    if (!rows?.length) return null;
+
+    let mejor = null;
+    let mejorDistancia = Number.POSITIVE_INFINITY;
+
+    for (const r of rows) {
+      const rLat = this.toNum(r?.lat);
+      const rLon = this.toNum(r?.lon);
+
+      if (!Number.isFinite(rLat) || !Number.isFinite(rLon)) {
+        continue;
+      }
+
+      const d = this.distanciaKm(lat, lon, rLat, rLon);
+
+      if (d < mejorDistancia) {
+        mejorDistancia = d;
+        mejor = r;
+      }
+    }
+
+    return mejor;
+  }
+
+  private distanciaKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+    if (
+      !Number.isFinite(lat1) ||
+      !Number.isFinite(lon1) ||
+      !Number.isFinite(lat2) ||
+      !Number.isFinite(lon2)
+    ) {
+      return NaN;
+    }
+
+    const R = 6371;
+    const dLat = this.toRad(lat2 - lat1);
+    const dLon = this.toRad(lon2 - lon1);
+
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(this.toRad(lat1)) *
+      Math.cos(this.toRad(lat2)) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    return R * c;
+  }
+
+  private toRad(v: number): number {
+    return v * Math.PI / 180;
+  }
+
+  private resetAnioCampaniaAlActual() {
+    const actual = new Date().getFullYear();
+
+    this.anioSeleccionado = actual;
+    this.campaniaLocalidad = null;
+    this.campaniaDataset = [];
+    this.campaniaReferencePeriod = '';
+    this.campaniaZone = '';
+    this.campaniaDistanciaKm = null;
+    this.campaniaMesesSinDatoTexto = '';
+
+    this.campaniaObsTexto = 'S/D';
+    this.campaniaNormalTexto = 'S/D';
+    this.campaniaPorcentajeTexto = 'S/D';
+    this.campaniaDiferenciaTexto = 'S/D';
+    this.campaniaEstadoTexto = 'Sin datos';
+    this.campaniaEstadoClase = 'estado--sd';
+    this.campaniaHastaTexto = '';
+  }
+
+  async abrirSelectorAnio(ev?: Event) {
+    const target = ev?.currentTarget as HTMLElement | null;
+
+    // Evita warning aria-hidden: el foco no debe quedar en el botón
+    // mientras Ionic abre el overlay.
+    if (target && typeof target.blur === 'function') {
+      target.blur();
+    }
+
+    // Refuerzo para navegadores que mantienen el foco unos milisegundos.
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+
+    const inputs = this.aniosDisponibles.map(y => ({
+      type: 'radio' as const,
+      label: String(y),
+      value: y,
+      checked: y === this.anioSeleccionado,
+    }));
+
+    const alert = await this.alertCtrl.create({
+      header: 'Seleccionar año',
+      inputs,
+      buttons: [
+        {
+          text: 'Cancelar',
+          role: 'cancel',
+        },
+        {
+          text: 'Aceptar',
+          handler: (value: number) => {
+            if (!value || Number(value) === this.anioSeleccionado) {
+              return;
+            }
+
+            this.anioSeleccionado = Number(value);
+            this.cargarCampaniaAnual();
+          },
+        },
+      ],
+      cssClass: 'alert-glass',
+    });
+
+    await alert.present();
+
+    alert.onDidDismiss().then(() => {
+      // Evita que el foco vuelva a quedar atrapado en un elemento oculto.
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+      }
+    });
+  }
 }

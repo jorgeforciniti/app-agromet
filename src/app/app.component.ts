@@ -4,7 +4,7 @@ import { Platform, LoadingController } from '@ionic/angular';
 import { SplashScreen } from '@ionic-native/splash-screen/ngx';
 import { StatusBar } from '@ionic-native/status-bar/ngx';
 import swal from 'sweetalert2';
-
+import { PushService } from './services/push.service';
 import { of } from 'rxjs';
 import { catchError, finalize, switchMap, tap } from 'rxjs/operators';
 
@@ -17,7 +17,6 @@ export class AppComponent implements OnInit {
 
   // *******  Importante: Cambiar la version
   version = { version: '2.2.4' };
-
   loading: number = 0;
   show = true;
   mostrar = false;
@@ -29,7 +28,8 @@ export class AppComponent implements OnInit {
     private splashScreen: SplashScreen,
     private statusBar: StatusBar,
     private plt: Platform,
-    public loadingCtrl: LoadingController
+    public loadingCtrl: LoadingController,
+    private pushService: PushService
   ) {
     this.initializeApp();
   }
@@ -49,8 +49,8 @@ export class AppComponent implements OnInit {
   ngOnInit() {
     // habilitar para control de versiones
     // this.traerVersion();
-
     this.traeEstacionesYDatos();
+    this.pushService.initPush();
   }
 
   // =========================
@@ -85,7 +85,7 @@ export class AppComponent implements OnInit {
           throw new Error('No se pudo seleccionar una estación válida.');
         }
 
-        localStorage.setItem('estacion', String(estacion));
+        this.estacionesService.setSelectedStation(estacion);
 
         // ✅ Actualizar estado UI (lo que antes hacía traerDatos)
         this.mensajes = stations;

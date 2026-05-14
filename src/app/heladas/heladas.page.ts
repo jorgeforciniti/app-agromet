@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { LoadingController } from '@ionic/angular';
 import { Router } from '@angular/router';
 import { EstacionesService } from 'src/app/services/estaciones.service';
+import { Subscription } from 'rxjs';
 
 type ModoHeladas = 'dia' | 'mes' | 'anio';
 
@@ -10,7 +11,9 @@ type ModoHeladas = 'dia' | 'mes' | 'anio';
   templateUrl: './heladas.page.html',
   styleUrls: ['./heladas.page.scss'],
 })
-export class HeladasPage implements OnInit {
+export class HeladasPage implements OnInit, OnDestroy {
+  private stationSub?: Subscription;
+  private estacionActualId: string | null = null;
   dato: any = {};
   ubicacion = '../../assets/wheater-icons/ubicacion.png';
   mapas = '../../assets/tab-icons/btnMapas.png';
@@ -54,6 +57,7 @@ export class HeladasPage implements OnInit {
     regAct: number;
     regPrev: number;
   }> = [];
+  resumenPeriodoItems: Array<{ label: string; value: string; hint?: string; tone?: string }> = [];
 
   constructor(
     private pronostico: EstacionesService,
@@ -62,8 +66,46 @@ export class HeladasPage implements OnInit {
   ) { }
 
   async ngOnInit() {
+    this.estacionActualId = localStorage.getItem('estacion');
     this.dato = this.safeParse(localStorage.getItem('datos')) || {};
+
     await this.cargarModo(this.modo);
+
+    this.stationSub = this.pronostico.stationChanged$.subscribe(async estacion => {
+      if (!estacion) return;
+
+      const cambioLocalidad =
+        this.estacionActualId !== null &&
+        this.estacionActualId !== estacion;
+
+      this.estacionActualId = estacion;
+
+      if (!cambioLocalidad) {
+        return;
+      }
+
+      this.showAll = false;
+
+      try {
+        const nuevoDato = await this.pronostico.getDatos(estacion).toPromise();
+
+        if (nuevoDato) {
+          this.dato = nuevoDato;
+          localStorage.setItem('datos', JSON.stringify(nuevoDato));
+        } else {
+          this.dato = this.safeParse(localStorage.getItem('datos')) || {};
+        }
+
+        await this.cargarModo(this.modo);
+      } catch {
+        this.dato = this.safeParse(localStorage.getItem('datos')) || {};
+        await this.cargarModo(this.modo);
+      }
+    });
+  }
+
+  ngOnDestroy() {
+    this.stationSub?.unsubscribe();
   }
 
   async onModoChange(value: ModoHeladas) {
@@ -172,6 +214,7 @@ export class HeladasPage implements OnInit {
     this.durTotalSel = this.toNum(rowSel?.duracion_t);
     this.diasSel = this.toNum(rowSel?.dias);
     this.registrosSel = this.toNum(rowSel?.registros);
+    this.updateResumenPeriodoDiaMes();
   }
 
   private procesarAnio(data: any[]) {
@@ -256,6 +299,7 @@ export class HeladasPage implements OnInit {
     this.durTotalSel = this.toNum(sel?.cur?.duracion_t);
     this.diasSel = this.toNum(sel?.cur?.dias);
     this.registrosSel = this.toNum(sel?.cur?.registros);
+    this.updateResumenPeriodoAnio();
   }
 
   private resetResumen() {
@@ -266,11 +310,12 @@ export class HeladasPage implements OnInit {
     this.durTotalSel = null;
     this.diasSel = null;
     this.registrosSel = null;
+    this.resumenPeriodoItems = [];
   }
 
   // --------- HELPERS UI ---------
 
-  nivelPorTemp(temp: number | null): 'reddark' |'red' | 'orange' | 'warn' | 'nt' {
+  nivelPorTemp(temp: number | null): 'reddark' | 'red' | 'orange' | 'warn' | 'nt' {
     if (temp == null) return 'nt';
     if (temp <= -6) return 'reddark';
     if (temp <= -4) return 'red';
@@ -301,6 +346,50 @@ export class HeladasPage implements OnInit {
     return str;
   }
 
+  private fmtFechaHelada(v: any): string {
+    if (!v) return 'S/D';
+
+    const s = String(v);
+
+    // Formato YYYY-MM-DD o YYYY-MM-DD HH:mm:ss
+    if (/^\d{4}-\d{2}-\d{2}/.test(s)) {
+      return `${s.substring(8, 10)}/${s.substring(5, 7)}`;
+    }
+
+    // Formato YYYYMMDD
+    if (/^\d{8}$/.test(s)) {
+      return `${s.substring(6, 8)}/${s.substring(4, 6)}`;
+    }
+
+    return s;
+  }
+
+  private fechaOrden(v: any): string {
+    if (!v) return '';
+
+    const s = String(v);
+
+    if (/^\d{4}-\d{2}-\d{2}/.test(s)) {
+      return s.substring(0, 10);
+    }
+
+    if (/^\d{8}$/.test(s)) {
+      return `${s.substring(0, 4)}-${s.substring(4, 6)}-${s.substring(6, 8)}`;
+    }
+
+    return s;
+  }
+
+  private fmtHoras(v: any): string {
+    const n = this.toNum(v);
+
+    if (!Number.isFinite(n as any)) {
+      return 'S/D';
+    }
+
+    return `${(n as number).toFixed(1)} h`;
+  }
+
   private toNum(v: any): number | null {
     const n = Number(v);
     return Number.isFinite(n) ? n : null;
@@ -314,4 +403,191 @@ export class HeladasPage implements OnInit {
   goLocalidades() {
     this.router.navigate(['/localidades']);
   }
+
+  private updateResumenPeriodoDiaMes() {
+    const rows = Array.isArray(this.rowsDiaMes) ? this.rowsDiaMes : [];
+
+    if (!rows.length) {
+      this.resumenPeriodoItems = [];
+      return;
+    }
+
+    const minRow = rows.reduce((acc, r) =>
+      (this.toNum(r?.temperatura) ?? 999) < (this.toNum(acc?.temperatura) ?? 999) ? r : acc,
+      rows[0]
+    );
+
+    const maxDurRow = rows.reduce((acc, r) =>
+      (this.toNum(r?.duracion) ?? 0) > (this.toNum(acc?.duracion) ?? 0) ? r : acc,
+      rows[0]
+    );
+
+    const primeraRow = rows
+      .filter(r => r?.fph)
+      .sort((a, b) => this.fechaOrden(a.fph).localeCompare(this.fechaOrden(b.fph)))[0];
+
+    const ultimaRow = rows
+      .filter(r => r?.fuh)
+      .sort((a, b) => this.fechaOrden(b.fuh).localeCompare(this.fechaOrden(a.fuh)))[0];
+
+    const totalDiasHelada = rows.reduce((acc, r) => acc + (this.toNum(r?.dias) ?? 0), 0);
+    const totalHorasBajo0 = rows.reduce((acc, r) => acc + (this.toNum(r?.duracion_t) ?? 0), 0);
+
+    this.resumenPeriodoItems = [
+      {
+        label: 'Estaciones con helada',
+        value: String(rows.length),
+        hint: this.modo === 'dia' ? 'hoy' : 'en el mes',
+        tone: 'cold',
+      },
+      {
+        label: 'Mínima provincial',
+        value: `${this.fmtTemp(minRow?.temperatura)} °C`,
+        hint: minRow?.nombre || '',
+        tone: this.nivelPorTemp(minRow?.temperatura),
+      },
+      {
+        label: 'Primera provincial',
+        value: this.fmtFechaHelada(primeraRow?.fph),
+        hint: primeraRow?.nombre || '',
+        tone: 'cold',
+      },
+      {
+        label: 'Última provincial',
+        value: this.fmtFechaHelada(ultimaRow?.fuh),
+        hint: ultimaRow?.nombre || '',
+        tone: 'cold',
+      },
+      {
+        label: 'Horas bajo 0 °C',
+        value: this.fmtHoras(totalHorasBajo0),
+        hint: `${totalDiasHelada} días con helada acumulados`,
+        tone: totalHorasBajo0 > 0 ? 'cold' : '',
+      },
+      {
+        label: 'Mayor duración diaria',
+        value: this.fmtHoras(maxDurRow?.duracion),
+        hint: maxDurRow?.nombre || '',
+        tone: 'cold',
+      },
+    ];
+  }
+
+  private updateResumenPeriodoAnio() {
+    const rows = Array.isArray(this.rowsAnio) ? this.rowsAnio : [];
+
+    if (!rows.length) {
+      this.resumenPeriodoItems = [];
+      return;
+    }
+
+    const conActual = rows.filter(r => r?.cur);
+
+    if (!conActual.length) {
+      this.resumenPeriodoItems = [];
+      return;
+    }
+
+    const conHeladaActual = conActual.filter(r => (this.toNum(r?.cur?.dias) ?? 0) > 0);
+    const conHeladaPrev = rows.filter(r => (this.toNum(r?.prev?.dias) ?? 0) > 0);
+
+    if (!conHeladaActual.length) {
+      this.resumenPeriodoItems = [
+        {
+          label: 'Estaciones c/helada',
+          value: '0',
+          hint: `${this.anioActual}`,
+        },
+        {
+          label: 'Vs año anterior',
+          value: `${0 - conHeladaPrev.length}`,
+          hint: `comparado con ${this.anioPrev}`,
+          tone: conHeladaPrev.length > 0 ? 'warn' : '',
+        },
+      ];
+      return;
+    }
+
+    const minActual = conHeladaActual.reduce((acc, r) =>
+      (this.toNum(r?.cur?.temperatura) ?? 999) < (this.toNum(acc?.cur?.temperatura) ?? 999) ? r : acc,
+      conHeladaActual[0]
+    );
+
+    const masDias = conHeladaActual.reduce((acc, r) =>
+      (this.toNum(r?.cur?.dias) ?? 0) > (this.toNum(acc?.cur?.dias) ?? 0) ? r : acc,
+      conHeladaActual[0]
+    );
+
+    const maxDurRow = conHeladaActual.reduce((acc, r) =>
+      (this.toNum(r?.cur?.duracion) ?? 0) > (this.toNum(acc?.cur?.duracion) ?? 0) ? r : acc,
+      conHeladaActual[0]
+    );
+
+    const primeraRow = conHeladaActual
+      .filter(r => r?.cur?.fph)
+      .sort((a, b) => this.fechaOrden(a.cur.fph).localeCompare(this.fechaOrden(b.cur.fph)))[0];
+
+    const ultimaRow = conHeladaActual
+      .filter(r => r?.cur?.fuh)
+      .sort((a, b) => this.fechaOrden(b.cur.fuh).localeCompare(this.fechaOrden(a.cur.fuh)))[0];
+
+    const totalHoras = conHeladaActual.reduce(
+      (acc, r) => acc + (this.toNum(r?.cur?.duracion_t) ?? 0),
+      0
+    );
+
+    const diferenciaEstaciones = conHeladaActual.length - conHeladaPrev.length;
+
+    this.resumenPeriodoItems = [
+      {
+        label: 'Estaciones c/helada',
+        value: String(conHeladaActual.length),
+        hint: `${this.anioActual}`,
+        tone: 'cold',
+      },
+      {
+        label: 'Mínima anual',
+        value: `${this.fmtTemp(minActual?.cur?.temperatura)} °C`,
+        hint: minActual?.nombre || '',
+        tone: this.nivelPorTemp(minActual?.cur?.temperatura),
+      },
+      {
+        label: 'Primera helada',
+        value: this.fmtFechaHelada(primeraRow?.cur?.fph),
+        hint: primeraRow?.nombre || '',
+        tone: 'cold',
+      },
+      {
+        label: 'Última helada',
+        value: this.fmtFechaHelada(ultimaRow?.cur?.fuh),
+        hint: ultimaRow?.nombre || '',
+        tone: 'cold',
+      },
+      {
+        label: 'Más días c/helada',
+        value: this.fmtNum(masDias?.cur?.dias),
+        hint: masDias?.nombre || '',
+        tone: 'cold',
+      },
+      {
+        label: 'Horas bajo 0 °C',
+        value: this.fmtHoras(totalHoras),
+        hint: 'acumulado provincial',
+        tone: 'cold',
+      },
+      {
+        label: 'Mayor duración diaria',
+        value: this.fmtHoras(maxDurRow?.cur?.duracion),
+        hint: maxDurRow?.nombre || '',
+        tone: 'cold',
+      },
+      {
+        label: 'Vs año anterior',
+        value: `${diferenciaEstaciones >= 0 ? '+' : ''}${diferenciaEstaciones}`,
+        hint: `estaciones con helada ${this.anioActual}/${this.anioPrev}`,
+        tone: diferenciaEstaciones > 0 ? 'warn' : '',
+      },
+    ];
+  }
+
 }

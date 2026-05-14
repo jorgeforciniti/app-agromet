@@ -12,31 +12,72 @@
 </ion-header>
 
 <ion-content [fullscreen]="true" class="contenido grad">
-    
-    <!-- RESUMEN -->
+
+  <!-- RESUMEN -->
   <div class="summary">
-    <div class="summary-left">
-      <div class="dow">{{ diaSemana }}</div>
-      <div class="temp">{{ tActualTexto }}</div>
-      <div class="date">{{ fechaTexto }}</div>
+    <div class="summary-main">
+      <div class="summary-topline">
+        <div>
+          <div class="dow">{{ diaSemana }}</div>
+          <div class="date">{{ fechaTexto }}</div>
+        </div>
+
+        <div class="last-hour" *ngIf="horaTexto">
+          {{ horaTexto }}
+        </div>
+      </div>
+
+      <div class="temp-row">
+        <div>
+          <div class="temp">{{ tActualTexto }}</div>
+
+          <div class="no-current-data" *ngIf="!tieneDatosHoy">
+            <ion-icon name="alert-circle-outline"></ion-icon>
+            <span>Sin registros de temperatura para hoy</span>
+          </div>
+        </div>
+
+        <div class="trend" [ngClass]="tendenciaClase" *ngIf="tieneDatosHoy">
+          <ion-icon [name]="tendenciaIcono"></ion-icon>
+          <span>{{ tendenciaTexto }}</span>
+        </div>
+      </div>
+
+      <div class="daily-grid" *ngIf="tieneDatosHoy">
+        <div class="daily-item">
+          <span class="daily-label">Mínima</span>
+          <strong>{{ tMinTexto }}</strong>
+          <small *ngIf="tMinHoraTexto">{{ tMinHoraTexto }}</small>
+        </div>
+
+        <div class="daily-item">
+          <span class="daily-label">Máxima</span>
+          <strong>{{ tMaxTexto }}</strong>
+          <small *ngIf="tMaxHoraTexto">{{ tMaxHoraTexto }}</small>
+        </div>
+
+        <div class="daily-item">
+          <span class="daily-label">Amplitud</span>
+          <strong>{{ amplitudTexto }}</strong>
+          <small>día actual</small>
+        </div>
+      </div>
+
+      <div class="daily-empty" *ngIf="!tieneDatosHoy">
+        No se pueden calcular mínima, máxima ni amplitud térmica diaria.
+      </div>
     </div>
 
-    <div class="summary-right">
-      <div class="minmax">
-        <span class="minmaxText">{{ tMinTexto }} / {{ tMaxTexto }}</span>
-      </div>
+    <div class="map-actions">
+      <ion-button class="actionBtn" size="small" fill="outline" (click)="openMapaAhora()">
+        <ion-icon name="map-outline" slot="start"></ion-icon>
+        Mapa ahora
+      </ion-button>
 
-      <div class="actions">
-        <ion-button class="actionBtn" size="small" fill="outline" (click)="openMapaAhora()">
-          <ion-icon name="map-outline" slot="start"></ion-icon>
-          Mapa ahora
-        </ion-button>
-
-        <ion-button class="actionBtn" size="small" fill="outline" (click)="openMapaHoy()">
-          <ion-icon name="map-outline" slot="start"></ion-icon>
-          Mapa hoy
-        </ion-button>
-      </div>
+      <ion-button class="actionBtn" size="small" fill="outline" (click)="openMapaHoy()">
+        <ion-icon name="map-outline" slot="start"></ion-icon>
+        Mapa hoy
+      </ion-button>
     </div>
   </div>
 
@@ -61,16 +102,34 @@
     </div>
 
     <div class="chartWrap" *ngIf="chartReady; else loadingTpl">
-      <canvas
-        baseChart
-        [datasets]="lineChartData"
-        [labels]="lineChartLabels"
-        [options]="lineChartOptions"
-        [colors]="lineChartColors"
-        [legend]="lineChartLegend"
-        [chartType]="lineChartType"
-        [plugins]="lineChartPlugins">
-      </canvas>
+
+      <ng-container *ngIf="tieneDatosRangoActual; else sinDatosChart">
+        <canvas baseChart [datasets]="lineChartData" [labels]="lineChartLabels" [options]="lineChartOptions"
+          [colors]="lineChartColors" [legend]="lineChartLegend" [chartType]="lineChartType"
+          [plugins]="lineChartPlugins">
+        </canvas>
+      </ng-container>
+
+      <ng-template #sinDatosChart>
+        <div class="empty-state">
+          <div class="empty-state__icon">
+            <ion-icon name="cloud-offline-outline"></ion-icon>
+          </div>
+
+          <div class="empty-state__title">
+            Sin datos disponibles
+          </div>
+
+          <div class="empty-state__text">
+            {{ mensajeSinDatos }}
+          </div>
+
+          <div class="empty-state__hint">
+            Probá cambiar a 30 días o Año para consultar datos históricos.
+          </div>
+        </div>
+      </ng-template>
+
     </div>
 
     <ng-template #loadingTpl>
@@ -81,8 +140,25 @@
     </ng-template>
   </div>
 
-  <!-- HORA -->
-  <div id="fechayhora">
-    <span>{{ horaTexto }}</span>
+  <!-- RESUMEN SEGÚN PERÍODO -->
+  <div class="card range-summary" *ngIf="tieneDatosRangoActual && resumenItems?.length">
+    <div class="range-summary__head">
+      <div class="range-summary__title">{{ resumenTitulo }}</div>
+    </div>
+
+    <div class="range-summary__grid">
+      <div class="range-summary__item" *ngFor="let item of resumenItems" [ngClass]="{
+        'tone-cold': item.tone === 'cold',
+        'tone-hot': item.tone === 'hot',
+        'tone-warn': item.tone === 'warn'
+      }">
+
+        <span>{{ item.label }}</span>
+        <strong>{{ item.value }}</strong>
+        <small *ngIf="item.hint">{{ item.hint }}</small>
+
+      </div>
+    </div>
   </div>
+
 </ion-content>

@@ -1,0 +1,120 @@
+<ion-header translucent="true">
+  <ion-toolbar>
+    <ion-title>Notificaciones</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="notificaciones-page">
+
+  <div class="page">
+
+    <section class="card intro">
+      <div class="title">Avisos de la app</div>
+      <p>
+        Configurá qué notificaciones querés recibir. Por defecto, los avisos de heladas se informan a nivel provincial para seguir la evolución del fenómeno en distintas zonas.
+      </p>
+    </section>
+
+    <section class="card">
+      <div class="section-title">
+        <ion-icon name="snow-outline"></ion-icon>
+        <span>Heladas</span>
+      </div>
+
+      <ion-item lines="none" class="setting-item">
+        <ion-label>
+          <h2>Recibir avisos de heladas</h2>
+          <p>Se notifican inicios de episodios y resúmenes controlados.</p>
+        </ion-label>
+        <ion-toggle
+          slot="end"
+          [(ngModel)]="pref.heladas_activo"
+          [checked]="pref.heladas_activo === 1"
+          (ionChange)="pref.heladas_activo = $event.detail.checked ? 1 : 0">
+        </ion-toggle>
+      </ion-item>
+
+      <ion-radio-group
+        [(ngModel)]="pref.heladas_alcance"
+        [disabled]="pref.heladas_activo !== 1">
+
+        <ion-item lines="none" class="setting-item">
+          <ion-label>
+            <h2>Toda la provincia</h2>
+            <p>Recomendado para productores con campos en distintas zonas.</p>
+          </ion-label>
+          <ion-radio slot="end" value="provincia"></ion-radio>
+        </ion-item>
+
+        <ion-item lines="none" class="setting-item">
+          <ion-label>
+            <h2>Solo mi localidad</h2>
+            <p>Recibe avisos solo de la estación seleccionada en la app.</p>
+          </ion-label>
+          <ion-radio slot="end" value="localidad"></ion-radio>
+        </ion-item>
+
+      </ion-radio-group>
+    </section>
+
+    <section class="card">
+      <div class="section-title">
+        <ion-icon name="warning-outline"></ion-icon>
+        <span>Alertas SMN</span>
+      </div>
+
+      <ion-item lines="none" class="setting-item">
+        <ion-label>
+          <h2>Recibir alertas del SMN</h2>
+          <p>Se notifican alertas nuevas o aumentos de severidad.</p>
+        </ion-label>
+        <ion-toggle
+          slot="end"
+          [(ngModel)]="pref.smn_activo"
+          [checked]="pref.smn_activo === 1"
+          (ionChange)="pref.smn_activo = $event.detail.checked ? 1 : 0">
+        </ion-toggle>
+      </ion-item>
+
+      <div class="subsection" [class.disabled]="pref.smn_activo !== 1">
+        <div class="subsection-title">Áreas</div>
+
+        <ion-item lines="none" class="setting-item">
+          <ion-label>
+            <h2>Tucumán</h2>
+            <p>Área SMN 3373</p>
+          </ion-label>
+          <ion-checkbox
+            slot="end"
+            [disabled]="pref.smn_activo !== 1"
+            [checked]="pref.smn_area_3373 === 1"
+            (ionChange)="pref.smn_area_3373 = $event.detail.checked ? 1 : 0; onToggleSmnArea()">
+          </ion-checkbox>
+        </ion-item>
+
+        <ion-item lines="none" class="setting-item">
+          <ion-label>
+            <h2>Valles Calchaquíes</h2>
+            <p>Área SMN 3375</p>
+          </ion-label>
+          <ion-checkbox
+            slot="end"
+            [disabled]="pref.smn_activo !== 1"
+            [checked]="pref.smn_area_3375 === 1"
+            (ionChange)="pref.smn_area_3375 = $event.detail.checked ? 1 : 0; onToggleSmnArea()">
+          </ion-checkbox>
+        </ion-item>
+      </div>
+    </section>
+
+    <div class="error" *ngIf="error">
+      {{ error }}
+    </div>
+
+    <ion-button expand="block" class="save-btn" (click)="guardar()">
+      Guardar preferencias
+    </ion-button>
+
+  </div>
+
+</ion-content>
