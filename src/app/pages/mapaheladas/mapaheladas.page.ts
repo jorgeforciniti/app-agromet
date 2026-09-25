@@ -3,6 +3,7 @@ import { EstacionesService } from 'src/app/services/estaciones.service';
 import { Router } from '@angular/router';
 import { LoadingController } from '@ionic/angular';
 import swal from 'sweetalert2';
+import { environment } from 'src/environments/environment';
 
 declare var mapboxgl: any;
 
@@ -44,8 +45,7 @@ export class MapaheladasPage implements OnInit {
   }
 
   private initMap() {
-    // IMPORTANTE: asumimos que ya tenés configurado mapboxgl.accessToken en otro lado
-    mapboxgl.accessToken = 'pk.eyJ1Ijoiam9yZ2Vmb3JjaW5pdGkiLCJhIjoiY2tkMXJmaG51MGljODMxcnlybW1uaWFhMSJ9.r5sRXgwgOL-34LRNjx0Mzg';
+    mapboxgl.accessToken = environment.mapboxAccessToken;
     this.map = new mapboxgl.Map({
       container: 'map',
       style: 'mapbox://styles/mapbox/satellite-streets-v12',

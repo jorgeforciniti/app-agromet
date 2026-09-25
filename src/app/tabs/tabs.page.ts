@@ -3,6 +3,7 @@ import { AlertController, Platform } from '@ionic/angular';
 import { Capacitor } from '@capacitor/core';
 import { App } from '@capacitor/app';
 import { Router } from '@angular/router';
+import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'app-tabs',
@@ -19,7 +20,7 @@ export class TabsPage {
     private platform: Platform,
     private router: Router
   ) {
-    this.publicidad = 'https://agromet.eeaoc.gob.ar/android/prop1.gif';
+    this.publicidad = environment.publicidadUrl;
     this.logo = 'assets/logo-agromet.png';
   }
 

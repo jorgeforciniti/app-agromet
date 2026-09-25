@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { Capacitor } from '@capacitor/core';
 import {
     PushNotifications,
@@ -6,6 +7,7 @@ import {
     PushNotificationSchema,
     ActionPerformed,
 } from '@capacitor/push-notifications';
+import { environment } from 'src/environments/environment';
 
 export interface PushPreferencias {
     dispositivo_id?: number;
@@ -26,6 +28,8 @@ export interface PushPreferencias {
     providedIn: 'root',
 })
 export class PushService {
+
+    constructor(private http: HttpClient) { }
 
     async initPush() {
         if (!Capacitor.isNativePlatform()) {
@@ -81,8 +85,7 @@ export class PushService {
     }
 
     private async enviarTokenAlServidor(token: string): Promise<any> {
-        const endpoint =
-            'https://agromet.eeaoc.gob.ar/api/push/push-registrar-token.php';
+        const endpoint = `${environment.pushApiBase}push-registrar-token.php`;
 
         const estacion = localStorage.getItem('estacion') || '';
         const plataforma = Capacitor.getPlatform();
@@ -95,15 +98,7 @@ export class PushService {
         };
 
         try {
-            const resp = await fetch(endpoint, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json; charset=utf-8',
-                },
-                body: JSON.stringify(body),
-            });
-
-            const json = await resp.json().catch(() => null);
+            const json: any = await this.http.post(endpoint, body).toPromise().catch(() => null);
 
             console.log('[PUSH] Token enviado al servidor:', json);
 
@@ -134,25 +129,14 @@ export class PushService {
     }
 
     async obtenerPreferencias(): Promise<PushPreferencias | null> {
-        const endpoint =
-            'https://agromet.eeaoc.gob.ar/api/push/push-obtener-preferencias.php';
+        const endpoint = `${environment.pushApiBase}push-obtener-preferencias.php`;
 
         const token = localStorage.getItem('push_token') || '';
         const dispositivo_id = localStorage.getItem('push_dispositivo_id') || '';
 
         try {
-            const resp = await fetch(endpoint, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json; charset=utf-8',
-                },
-                body: JSON.stringify({
-                    token,
-                    dispositivo_id,
-                }),
-            });
-
-            const json = await resp.json().catch(() => null);
+            const json: any = await this.http.post(endpoint, { token, dispositivo_id })
+                .toPromise().catch(() => null);
 
             if (json?.ok && json?.preferencias) {
                 return json.preferencias as PushPreferencias;
@@ -167,32 +151,23 @@ export class PushService {
     }
 
     async guardarPreferencias(pref: PushPreferencias): Promise<boolean> {
-        const endpoint =
-            'https://agromet.eeaoc.gob.ar/api/push/push-guardar-preferencias.php';
+        const endpoint = `${environment.pushApiBase}push-guardar-preferencias.php`;
 
         const token = localStorage.getItem('push_token') || '';
         const dispositivo_id = localStorage.getItem('push_dispositivo_id') || '';
 
         try {
-            const resp = await fetch(endpoint, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json; charset=utf-8',
-                },
-                body: JSON.stringify({
-                    token,
-                    dispositivo_id,
+            const json: any = await this.http.post(endpoint, {
+                token,
+                dispositivo_id,
 
-                    heladas_activo: pref.heladas_activo,
-                    heladas_alcance: pref.heladas_alcance,
+                heladas_activo: pref.heladas_activo,
+                heladas_alcance: pref.heladas_alcance,
 
-                    smn_activo: pref.smn_activo,
-                    smn_area_3373: pref.smn_area_3373,
-                    smn_area_3375: pref.smn_area_3375,
-                }),
-            });
-
-            const json = await resp.json().catch(() => null);
+                smn_activo: pref.smn_activo,
+                smn_area_3373: pref.smn_area_3373,
+                smn_area_3375: pref.smn_area_3375,
+            }).toPromise().catch(() => null);
 
             console.log('[PUSH] Preferencias guardadas:', json);
 

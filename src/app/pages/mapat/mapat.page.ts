@@ -2,6 +2,7 @@ import { Component, OnInit, AfterViewInit } from '@angular/core';
 import { EstacionesService } from 'src/app/services/estaciones.service';
 import { Router } from '@angular/router';
 import swal from 'sweetalert2';
+import { environment } from 'src/environments/environment';
 
 declare var mapboxgl: any;
 @Component({
@@ -29,7 +30,7 @@ export class MapatPage implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit(){
-    mapboxgl.accessToken = 'pk.eyJ1Ijoiam9yZ2Vmb3JjaW5pdGkiLCJhIjoiY2tkMXJmaG51MGljODMxcnlybW1uaWFhMSJ9.r5sRXgwgOL-34LRNjx0Mzg';
+    mapboxgl.accessToken = environment.mapboxAccessToken;
     const map = new mapboxgl.Map({
       container: 'map',
       style: 'mapbox://styles/mapbox/satellite-streets-v11',

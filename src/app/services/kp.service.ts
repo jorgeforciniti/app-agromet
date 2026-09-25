@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { environment } from 'src/environments/environment';
 export interface KpLatest {
   timeTag: string;      // UTC string ("YYYY-MM-DD HH:mm:ss.SSS")
   kp: number;           // 0..9 (puede venir con decimales)
@@ -14,7 +15,7 @@ export class KpService {
    * Feed oficial SWPC (NOAA) en formato "tabla" JSON.
    * Contiene Kp observado en intervalos de 3 horas.
    */
-  private readonly url = 'https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json';
+  private readonly url = environment.swpcKpUrl;
 
   constructor(private http: HttpClient) {}
 

@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { EstacionesService } from 'src/app/services/estaciones.service';
 import swal from 'sweetalert2';
 import { LoadingController } from '@ionic/angular';
+import { environment } from 'src/environments/environment';
 
 declare var mapboxgl: any;
 @Component({
@@ -46,7 +47,7 @@ export class MapaRRPage implements OnInit {
   }
 
   mostrarMapa(){
-    mapboxgl.accessToken = 'pk.eyJ1Ijoiam9yZ2Vmb3JjaW5pdGkiLCJhIjoiY2tkMXJmaG51MGljODMxcnlybW1uaWFhMSJ9.r5sRXgwgOL-34LRNjx0Mzg';
+    mapboxgl.accessToken = environment.mapboxAccessToken;
     const maprr = new mapboxgl.Map({
       container: 'maprr',
       style: 'mapbox://styles/mapbox/satellite-streets-v11',

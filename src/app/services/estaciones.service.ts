@@ -4,6 +4,7 @@ import { Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { tap } from 'rxjs/operators';
 import { BehaviorSubject } from 'rxjs';
+import { environment } from 'src/environments/environment';
 
 export interface EstacionDatos {
   lat: number;
@@ -27,9 +28,9 @@ export class EstacionesService {
   }
 
   dato: any;
-  private agrometBase = 'https://agromet.eeaoc.gob.ar/android/';
-  private servicesBase = 'https://agromet.eeaoc.gob.ar/services/';
-  private apiKey = 'ea2faa440ccc747a20a042317dadac3f';
+  private agrometBase = environment.agrometBase;
+  private servicesBase = environment.servicesBase;
+  private apiKey = environment.openWeatherApiKey;
 
   constructor(private http: HttpClient) { }
 
@@ -100,15 +101,11 @@ export class EstacionesService {
   }
 
   getClimaActual(lat: number, lon: number): Observable<any> {
-    const params = new HttpParams()
-      .set('lat', String(lat))
-      .set('lon', String(lon));
-    // Si seguís pegándole directo a OWM:
-    return this.http.get(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&lang=es&units=metric&appid=${this.apiKey}`);
+    return this.http.get(`${environment.openWeatherBase}weather?lat=${lat}&lon=${lon}&lang=es&units=metric&appid=${this.apiKey}`);
   }
 
   getPronostico(lat: number, lon: number): Observable<any> {
-    return this.http.get(`https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&lang=es&units=metric&appid=${this.apiKey}`);
+    return this.http.get(`${environment.openWeatherBase}forecast?lat=${lat}&lon=${lon}&lang=es&units=metric&appid=${this.apiKey}`);
   }
 
   getTemperatura24(estacion: string | number): Observable<any> {
@@ -116,8 +113,7 @@ export class EstacionesService {
   }
 
   getDatosCampaniaLluvia(mes: number, anio: number) {
-    const url =
-      `https://agromet.eeaoc.gob.ar/services/datos-campania.php?mes=${mes}&anio=${anio}&tipo=2`;
+    const url = `${this.servicesBase}datos-campania.php?mes=${mes}&anio=${anio}&tipo=2`;
 
     return this.http.get<any>(url);
   }
