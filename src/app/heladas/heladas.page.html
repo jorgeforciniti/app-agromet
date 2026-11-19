@@ -10,8 +10,16 @@
       </ion-button>
     </ion-buttons>
   </ion-toolbar>
+
+  <ion-toolbar class="segToolbar">
+    <app-estacion-segment value="heladas"></app-estacion-segment>
+  </ion-toolbar>
 </ion-header>
 <ion-content [fullscreen]="true" class="contenido grad">
+
+  <ion-refresher slot="fixed" (ionRefresh)="refrescar($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
 
   <!-- Resumen principal -->
   <section class="summaryCard">
@@ -32,38 +40,43 @@
         </div>
 
         <div class="dateLine" *ngIf="modo !== 'anio'">
-          {{ dia }} de {{ nombreMes }} {{ anio }}
+          {{ fechaPeriodoTexto }}
         </div>
 
         <div class="dateLine" *ngIf="modo === 'anio'">
           Comparación anual ({{ anioActual }} / {{ anioPrev }})
+        </div>
+
+        <!-- Si hay pronóstico, ya dice si hay riesgo: no hace falta también el aviso de temporada -->
+        <div class="fueraTemporada" *ngIf="fueraDeTemporada && modo !== 'anio' && !pronosticoNoche">
+          Fuera de la temporada de heladas (mayo a septiembre).
         </div>
       </div>
 
       <div class="summaryRight">
         <div class="metricGrid">
           <div class="metric">
-            <div class="k">Primera local</div>
+            <div class="k">Primera helada</div>
             <div class="v">{{ fmtDate(fphSel) }}</div>
           </div>
           <div class="metric">
-            <div class="k">Última local</div>
+            <div class="k">Última helada</div>
             <div class="v">{{ fmtDate(fuhSel) }}</div>
           </div>
           <div class="metric">
-            <div class="k">Hs máx.</div>
+            <div class="k">Helada más larga (h)</div>
             <div class="v">{{ fmtNum(durMaxSel) }}</div>
           </div>
           <div class="metric">
-            <div class="k">Hs tot.</div>
+            <div class="k">Horas bajo 0 °C</div>
             <div class="v">{{ fmtNum(durTotalSel) }}</div>
           </div>
           <div class="metric">
-            <div class="k">Días c/hel</div>
+            <div class="k">Días con helada</div>
             <div class="v">{{ fmtNum(diasSel) }}</div>
           </div>
           <div class="metric">
-            <div class="k">Reg.</div>
+            <div class="k">Registros</div>
             <div class="v">{{ fmtNum(registrosSel) }}</div>
           </div>
         </div>
@@ -71,10 +84,17 @@
     </div>
 
     <!-- Acción: Mapa -->
-    <button class="mapBtn" type="button" (click)="onClickHoy()">
-      <img [src]="mapas" alt="Mapa" />
-      <span>Mapa de heladas</span>
-    </button>
+    <div class="pronosticoNoche" *ngIf="pronosticoNoche && modo === 'dia'"
+      [class.pronosticoNoche--riesgo]="pronosticoNoche.riesgo !== 'sin-riesgo'">
+      <ion-icon name="moon-outline" aria-hidden="true"></ion-icon>
+      <span>{{ pronosticoNocheTexto }} <span class="fuente">Fuente: Open-Meteo.</span></span>
+    </div>
+
+    <!-- Mismo botón que «Mapa ahora» (Temperatura) y «Mapa últimas 24 horas» (Lluvia) -->
+    <ion-button class="actionBtn" fill="outline" size="small" expand="block" (click)="onClickHoy()">
+      <ion-icon name="map-outline" slot="start"></ion-icon>
+      Mapa de heladas
+    </ion-button>
 
     <!-- Selector de modo -->
     <div class="modeCard">
@@ -92,10 +112,10 @@
 
       <!-- Leyenda -->
       <div class="legend">
-        <span class="chip reddark">≤ -6</span>
-        <span class="chip red">-5.9 a -4</span>
-        <span class="chip orange">-3.9 a -2</span>
-        <span class="chip warn">-1.9 a 0</span>
+        <span class="chip reddark">Muy severa ≤ -6</span>
+        <span class="chip red">Severa -4 a -6</span>
+        <span class="chip orange">Moderada -2 a -4</span>
+        <span class="chip warn">Suave 0 a -2</span>
         <span class="chip nt">Sin helada</span>
       </div>
 

@@ -1,0 +1,103 @@
+<ion-header translucent="true">
+  <ion-toolbar class="topbar">
+    <ion-title class="title">MÁS</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" class="contenido grad">
+
+  <ion-list lines="full" class="menuList">
+
+    <ion-item button (click)="goAplicaciones()">
+      <ion-icon name="leaf-outline" slot="start"></ion-icon>
+      <ion-label>
+        <h2>Aplicaciones</h2>
+        <p>Condiciones para aplicaciones agroquímicas</p>
+      </ion-label>
+    </ion-item>
+
+    <ion-item button (click)="goCuaderno()">
+      <ion-icon name="book-outline" slot="start"></ion-icon>
+      <ion-label>
+        <h2>Cuaderno de aplicaciones</h2>
+        <p>Lo que aplicaste, con las condiciones del momento</p>
+      </ion-label>
+    </ion-item>
+
+    <ion-item button (click)="goHerramientas()">
+      <ion-icon name="calculator-outline" slot="start"></ion-icon>
+      <ion-label>
+        <h2>Herramientas</h2>
+        <p>Agua en el suelo, suma térmica, horas de frío y enfermedades</p>
+      </ion-label>
+    </ion-item>
+
+    <ion-item button (click)="goComparar()">
+      <ion-icon name="git-compare-outline" slot="start"></ion-icon>
+      <ion-label>
+        <h2>Comparar favoritas</h2>
+        <p>Ver lado a lado el estado de tus estaciones favoritas</p>
+      </ion-label>
+    </ion-item>
+
+    <ion-item button (click)="goLocalidades()">
+      <ion-icon name="location-outline" slot="start"></ion-icon>
+      <ion-label>
+        <h2>Estaciones</h2>
+        <p>Cambiar la estación y marcar favoritas</p>
+      </ion-label>
+    </ion-item>
+
+    <ion-item button (click)="goCuenta()">
+      <ion-icon name="person-circle-outline" slot="start"></ion-icon>
+      <ion-label>
+        <h2>Cuenta</h2>
+        <p>{{ cuenta.sesion?.email || 'Guardá favoritas y cuaderno con tu cuenta de la web' }}</p>
+      </ion-label>
+    </ion-item>
+
+    <ion-item button (click)="goNotificaciones()">
+      <ion-icon name="notifications-outline" slot="start"></ion-icon>
+      <ion-label>
+        <h2>Notificaciones</h2>
+        <p>Preferencias de alertas push</p>
+      </ion-label>
+    </ion-item>
+  </ion-list>
+
+  <ion-list lines="full" class="menuList">
+    <ion-item button (click)="abrirWeb()">
+      <ion-icon name="globe-outline" slot="start"></ion-icon>
+      <ion-label>
+        <h2>Sitio web</h2>
+        <p>Mapas, datos históricos, informes y más herramientas</p>
+      </ion-label>
+    </ion-item>
+
+    <ion-item button (click)="escribir()">
+      <ion-icon name="mail-outline" slot="start"></ion-icon>
+      <ion-label>
+        <h2>Contacto</h2>
+        <p>Escribir a la Sección Agrometeorología</p>
+      </ion-label>
+    </ion-item>
+
+    <ion-item button (click)="acercaDe()">
+      <ion-icon name="information-circle-outline" slot="start"></ion-icon>
+      <ion-label>
+        <h2>Acerca de</h2>
+        <p>Versión, fuentes de datos y aviso</p>
+      </ion-label>
+    </ion-item>
+
+    <ion-item button *ngIf="!platform.is('ios')" (click)="confirmSalir()">
+      <ion-icon name="power-outline" slot="start" color="danger"></ion-icon>
+      <ion-label>
+        <h2>Salir</h2>
+        <p>Cerrar la aplicación</p>
+      </ion-label>
+    </ion-item>
+
+  </ion-list>
+
+</ion-content>

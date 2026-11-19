@@ -1,16 +1,38 @@
-@font-face {
-    font-family: helveticaNR;
-    src: url('../../../assets/fonts/helvetica-neue-lt-std-55-roman.otf');
-    }
-@font-face {
-    font-family: helveticaNBC;
-    src: url('../../../assets/fonts/HelveticaNeueLTStd-BdCn.otf');
-    }
+:host {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    height: 100%;
+}
+
+.mapEmbed {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    height: 100%;
+}
+
+/* Título uniforme con el resto de las secciones de Mapa (igual a Heladas) */
+:host ::ng-deep app-header ion-title.centrado {
+    font-size: 0.95rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 1px !important;
+    color: #d7d7d7 !important;
+}
 
 #mapa{
     width: 100% !important;
     height: 92% !important;
     background-color: transparent;
+}
+
+/* Embebido dentro de MapaPage: ocupa todo el alto disponible (sin el 92% fijo, pensado para ion-content standalone) */
+.mapEmbed #mapa {
+    height: auto !important;
+    flex: 1;
+    min-height: 0;
 }
 
 .marker{
@@ -41,9 +63,103 @@ span{
     padding-left: 10px;
     margin: 0px;
 }
-.mapita{
-    padding-top: 0px;
-    margin-top: 0px;
-    height: 42px;
-    text-align: center;
+/* Máximas | Mínimas, con el mismo aspecto que Día/Mes/Año del mapa de heladas */
+.tipoBar {
+    padding: 8px 12px;
+}
+
+.seg {
+    --background: rgba(0, 0, 0, 0.22);
+    border-radius: 12px;
+    border: 1px solid rgba(128, 227, 211, 0.35);
+}
+
+ion-segment-button {
+    --color: rgba(215, 215, 215, 0.7);
+    --color-checked: rgb(128, 227, 211);
+    font-weight: 700;
+}
+
+/* Leyenda flotante */
+.legend {
+    position: absolute;
+    left: 12px;
+    bottom: 16px;
+    z-index: 999;
+    padding: 10px 10px;
+    border-radius: 12px;
+    background: rgba(0, 0, 0, 0.38);
+    border: 1px solid rgba(128, 227, 211, 0.35);
+    color: #d7d7d7;
+    width: min(220px, 70vw);
+    backdrop-filter: blur(10px);
+    text-transform: none;
+}
+
+.legend--collapsed {
+    width: auto;
+    padding: 6px 8px;
+}
+
+.legendToggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    color: #d7d7d7;
+    font-weight: 800;
+    letter-spacing: .5px;
+    font-size: 0.85rem;
+    text-transform: none;
+
+    ion-icon {
+        font-size: 1rem;
+    }
+}
+
+.legend--collapsed .legendToggle {
+    font-size: 0.78rem;
+}
+
+.legendBody {
+    margin-top: 8px;
+}
+
+.legendTitle {
+    font-weight: 800;
+    letter-spacing: .5px;
+    margin-bottom: 6px;
+    font-size: 0.85rem;
+}
+
+.legendRow {
+    display: grid;
+    grid-template-columns: 18px 1fr;
+    gap: 8px;
+    align-items: center;
+    font-size: 0.8rem;
+    margin: 3px 0;
+}
+
+.legendRow span {
+    color: #d7d7d7 !important;
+    font-family: inherit !important;
+    font-size: 0.8rem !important;
+    padding-left: 0 !important;
+}
+
+.legendRow .dot {
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+}
+
+.legendHint {
+    margin-top: 6px;
+    opacity: 0.75;
+    font-size: 0.75rem;
 }

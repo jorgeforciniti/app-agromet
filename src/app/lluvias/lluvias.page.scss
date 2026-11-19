@@ -1,18 +1,4 @@
-@font-face {
-  font-family: helveticaNR;
-  src: url('../../assets/fonts/helvetica-neue-lt-std-55-roman.otf');
-}
-@font-face {
-  font-family: helveticaNBC;
-  src: url('../../assets/fonts/HelveticaNeueLTStd-BdCn.otf');
-}
-
 :host {
-  --accent: rgb(128, 227, 211);
-  --text: #d7d7d7;
-  --muted: rgba(215, 215, 215, 0.7);
-  --card: rgba(0, 0, 0, 0.35);
-  --border: rgba(128, 227, 211, 0.35);
 }
 
 .contenido {
@@ -29,6 +15,15 @@ ion-content.contenido.grad::part(scroll) {
 .topbar {
   --background: rgba(0, 0, 0, 0.35);
   --border-color: transparent;
+  backdrop-filter: blur(10px);
+}
+
+.segToolbar {
+  --background: rgba(0, 0, 0, 0.35);
+  --border-color: transparent;
+  --min-height: auto;
+  --padding-top: 0;
+  --padding-bottom: 6px;
   backdrop-filter: blur(10px);
 }
 
@@ -91,6 +86,18 @@ ion-content.contenido.grad::part(scroll) {
   text-transform: uppercase;
   font-size: 0.85rem;
   margin-top: 6px;
+}
+
+.vsNormal {
+  margin-top: 8px;
+  padding: 0 4px;
+
+  p {
+    margin: 0 0 2px;
+    color: var(--muted);
+    font-size: 0.85rem;
+    line-height: 1.35;
+  }
 }
 
 .summary-right {
@@ -168,6 +175,8 @@ ion-segment-button {
 }
 
 .cardHint {
+  /* Con el botón Compartir, la unidad queda junto a él a la derecha */
+  margin-left: auto;
   color: var(--muted);
   font-family: helveticaNR;
   font-size: 0.8rem;

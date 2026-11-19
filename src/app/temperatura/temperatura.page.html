@@ -9,9 +9,17 @@
       </ion-button>
     </ion-buttons>
   </ion-toolbar>
+
+  <ion-toolbar class="segToolbar">
+    <app-estacion-segment value="temperatura"></app-estacion-segment>
+  </ion-toolbar>
 </ion-header>
 
 <ion-content [fullscreen]="true" class="contenido grad">
+
+  <ion-refresher slot="fixed" (ionRefresh)="refrescar($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
 
   <!-- RESUMEN -->
   <div class="summary">
@@ -99,6 +107,10 @@
     <div class="cardHeader">
       <div class="cardTitle">{{ chartTitle }}</div>
       <div class="cardHint">{{ chartHint }}</div>
+      <button class="botonCompartir" type="button" *ngIf="chartReady && tieneDatosRangoActual"
+        (click)="compartirGrafico()" aria-label="Compartir el gráfico como imagen">
+        <ion-icon name="share-social-outline"></ion-icon>
+      </button>
     </div>
 
     <div class="chartWrap" *ngIf="chartReady; else loadingTpl">

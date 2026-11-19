@@ -1,0 +1,103 @@
+<ion-header translucent="true">
+  <ion-toolbar class="topbar">
+    <ion-title class="title">ALERTAS</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" class="contenido grad">
+
+  <ion-refresher slot="fixed" (ionRefresh)="refrescar($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <div class="estado" *ngIf="!cargando" [ngClass]="hayAlertasCriticas ? 'estado--alerta' : 'estado--normal'">
+    <ion-icon [name]="hayAlertasCriticas ? 'warning-outline' : 'checkmark-circle-outline'"></ion-icon>
+    <span>{{ hayAlertasCriticas ? 'Hay alertas activas' : 'Sin alertas activas' }}</span>
+  </div>
+
+  <div class="loadingBox" *ngIf="cargando">
+    <ion-spinner name="crescent"></ion-spinner>
+    <div>Cargando alertas…</div>
+  </div>
+
+  <ng-container *ngIf="!cargando">
+
+    <!-- HELADAS -->
+    <div class="card">
+      <div class="cardHeader">
+        <ion-icon name="snow-outline"></ion-icon>
+        <span class="cardTitle">Heladas · {{ heladaEstacionNombre || 'Estación actual' }}</span>
+      </div>
+
+      <div class="heladaBody" *ngIf="heladaHoyActiva; else sinHelada">
+        <strong>Helada registrada hoy</strong>
+        <span *ngIf="heladaHoyTemp !== null">Mínima: {{ heladaHoyTemp | number:'1.1-1' }} °C</span>
+      </div>
+      <ng-template #sinHelada>
+        <div class="heladaBody heladaBody--ok">Sin heladas registradas hoy en esta estación.</div>
+      </ng-template>
+
+      <ion-button fill="clear" size="small" (click)="goMapaHeladas()">
+        <ion-icon name="map-outline" slot="start"></ion-icon>
+        Ver mapa de heladas
+      </ion-button>
+    </div>
+
+    <!-- AVISOS SMN DE FRÍO/CALOR -->
+    <div class="card" *ngIf="avisosFrioCalor.length">
+      <div class="cardHeader">
+        <ion-icon name="thermometer-outline"></ion-icon>
+        <span class="cardTitle">Avisos de frío/calor (SMN)</span>
+      </div>
+
+      <div class="alertaRow" *ngFor="let a of avisosFrioCalor" [ngClass]="nivelClase(a.nivel)">
+        <div class="alertaHead">
+          <strong>{{ a.tipo }} · {{ a.area }}</strong>
+          <span class="alertaFecha">Nivel {{ a.nivel }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- SMN POR ÁREA -->
+    <div class="card" *ngFor="let area of areas">
+      <div class="cardHeader">
+        <ion-icon name="warning-outline"></ion-icon>
+        <span class="cardTitle">SMN · {{ area.nombre }}</span>
+        <ion-badge *ngIf="area.esAreaActual" color="success">tu área</ion-badge>
+      </div>
+
+      <div class="sinAlertas" *ngIf="!area.alertas.length">
+        No se registran alertas vigentes para esta área.
+      </div>
+
+      <div class="alertaRow" *ngFor="let a of area.alertas" [ngClass]="nivelClase(a.nivel)">
+        <div class="alertaHead">
+          <strong>Nivel {{ a.nivel }}</strong>
+          <div class="alertaFechas">
+            <span class="alertaFecha" *ngFor="let f of a.fechas">{{ f }}</span>
+          </div>
+        </div>
+        <div class="alertaDesc">{{ a.descripcion }}</div>
+
+        <ng-container *ngIf="a.instrucciones.length">
+          <button type="button" class="instrToggle" (click)="toggleInstrucciones(a.clave)"
+            [attr.aria-expanded]="instruccionesAbiertas.has(a.clave)">
+            Qué hacer ({{ a.instrucciones.length }})
+            <ion-icon [name]="instruccionesAbiertas.has(a.clave) ? 'chevron-up-outline' : 'chevron-down-outline'">
+            </ion-icon>
+          </button>
+          <ol class="alertaInstr" *ngIf="instruccionesAbiertas.has(a.clave)">
+            <li *ngFor="let i of a.instrucciones">{{ i }}</li>
+          </ol>
+        </ng-container>
+      </div>
+    </div>
+
+    <ion-button expand="block" fill="outline" class="configBtn" (click)="goNotificaciones()">
+      <ion-icon name="notifications-outline" slot="start"></ion-icon>
+      Configurar notificaciones
+    </ion-button>
+
+  </ng-container>
+
+</ion-content>

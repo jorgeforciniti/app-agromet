@@ -1,4 +1,6 @@
-import { NgModule } from '@angular/core';
+import { LOCALE_ID, NgModule } from '@angular/core';
+import { registerLocaleData } from '@angular/common';
+import localeEsAr from '@angular/common/locales/es-AR';
 import { BrowserModule } from '@angular/platform-browser';
 import { RouteReuseStrategy } from '@angular/router';
 
@@ -9,13 +11,17 @@ import { StatusBar } from '@ionic-native/status-bar/ngx';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { ComponentsModule } from './components/components.module';
-import { HttpClientModule } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
+import { SinConexionInterceptor } from './services/sin-conexion.interceptor';
 import { InAppBrowser } from '@ionic-native/in-app-browser/ngx';
 
 import { IonicStorageModule } from '@ionic/storage';
 
 // Gráficos
 import { ChartsModule } from 'ng2-charts';
+
+// Pipes `number` y `date` con coma decimal y fechas en español de Argentina
+registerLocaleData(localeEsAr, 'es-AR');
 
 @NgModule({
   declarations: [AppComponent],
@@ -33,7 +39,10 @@ import { ChartsModule } from 'ng2-charts';
     StatusBar,
     SplashScreen,
     { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
-    InAppBrowser
+    { provide: LOCALE_ID, useValue: 'es-AR' },
+    InAppBrowser,
+    // Sin señal se muestra la última respuesta guardada de cada consulta
+    { provide: HTTP_INTERCEPTORS, useClass: SinConexionInterceptor, multi: true }
   ],
   bootstrap: [AppComponent]
 })

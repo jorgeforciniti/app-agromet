@@ -1,8 +1,8 @@
-<ion-content class="contenido" [fullscreen]="true">
+<ng-template #innerContent>
   <div class="wrap">
 
     <div class="topControls">
-      <div class="screenTitle">MAPA DE HELADAS</div>
+      <div class="screenTitle" *ngIf="!embedded">MAPA DE HELADAS</div>
 
       <ion-segment [(ngModel)]="modo" (ionChange)="onModoChange()" class="seg">
         <ion-segment-button value="dia">
@@ -26,32 +26,55 @@
       </ion-segment>
     </div>
 
-    <div id="map"></div>
+    <div id="mapHeladas"></div>
 
-    <div class="legend">
-      <div class="legendTitle">Criterio (T mínima)</div>
+    <div class="legend" [class.legend--collapsed]="!legendAbierta">
+      <button class="legendToggle" (click)="legendAbierta = !legendAbierta">
+        <span>Referencias</span>
+        <ion-icon [name]="legendAbierta ? 'chevron-down-outline' : 'chevron-up-outline'"></ion-icon>
+      </button>
 
-      <div class="legendRow">
-        <span class="dot d0"></span>
-        <span>Sin helada (&gt; 2°C)</span>
-      </div>
-      <div class="legendRow">
-        <span class="dot d1"></span>
-        <span>Riesgo (0 a 2°C)</span>
-      </div>
-      <div class="legendRow">
-        <span class="dot d2"></span>
-        <span>Helada (0 a -2°C)</span>
-      </div>
-      <div class="legendRow">
-        <span class="dot d3"></span>
-        <span>Severa (&le; -2°C)</span>
-      </div>
+      <div class="legendBody" *ngIf="legendAbierta">
+        <div class="legendTitle">Criterio (T mínima)</div>
 
-      <div class="legendHint">
-        Tocá un punto para ver detalle.
+        <div class="legendRow">
+          <span class="dot d0"></span>
+          <span>Sin helada (&gt; 0°C)</span>
+        </div>
+        <div class="legendRow">
+          <span class="dot d1"></span>
+          <span>Helada suave (0 a -2°C)</span>
+        </div>
+        <div class="legendRow">
+          <span class="dot d2"></span>
+          <span>Helada moderada (-2 a -4°C)</span>
+        </div>
+        <div class="legendRow">
+          <span class="dot d3"></span>
+          <span>Helada severa (-4 a -6°C)</span>
+        </div>
+        <div class="legendRow">
+          <span class="dot d4"></span>
+          <span>Helada muy severa (&le; -6°C)</span>
+        </div>
+        <div class="legendRow">
+          <span class="dot dSD"></span>
+          <span>Sin dato</span>
+        </div>
+
+        <div class="legendHint">
+          Tocá un punto para ver detalle. Acercá el mapa para ver los valores.
+        </div>
       </div>
     </div>
 
   </div>
+</ng-template>
+
+<ion-content *ngIf="!embedded" class="contenido" [fullscreen]="true">
+  <ng-container *ngTemplateOutlet="innerContent"></ng-container>
 </ion-content>
+
+<div *ngIf="embedded" class="mapEmbed">
+  <ng-container *ngTemplateOutlet="innerContent"></ng-container>
+</div>

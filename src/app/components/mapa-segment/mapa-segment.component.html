@@ -1,0 +1,26 @@
+<ion-segment [value]="value" (ionChange)="onChange($event)" class="mapaSegment" mode="md" scrollable="true">
+  <ion-segment-button value="mapat">
+    <ion-icon name="thermometer-outline"></ion-icon>
+    <ion-label>Ahora</ion-label>
+  </ion-segment-button>
+
+  <ion-segment-button value="mapathoy">
+    <ion-icon name="sunny-outline"></ion-icon>
+    <ion-label>Hoy</ion-label>
+  </ion-segment-button>
+
+  <ion-segment-button value="mapa-rr">
+    <ion-icon name="rainy-outline"></ion-icon>
+    <ion-label>Lluvia</ion-label>
+  </ion-segment-button>
+
+  <ion-segment-button value="mapaheladas">
+    <ion-icon name="snow-outline"></ion-icon>
+    <ion-label>Heladas</ion-label>
+  </ion-segment-button>
+
+  <ion-segment-button value="satelite">
+    <ion-icon name="cloud-outline"></ion-icon>
+    <ion-label>Satélite</ion-label>
+  </ion-segment-button>
+</ion-segment>

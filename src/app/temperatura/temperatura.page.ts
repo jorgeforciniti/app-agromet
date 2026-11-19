@@ -1,6 +1,9 @@
-import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, ViewChild } from '@angular/core';
+import { BaseChartDirective } from 'ng2-charts';
+import { decimal } from '../shared/formato';
 import { Router } from '@angular/router';
 import { EstacionesService } from 'src/app/services/estaciones.service';
+import { CompartirService, fechaHoy } from 'src/app/services/compartir.service';
 import { Subject, of } from 'rxjs';
 import { catchError, takeUntil, timeout } from 'rxjs/operators';
 
@@ -47,6 +50,8 @@ export class TemperaturaPage implements OnInit, OnDestroy {
   // CHARTJS (ng2-charts)
   lineChartData: any[] = [{ data: [], label: 'Temperatura' }];
   lineChartLabels: string[] = [];
+  // Sintaxis de Chart.js 2.9 (la instalada): con la de la 3 (scales.x, plugins) las opciones se
+  // ignoraban y el eje X mostraba todas las horas inclinadas
   lineChartOptions: any = {
     responsive: true,
     maintainAspectRatio: false,
@@ -55,19 +60,22 @@ export class TemperaturaPage implements OnInit, OnDestroy {
       point: { radius: 2, hitRadius: 10, hoverRadius: 4 },
       line: { tension: 0.25, borderWidth: 2 },
     },
-    plugins: {
-      legend: { display: false },
-      tooltip: { enabled: true },
+    legend: { display: false },
+    tooltips: {
+      enabled: true,
+      callbacks: {
+        label: (item: any) => `${String(item.yLabel).replace('.', ',')} °C`,
+      },
     },
     scales: {
-      x: {
-        ticks: { maxTicksLimit: 8 },
-        grid: { display: true },
-      },
-      y: {
-        ticks: { maxTicksLimit: 6 },
-        grid: { display: true },
-      },
+      xAxes: [{
+        ticks: { autoSkip: true, maxTicksLimit: 7, maxRotation: 0, minRotation: 0 },
+        gridLines: { display: true },
+      }],
+      yAxes: [{
+        ticks: { maxTicksLimit: 6, callback: (v: number) => `${v} °C` },
+        gridLines: { display: true },
+      }],
     },
   };
   lineChartColors: any[] = [
@@ -85,8 +93,23 @@ export class TemperaturaPage implements OnInit, OnDestroy {
   constructor(
     private estacionesService: EstacionesService,
     private router: Router,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private compartir: CompartirService
   ) { }
+
+  @ViewChild(BaseChartDirective) chart?: BaseChartDirective;
+
+  /** Comparte el gráfico como imagen con la estación, la fecha y la fuente (WhatsApp, etc.) */
+  compartirGrafico() {
+    const canvas = this.chart?.chart?.canvas;
+    if (!canvas) return;
+    this.compartir.compartir({
+      titulo: `Temperatura · ${this.chartTitle}`,
+      subtitulo: [this.estacionNombre, fechaHoy()].filter(Boolean).join(' · '),
+      imagen: canvas,
+      nombre: 'temperatura',
+    });
+  }
 
   ngOnInit() {
     this.load();
@@ -106,7 +129,7 @@ export class TemperaturaPage implements OnInit, OnDestroy {
     this.load();
   }
 
-  private load() {
+  private load(onDone?: () => void) {
     const estacion = localStorage.getItem('estacion');
     const datosRaw = localStorage.getItem('datos');
     const datos = this.safeParse(datosRaw) || {};
@@ -117,6 +140,7 @@ export class TemperaturaPage implements OnInit, OnDestroy {
     if (!estacion || estacion === '0') {
       this.chartReady = false;
       this.cdr.markForCheck();
+      onDone?.();
       return;
     }
 
@@ -137,6 +161,7 @@ export class TemperaturaPage implements OnInit, OnDestroy {
           this.chartReady = true; // para que deje de spinear aunque venga vacío
           this.applyEmptyChart('Sin datos');
           this.cdr.markForCheck();
+          onDone?.();
           return;
         }
 
@@ -151,7 +176,13 @@ export class TemperaturaPage implements OnInit, OnDestroy {
 
         this.chartReady = true;
         this.cdr.markForCheck();
+        onDone?.();
       });
+  }
+
+  refrescar(event: any) {
+    this.load(() => event?.target?.complete?.());
+    setTimeout(() => event?.target?.complete?.(), 15000);
   }
 
   onRangeChange(ev: any) {
@@ -239,13 +270,13 @@ export class TemperaturaPage implements OnInit, OnDestroy {
 
     const amplitud = maxP.temp - minP.temp;
 
-    this.tActualTexto = `${ultimo.temp.toFixed(1)}°`;
-    this.tMinTexto = `${minP.temp.toFixed(1)}°`;
-    this.tMaxTexto = `${maxP.temp.toFixed(1)}°`;
+    this.tActualTexto = `${decimal(ultimo.temp, 1)}°`;
+    this.tMinTexto = `${decimal(minP.temp, 1)}°`;
+    this.tMaxTexto = `${decimal(maxP.temp, 1)}°`;
 
     this.tMinHoraTexto = minP.hora || '';
     this.tMaxHoraTexto = maxP.hora || '';
-    this.amplitudTexto = `${amplitud.toFixed(1)}°`;
+    this.amplitudTexto = `${decimal(amplitud, 1)}°`;
 
     this.updateTendencia(puntos);
   }
@@ -277,13 +308,13 @@ export class TemperaturaPage implements OnInit, OnDestroy {
     }
 
     if (delta > 0) {
-      this.tendenciaTexto = `Subiendo +${delta.toFixed(1)}°`;
+      this.tendenciaTexto = `Subiendo +${decimal(delta, 1)}°`;
       this.tendenciaClase = 'trend--up';
       this.tendenciaIcono = 'trending-up-outline';
       return;
     }
 
-    this.tendenciaTexto = `Bajando ${delta.toFixed(1)}°`;
+    this.tendenciaTexto = `Bajando ${decimal(delta, 1)}°`;
     this.tendenciaClase = 'trend--down';
     this.tendenciaIcono = 'trending-down-outline';
   }
@@ -370,19 +401,19 @@ export class TemperaturaPage implements OnInit, OnDestroy {
     this.resumenItems = [
       {
         label: 'Mínima absoluta',
-        value: Number.isFinite(minAbs) ? `${minAbs.toFixed(1)}°` : 'S/D',
+        value: Number.isFinite(minAbs) ? `${decimal(minAbs, 1)}°` : 'S/D',
         hint: 'menor mínima',
         tone: Number.isFinite(minAbs) && minAbs <= 0 ? 'cold' : '',
       },
       {
         label: 'Máxima absoluta',
-        value: Number.isFinite(maxAbs) ? `${maxAbs.toFixed(1)}°` : 'S/D',
+        value: Number.isFinite(maxAbs) ? `${decimal(maxAbs, 1)}°` : 'S/D',
         hint: 'mayor máxima',
         tone: Number.isFinite(maxAbs) && maxAbs >= 30 ? 'hot' : '',
       },
       {
         label: 'Promedio mín/máx',
-        value: `${Number.isFinite(promMin) ? promMin.toFixed(1) : 'S/D'}° / ${Number.isFinite(promMax) ? promMax.toFixed(1) : 'S/D'}°`,
+        value: `${Number.isFinite(promMin) ? decimal(promMin, 1) : 'S/D'}° / ${Number.isFinite(promMax) ? decimal(promMax, 1) : 'S/D'}°`,
         hint: 'últimos 30 días',
       },
       {
@@ -429,18 +460,18 @@ export class TemperaturaPage implements OnInit, OnDestroy {
     this.resumenItems = [
       {
         label: 'Media mín/máx',
-        value: `${Number.isFinite(promMin) ? promMin.toFixed(1) : 'S/D'}° / ${Number.isFinite(promMax) ? promMax.toFixed(1) : 'S/D'}°`,
+        value: `${Number.isFinite(promMin) ? decimal(promMin, 1) : 'S/D'}° / ${Number.isFinite(promMax) ? decimal(promMax, 1) : 'S/D'}°`,
         hint: 'promedio mensual',
       },
       {
         label: 'Menor media mínima',
-        value: Number.isFinite(minMedia) ? `${minMedia.toFixed(1)}°` : 'S/D',
+        value: Number.isFinite(minMedia) ? `${decimal(minMedia, 1)}°` : 'S/D',
         hint: 'entre meses disponibles',
         tone: Number.isFinite(minMedia) && minMedia <= 5 ? 'cold' : '',
       },
       {
         label: 'Mayor media máxima',
-        value: Number.isFinite(maxMedia) ? `${maxMedia.toFixed(1)}°` : 'S/D',
+        value: Number.isFinite(maxMedia) ? `${decimal(maxMedia, 1)}°` : 'S/D',
         hint: 'entre meses disponibles',
         tone: Number.isFinite(maxMedia) && maxMedia >= 30 ? 'hot' : '',
       },
@@ -519,13 +550,11 @@ export class TemperaturaPage implements OnInit, OnDestroy {
   }
 
   openMapaAhora() {
-    // poné tu URL real
-    this.router.navigate(['tabs/mapat']);
+    this.router.navigate(['/tabs/mapa'], { queryParams: { modo: 'mapat' } });
   }
 
   openMapaHoy() {
-    // poné tu URL real
-    this.router.navigate(['tabs/mapathoy']);
+    this.router.navigate(['/tabs/mapa'], { queryParams: { modo: 'mapathoy' } });
   }
 
   get tieneDatosHoy(): boolean {

@@ -1,5 +1,11 @@
 <ion-header class="ion-no-border">
   <ion-toolbar class="transparente">
+    <!-- Sin esto, en iOS no había forma de salir de Localidades, Comparar o los mapas sueltos -->
+    <ion-buttons slot="start">
+      <ion-back-button [defaultHref]="volverA" text="" aria-label="Volver"></ion-back-button>
+    </ion-buttons>
     <ion-title class="centrado"> {{ titulo }} </ion-title>
+    <!-- Mismo ancho que el botón de volver, para que el título quede centrado -->
+    <ion-buttons slot="end"><span class="espaciador"></span></ion-buttons>
   </ion-toolbar>
 </ion-header>

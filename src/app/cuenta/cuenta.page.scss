@@ -1,0 +1,88 @@
+.contenido {
+  --padding-start: 12px;
+  --padding-end: 12px;
+  --padding-bottom: 24px;
+}
+
+.intro {
+  margin: 0 0 12px;
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+.nota {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.error,
+.aviso {
+  margin: 8px 0 0;
+  font-size: 0.85rem;
+}
+
+.error { color: var(--ion-color-danger); }
+.aviso { color: var(--accent); }
+
+.modo {
+  margin-bottom: 8px;
+}
+
+.campo {
+  --background: transparent;
+  --padding-start: 0;
+  --inner-padding-end: 0;
+  margin-top: 6px;
+
+  ion-input {
+    --padding-start: 10px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+  }
+}
+
+ion-button[expand="block"] {
+  margin-top: 12px;
+}
+
+.separador {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 0.8rem;
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+}
+
+.usuario {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  ion-icon {
+    color: var(--accent);
+    font-size: 2.2rem;
+  }
+
+  &__email {
+    color: var(--text);
+    font-weight: 600;
+    word-break: break-all;
+  }
+}
+
+.acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+}

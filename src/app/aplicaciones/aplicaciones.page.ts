@@ -1,17 +1,46 @@
 import { Component, OnInit } from '@angular/core';
+import { decimal } from '../shared/formato';
 import { LoadingController, ToastController, ModalController } from '@ionic/angular';
 import { EstacionesService } from '../services/estaciones.service';
-import { SprayAdvisorService, MetodoAplicacion, Prioridad, Cultivo, EvaluacionAplicacion } from '../services/spray-advisor.service';
+import {
+  SprayAdvisorService, MetodoAplicacion, Prioridad, Cultivo, EvaluacionAplicacion, RegistroMeteo, salidaPuestaSol
+} from '../services/spray-advisor.service';
 import { KpService } from '../services/kp.service';
 import { InfoModalComponent } from './info-modal.component';
 import { Capacitor } from '@capacitor/core';
 import { Geolocation } from '@capacitor/geolocation';
+import { Router } from '@angular/router';
+import { CuadernoService } from '../services/cuaderno.service';
 
 type MetodoApp = 'terrestre' | 'aerea' | 'drone';
+
+/**
+ * OpenWeatherMap da el viento a 10 m; los anemómetros de la red están a 3 m. Se lleva a 3 m (÷ 1,35,
+ * como la página web) para compararlo con los mismos umbrales que los registros de la estación.
+ */
+const VIENTO_10M_A_3M = 1 / 1.35;
+
+/** Un registro de la estación con más de una hora ya no es «ahora»: se usa la estimación */
+const MINUTOS_REGISTRO_VIGENTE = 60;
+
+/** Valores de «Ahora»: de la estación o, si falta o está atrasado, estimados con OpenWeatherMap */
+interface ValoresAhora {
+  tC: number | null;
+  rh: number | null;
+  medioKmh: number | null;
+  rafagaKmh: number | null;
+  deg: number | null;
+  estimado: { temp: boolean; hum: boolean; viento: boolean };
+}
 
 // ✅ Extras de aplicación (simples, sin complicar UX)
 type TipoProducto = 'HERBICIDA' | 'FUNGICIDA' | 'INSECTICIDA';
 type TamGota = 'MUY_FINA' | 'FINA' | 'MEDIA' | 'GRUESA' | 'MUY_GRUESA';
+
+/** Nombre corto del método, para el selector cerrado y el resumen de la configuración */
+const METODOS_CORTOS: Record<string, string> = {
+  MANUAL: 'Manual', MOSQUITO: 'Mosquito', AIRBLAST: 'Airblast', DRON: 'Dron', AVION: 'Avión',
+};
 
 @Component({
   selector: 'app-aplicaciones',
@@ -33,7 +62,7 @@ export class AplicacionesPage implements OnInit {
 
   // selección del usuario
   metodo: MetodoAplicacion = 'MOSQUITO';
-  cultivo: Cultivo = 'CANA';
+  cultivo: Cultivo = 'CAÑA';
   prioridad: Prioridad = 'EQUILIBRADO';
 
   // “extras”
@@ -52,11 +81,17 @@ export class AplicacionesPage implements OnInit {
 
   // datos
   climaActual: any = null;
+  /** Último registro de la estación elegida (estaciones.php, depurado) */
+  datoEstacion: any = null;
+  ahora: ValoresAhora | null = null;
   pronostico: any[] = [];
   gpsNombre: string | null = null;
 
   evalActual: EvaluacionAplicacion | null = null;
   evalPronostico: Array<{ dt: number; dtTxt: string; eval: EvaluacionAplicacion; tC: number; rh: number; windMs: number; pop: number }> = [];
+
+  /** La configuración va plegada al final; el resultado es lo primero que se ve */
+  configAbierta = false;
 
   constructor(
     private estaciones: EstacionesService,
@@ -65,7 +100,29 @@ export class AplicacionesPage implements OnInit {
     private loadingCtrl: LoadingController,
     private toastCtrl: ToastController,
     private modalCtrl: ModalController,
+    private router: Router,
+    private cuaderno: CuadernoService,
   ) { }
+
+  /** Lleva las condiciones de «Ahora» al formulario del Cuaderno de aplicaciones */
+  anotarAplicacion() {
+    if (!this.evalActual) return;
+    const a = this.ahora;
+    this.cuaderno.condicionesPendientes = {
+      estacion: this.origenUbicacion === 'ESTACION' && this.estacionNombre ? this.estacionNombre : (this.climaActual?.name ?? null),
+      tC: a?.tC ?? null,
+      rh: a?.rh ?? null,
+      vientoKmh: a?.medioKmh ?? null,
+      rafagaKmh: a?.rafagaKmh ?? null,
+      direccion: a?.deg != null ? this.windDirLabel(a.deg) : null,
+      deltaT: Number.isFinite(this.evalActual.deltaT) ? this.evalActual.deltaT : null,
+      semaforo: this.evalActual.semaforo,
+      estimado: !!a && (a.estimado.temp || a.estimado.hum || a.estimado.viento),
+      metodo: this.metodoCorto,
+      cultivo: this.cultivo,
+    };
+    this.router.navigate(['/tabs/cuaderno'], { queryParams: { nueva: Date.now() } });
+  }
 
   ngOnInit() {
     this.usarUbicacionDeEstacion(true);
@@ -197,21 +254,47 @@ export class AplicacionesPage implements OnInit {
     });
   }
 
+  /** «Ahora»: el último registro de la estación y, para lo que falte, OpenWeatherMap */
   private async cargarActual() {
     if (this.lat == null || this.lon == null) return;
 
-    return new Promise<void>((resolve) => {
+    const owm = new Promise<void>((resolve) => {
       this.estaciones.getClimaActual(this.lat!, this.lon!).subscribe((json) => {
         this.climaActual = json;
         this.gpsNombre = (json?.name ?? null);
         this.lugarNombre = (json?.name ?? null);
-
-        // ✅ Ahora SI afecta recomendaciones con extras de producto/gota
-        this.evalActual = this.evaluarDesdeOWMActual(json);
-
         resolve();
       }, _ => resolve());
     });
+
+    const id = this.origenUbicacion === 'ESTACION' ? this.idEstacionElegida() : null;
+    const estacion = new Promise<void>((resolve) => {
+      if (!id) {
+        this.datoEstacion = null;
+        resolve();
+        return;
+      }
+      this.estaciones.getDatos(id).subscribe((dato) => {
+        this.datoEstacion = dato;
+        resolve();
+      }, _ => {
+        this.datoEstacion = null;
+        resolve();
+      });
+    });
+
+    await Promise.all([owm, estacion]);
+    this.evalActual = this.evaluarActual();
+  }
+
+  private idEstacionElegida(): string | null {
+    try {
+      const datos = JSON.parse(localStorage.getItem('datos') ?? 'null');
+      const id = datos?.Identificacion ?? localStorage.getItem('estacion');
+      return id != null && String(id) !== '' ? String(id) : null;
+    } catch {
+      return localStorage.getItem('estacion');
+    }
   }
 
   private async cargarPronostico() {
@@ -228,55 +311,90 @@ export class AplicacionesPage implements OnInit {
   }
 
   onParamsChanged() {
-    if (this.climaActual) this.evalActual = this.evaluarDesdeOWMActual(this.climaActual);
+    if (this.climaActual || this.datoEstacion) this.evalActual = this.evaluarActual();
     if (this.pronostico?.length) this.evalPronostico = this.evaluarPronostico(this.pronostico, null);
   }
 
-  private evaluarDesdeOWMActual(json: any): EvaluacionAplicacion {
-    const tC = Number(json?.main?.temp ?? 0);
-    const rh = Number(json?.main?.humidity ?? 0);
-    const windMs = Number(json?.wind?.speed ?? 0);
-    const gustMs = json?.wind?.gust != null ? Number(json.wind.gust) : undefined;
-    const dtUtc = Number(json?.dt ?? 0);
-    const tz = Number(json?.timezone ?? 0);
-    const sunrise = Number(json?.sys?.sunrise ?? 0);
-    const sunset = Number(json?.sys?.sunset ?? 0);
+  /**
+   * «Ahora» con las mismas reglas que la página web (SprayAdvisorService.evaluarRegistro): el último
+   * registro de la estación; si falta un valor, el sensor está dado de baja o el registro tiene más de
+   * una hora, la estimación de OpenWeatherMap (marcada «estimado»). Con la ubicación del celular, sólo
+   * OpenWeatherMap.
+   */
+  private evaluarActual(): EvaluacionAplicacion | null {
+    const st = this.origenUbicacion === 'ESTACION' ? this.datoEstacion : null;
+    const owm = this.climaActual;
+    const num = (v: any): number | null => {
+      if (v == null || v === '') return null;
+      const n = Number(v);
+      return Number.isFinite(n) ? n : null;
+    };
 
-    const weather = Array.isArray(json?.weather)
-      ? json.weather.map((w: any) => ({
-        id: Number(w?.id),
-        main: w?.main,
-        description: w?.description,
-      }))
-      : undefined;
+    const fechaI = String(st?.fecha_I ?? '');
+    const f = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/.exec(fechaI);
+    const instanteSt = f ? Date.UTC(+f[1], +f[2] - 1, +f[3], +f[4] + 3, +f[5]) : null; // hora local UTC−3
+    const vigente = instanteSt != null && Date.now() - instanteSt <= MINUTOS_REGISTRO_VIGENTE * 60000;
 
-    const base = this.advisor.evaluar(
-      { tC, rh, windMs, gustMs, pop: 0, dtUtc, tzSeconds: tz, sunriseUtc: sunrise, sunsetUtc: sunset, weather },
-      this.metodo,
-      this.cultivo,
-      this.prioridad,
-      this.extrasDecision()
-    );
+    const estOk = (v: number | null, min: number, max: number) => vigente && v != null && v >= min && v <= max;
+    const stT = num(st?.temp_af), stH = num(st?.hum_af), stV = num(st?.viento_medio), stR = num(st?.viento_max);
+    const owmV = num(owm?.wind?.speed), owmG = num(owm?.wind?.gust);
+    const owmMedio = owmV != null ? owmV * 3.6 * VIENTO_10M_A_3M : null;
+    const owmRafaga = owmG != null && owmV != null ? Math.max(owmG, owmV) * 3.6 * VIENTO_10M_A_3M : owmMedio;
 
-    // ✅ aplicar extras (producto + gota) también en “Ahora”
-    return this.applyProductoExtras(base, { tC, rh, windMs });
+    const usaT = estOk(stT, -30, 55), usaH = estOk(stH, 1, 100), usaV = estOk(stV, 0, 200) && estOk(stR, 0, 200);
+    const valores: ValoresAhora = {
+      tC: usaT ? stT : num(owm?.main?.temp),
+      rh: usaH ? stH : num(owm?.main?.humidity),
+      medioKmh: usaV ? stV : owmMedio,
+      rafagaKmh: usaV ? stR : owmRafaga,
+      deg: usaV ? this.gradosDeRumbo(st?.direc) : num(owm?.wind?.deg),
+      estimado: { temp: !usaT, hum: !usaH, viento: !usaV }
+    };
+    this.ahora = valores;
+
+    // Lluvia: la de los últimos 15 minutos de la estación; si no, la última hora de OpenWeatherMap
+    const lluvia = vigente && num(st?.rr_15) != null ? num(st?.rr_15) : (num(owm?.rain?.['1h']) ?? 0);
+    const reg: RegistroMeteo = {
+      instante: new Date(usaT && instanteSt != null ? instanteSt : Date.now()),
+      lat: this.lat, lon: this.lon,
+      temperatura: valores.tC, humedad: valores.rh,
+      vientoMedio: valores.medioKmh, rafaga: valores.rafagaKmh, lluvia
+    };
+    const r = this.advisor.evaluarRegistro(reg, {
+      metodo: this.metodo, cultivo: this.cultivo, prioridad: this.prioridad, ...this.extrasDecision()
+    });
+    if (!r.evaluacion) return null;
+    return this.applyProductoExtras(r.evaluacion, {
+      tC: valores.tC as number, rh: valores.rh as number, windMs: (valores.rafagaKmh as number) / 3.6
+    });
   }
 
-  private evaluarPronostico(list: any[], city: any): Array<{ dt: number; dtTxt: string; eval: EvaluacionAplicacion; tC: number; rh: number; windMs: number; pop: number }> {
-    const tz = city?.timezone != null ? Number(city.timezone) : (this.climaActual?.timezone ?? 0);
-    const sunrise = city?.sunrise ?? this.climaActual?.sys?.sunrise;
-    const sunset = city?.sunset ?? this.climaActual?.sys?.sunset;
+  private gradosDeRumbo(rumbo: any): number | null {
+    const rumbos = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+    const i = rumbos.indexOf(String(rumbo ?? '').toUpperCase().replace(/[^A-Z]/g, ''));
+    return i >= 0 ? i * 22.5 : null;
+  }
 
+  /**
+   * Pronóstico con las mismas reglas que la página web: viento llevado a 3 m, ráfaga (si viene menor
+   * que el medio, el medio), salida y puesta del sol de cada día y la probabilidad de lluvia.
+   */
+  private evaluarPronostico(list: any[], city: any): Array<{ dt: number; dtTxt: string; eval: EvaluacionAplicacion; tC: number; rh: number; windMs: number; pop: number }> {
     return (list ?? [])
       .slice(0, 12)
       .map((it) => {
         const tC = Number(it?.main?.temp ?? 0);
         const rh = Number(it?.main?.humidity ?? 0);
-        const windMs = Number(it?.wind?.speed ?? 0);
-        const gustMs = it?.wind?.gust != null ? Number(it.wind.gust) : undefined;
+        const medioMs = Number(it?.wind?.speed ?? 0) * VIENTO_10M_A_3M;
+        const gustMs = it?.wind?.gust != null ? Math.max(Number(it.wind.gust) * VIENTO_10M_A_3M, medioMs) : medioMs;
         const pop = Number(it?.pop ?? 0);
         const dtUtc = Number(it?.dt ?? 0);
-        const dtTxt = it?.dt_txt ?? new Date((dtUtc + tz) * 1000).toISOString();
+        // Hora local de Tucumán (dt_txt de OpenWeatherMap está en UTC)
+        const local = new Date((dtUtc - 3 * 3600) * 1000); // UTC−3
+        const dtTxt = this.fechaHoraCorta(local);
+        const sol = this.lat != null && this.lon != null
+          ? salidaPuestaSol(local.getUTCFullYear(), local.getUTCMonth() + 1, local.getUTCDate(), this.lat, this.lon)
+          : null;
 
         const weather = Array.isArray(it?.weather)
           ? it.weather.map((w: any) => ({
@@ -287,17 +405,20 @@ export class AplicacionesPage implements OnInit {
           : undefined;
 
         const base = this.advisor.evaluar(
-          { tC, rh, windMs, gustMs, pop, dtUtc, tzSeconds: tz, sunriseUtc: sunrise, sunsetUtc: sunset, weather },
+          {
+            tC, rh, windMs: medioMs, gustMs, pop, dtUtc,
+            sunriseUtc: sol ? Math.floor(sol.salidaMs / 1000) : undefined,
+            sunsetUtc: sol ? Math.floor(sol.puestaMs / 1000) : undefined, weather
+          },
           this.metodo,
           this.cultivo,
           this.prioridad,
           this.extrasDecision()
         );
 
-        // ✅ aplicar extras (producto + gota)
-        const ev = this.applyProductoExtras(base, { tC, rh, windMs });
+        const ev = this.applyProductoExtras(base, { tC, rh, windMs: gustMs });
 
-        return { dt: dtUtc, dtTxt, eval: ev, tC, rh, windMs, pop };
+        return { dt: dtUtc, dtTxt, eval: ev, tC, rh, windMs: medioMs, pop };
       });
   }
 
@@ -305,6 +426,99 @@ export class AplicacionesPage implements OnInit {
     if (semaforo === 'VERDE') return 'success';
     if (semaforo === 'AMARILLO') return 'warning';
     return 'danger';
+  }
+
+  /**
+   * El tramo más largo de horas seguidas en VERDE de las próximas 36 h (si no hay, en AMARILLO), para no
+   * tener que leer la lista. null si todo está en ROJO.
+   */
+  get mejorMomento(): { semaforo: string; texto: string } | null {
+    for (const semaforo of ['VERDE', 'AMARILLO']) {
+      let mejor: { i: number; n: number } | null = null;
+      let inicio = -1;
+      this.evalPronostico.forEach((it, i) => {
+        if (it.eval.semaforo === semaforo) {
+          if (inicio < 0) inicio = i;
+          const n = i - inicio + 1;
+          if (!mejor || n > mejor.n) mejor = { i: inicio, n };
+        } else {
+          inicio = -1;
+        }
+      });
+      if (mejor) {
+        const { i, n } = mejor as { i: number; n: number };
+        return { semaforo, texto: this.textoTramo(this.evalPronostico[i].dt, this.evalPronostico[i + n - 1].dt) };
+      }
+    }
+    return null;
+  }
+
+  /** «hoy de 9 a 15 h», «mañana a las 6 h», «desde hoy 21 h hasta mañana 3 h» (dt en segundos UTC) */
+  private textoTramo(dtDesde: number, dtHasta: number): string {
+    const local = (dt: number) => new Date((dt - 3 * 3600) * 1000); // UTC−3, se leen los campos UTC
+    const a = local(dtDesde);
+    const b = local(dtHasta);
+    const ahora = local(Date.now() / 1000);
+    const dia = (d: Date) => {
+      const diff = Math.round((Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())
+        - Date.UTC(ahora.getUTCFullYear(), ahora.getUTCMonth(), ahora.getUTCDate())) / 86400000);
+      return diff === 0 ? 'hoy' : diff === 1 ? 'mañana' : this.fechaHoraCorta(d).split(' · ')[0];
+    };
+    if (dtDesde === dtHasta) return `${dia(a)} a las ${a.getUTCHours()} h`;
+    if (dia(a) === dia(b)) return `${dia(a)} de ${a.getUTCHours()} a ${b.getUTCHours()} h`;
+    return `desde ${dia(a)} ${a.getUTCHours()} h hasta ${dia(b)} ${b.getUTCHours()} h`;
+  }
+
+  /** «lun 16/11 · 21 h» a partir de una fecha ya corrida a UTC−3 (se leen los campos UTC) */
+  private fechaHoraCorta(local: Date): string {
+    const dias = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
+    const dd = String(local.getUTCDate()).padStart(2, '0');
+    const mm = String(local.getUTCMonth() + 1).padStart(2, '0');
+    return `${dias[local.getUTCDay()]} ${dd}/${mm} · ${local.getUTCHours()} h`;
+  }
+
+  /**
+   * La razón que explica el color: la primera marcada con el mismo semáforo («… (ROJO).»). Si ninguna
+   * lo dice (inversión, por ejemplo, no lleva marca y va primera), la primera de la lista.
+   */
+  motivoPrincipal(ev: EvaluacionAplicacion): string {
+    const razones = ev?.razones ?? [];
+    return razones.find((r) => r.includes(`(${ev.semaforo})`)) ?? razones[0] ?? '';
+  }
+
+  /** Lo que muestra el selector cerrado: «Mosquito (terrestre)» no entra a 375 px */
+  get metodoCorto(): string {
+    return METODOS_CORTOS[this.metodo] ?? this.metodo;
+  }
+
+  /** Mismos cortes que la ayuda de 'SCORES': 0–34 bajo, 35–65 medio, más de 65 alto */
+  nivelRiesgo(score: number): string {
+    if (score > 65) return 'Alto';
+    if (score >= 35) return 'Medio';
+    return 'Bajo';
+  }
+
+  /** Resumen de la configuración plegada: «El Colmenar · Mosquito · Caña · Herbicida · gota media» */
+  get resumenConfig(): string {
+    const metodos = METODOS_CORTOS;
+    const cultivos: Record<string, string> = { 'CAÑA': 'Caña', CITRUS: 'Citrus', GRANOS: 'Granos' };
+    const productos: Record<string, string> = {
+      HERBICIDA: 'Herbicida', FUNGICIDA: 'Fungicida', INSECTICIDA: 'Insecticida',
+    };
+    const gotas: Record<string, string> = {
+      MUY_FINA: 'muy fina', FINA: 'fina', MEDIA: 'media', GRUESA: 'gruesa', MUY_GRUESA: 'muy gruesa',
+    };
+    const lugar = this.origenUbicacion === 'GPS'
+      ? (this.lugarNombre || 'Ubicación del celular')
+      : (this.estacionNombre || 'Estación');
+
+    return [
+      lugar,
+      metodos[this.metodo] ?? this.metodo,
+      cultivos[this.cultivo] ?? this.cultivo,
+      productos[this.tipoProducto] ?? this.tipoProducto,
+      `gota ${gotas[this.tamGota] ?? this.tamGota}`,
+    ].join(' · ');
   }
 
   formatWindMsToKmh(ms: any): string {
@@ -320,7 +534,8 @@ export class AplicacionesPage implements OnInit {
   private extrasDecision() {
     return {
       kpIndex: this.kpIndex,
-      sats: this.usarGnssEnDecision() ? this.sats : undefined
+      sats: this.usarGnssEnDecision() ? this.sats : undefined,
+      gotaGruesa: this.tamGota === 'GRUESA' || this.tamGota === 'MUY_GRUESA'
     };
   }
 
@@ -434,7 +649,7 @@ export class AplicacionesPage implements OnInit {
     lines.push(`Eficacia (score): ${ev.scoreEficacia}`);
 
     lines.push('—');
-    lines.push(`ΔT: ${ev.deltaT.toFixed(1)} °C`);
+    lines.push(`ΔT: ${decimal(ev.deltaT, 1)} °C`);
     lines.push(`Inversión probable: ${ev.inversionProbable ? 'Sí' : 'No'}`);
 
     lines.push('—');
@@ -448,7 +663,7 @@ export class AplicacionesPage implements OnInit {
     else lines.push('• (No se registraron recomendaciones)');
 
     lines.push('—');
-    lines.push(`Extras: Kp=${this.kpIndex.toFixed(1)} · Satélites=${this.sats}`);
+    lines.push(`Extras: Kp=${decimal(this.kpIndex, 1)} · Satélites=${this.sats}`);
 
     return lines;
   }

@@ -1,12 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import { EstacionesService } from 'src/app/services/estaciones.service';
-import { Platform, LoadingController } from '@ionic/angular';
+import { Platform, LoadingController, ToastController } from '@ionic/angular';
+import { Router } from '@angular/router';
 import { SplashScreen } from '@ionic-native/splash-screen/ngx';
 import { StatusBar } from '@ionic-native/status-bar/ngx';
 import swal from 'sweetalert2';
-import { PushService } from './services/push.service';
-import { of } from 'rxjs';
-import { catchError, finalize, switchMap, tap } from 'rxjs/operators';
+import { PushNavigationIntent, PushService } from './services/push.service';
+import { CuentaSyncService } from './services/cuenta-sync.service';
+import { of, ReplaySubject } from 'rxjs';
+import { catchError, filter, finalize, map, switchMap, take, tap } from 'rxjs/operators';
 
 @Component({
   selector: 'app-root',
@@ -22,6 +24,10 @@ export class AppComponent implements OnInit {
   mostrar = false;
   mensajes: any;
 
+  // Emite una vez que localStorage['estaciones'] está disponible y validado.
+  // ReplaySubject(1): si el push llega antes (cold start), lo espera igual.
+  private estacionesListas$ = new ReplaySubject<void>(1);
+
   constructor(
     private estacionesService: EstacionesService,
     private platform: Platform,
@@ -29,7 +35,11 @@ export class AppComponent implements OnInit {
     private statusBar: StatusBar,
     private plt: Platform,
     public loadingCtrl: LoadingController,
-    private pushService: PushService
+    private pushService: PushService,
+    private router: Router,
+    private toastCtrl: ToastController,
+    // Se crea al arrancar: con sesión iniciada sincroniza favoritas y cuaderno con la cuenta
+    private cuentaSync: CuentaSyncService
   ) {
     this.initializeApp();
   }
@@ -51,23 +61,38 @@ export class AppComponent implements OnInit {
     // this.traerVersion();
     this.traeEstacionesYDatos();
     this.pushService.initPush();
+
+    this.pushService.pendingNavigation$
+      .pipe(
+        filter((intent): intent is PushNavigationIntent => !!intent),
+        switchMap(intent => this.estacionesListas$.pipe(take(1), map(() => intent)))
+      )
+      .subscribe(intent => {
+        this.procesarPushPendiente(intent);
+        this.pushService.clearPendingNavigation();
+      });
   }
 
   // =========================
   // P0: estaciones + default 2049 + datos
   // =========================
   async traeEstacionesYDatos() {
-    console.log('trae Estaciones y datos desde appComponent ****');
+    // Con la lista y la estación de la vez anterior la app ya puede mostrarse: se actualiza por detrás.
+    // El cartel que bloquea queda sólo para la primera vez (o si se borró lo guardado).
+    const hayGuardado = this.safeParseStations().length > 0 && !!localStorage.getItem('estacion');
+    let loading: HTMLIonLoadingElement | null = null;
 
-    const loading = await this.loadingCtrl.create({
-      spinner: 'bubbles',
-      translucent: true,
-      cssClass: 'custom-class custom-loading',
-      showBackdrop: false,
-      message: 'Espere por favor...',
-    });
+    if (!hayGuardado) {
+      loading = await this.loadingCtrl.create({
+        spinner: 'bubbles',
+        translucent: true,
+        cssClass: 'custom-class custom-loading',
+        showBackdrop: false,
+        message: 'Espere por favor...',
+      });
 
-    await loading.present();
+      await loading.present();
+    }
 
     this.estacionesService.getPosts().pipe(
       tap((stations: any[]) => {
@@ -85,7 +110,11 @@ export class AppComponent implements OnInit {
           throw new Error('No se pudo seleccionar una estación válida.');
         }
 
-        this.estacionesService.setSelectedStation(estacion);
+        // Si sigue siendo la misma estación no se avisa de nuevo: las páginas ya la están mostrando y
+        // volverían a pedir los datos
+        if (estacion !== localStorage.getItem('estacion')) {
+          this.estacionesService.setSelectedStation(estacion);
+        }
 
         // ✅ Actualizar estado UI (lo que antes hacía traerDatos)
         this.mensajes = stations;
@@ -123,9 +152,71 @@ export class AppComponent implements OnInit {
 
       // ✅ Pase lo que pase: cerrar loading
       finalize(() => {
-        loading.dismiss().catch(() => {});
+        loading?.dismiss().catch(() => {});
+        // Pase lo que pase (éxito o error), ya podemos resolver un deep link
+        // de push pendiente: si falló la carga, igual no conviene dejarlo
+        // esperando para siempre.
+        this.estacionesListas$.next();
       })
     ).subscribe();
+  }
+
+  // =========================
+  // Deep link de push
+  // =========================
+  private procesarPushPendiente(intent: PushNavigationIntent) {
+    const stations = this.safeParseStations();
+    const estacionId = intent.estacionId;
+
+    if (estacionId) {
+      const existe = stations.some(
+        s => String(s?.Identificacion ?? s?.identificacion) === estacionId
+      );
+
+      if (existe) {
+        this.estacionesService.setSelectedStation(estacionId);
+        localStorage.removeItem('datos');
+      } else {
+        console.warn('[PUSH] Estación del deep link ya no existe:', estacionId);
+        this.mostrarToastRecursoInexistente();
+        this.router.navigate(['/tabs/home']);
+        return;
+      }
+    }
+
+    this.router.navigate([this.rutaPorTipoPush(intent.tipo)]);
+  }
+
+  private rutaPorTipoPush(tipo: string): string {
+    switch (tipo) {
+      case 'helada_inicio':
+      case 'helada':
+        return '/tabs/heladas';
+      case 'smn':
+      case 'smn_alerta':
+        return '/tabs/alertas';
+      default:
+        return '/tabs/home';
+    }
+  }
+
+  private async mostrarToastRecursoInexistente() {
+    const toast = await this.toastCtrl.create({
+      message: 'La estación de esa notificación ya no está disponible.',
+      duration: 3000,
+      position: 'bottom',
+      color: 'warning',
+    });
+    await toast.present();
+  }
+
+  private safeParseStations(): any[] {
+    try {
+      const raw = JSON.parse(localStorage.getItem('estaciones') || '[]');
+      return Array.isArray(raw) ? raw : [];
+    } catch {
+      return [];
+    }
   }
 
   // =========================

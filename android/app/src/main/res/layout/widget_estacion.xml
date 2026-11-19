@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Widget de la estación (EstacionWidget.java): colores de la app (fondo oscuro, verde agua).
+     Los textos fijos son la muestra de la lista de widgets; al agregarlo se reemplazan por los datos. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_raiz"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_fondo"
+    android:padding="12dp">
+
+    <LinearLayout
+        android:id="@+id/widget_datos"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/widget_estacion"
+                android:text="El Colmenar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="#B8E2E2E2"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/widget_temperatura"
+                android:text="20,8°"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:includeFontPadding="false"
+                android:textColor="#80E3D3"
+                android:textSize="34sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="end"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/widget_humedad"
+                android:text="Humedad 94 %"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#E2E2E2"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/widget_lluvia"
+                android:text="Lluvia hoy 0,0 mm"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#E2E2E2"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/widget_hora"
+                android:text="08:15"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#B8E2E2E2"
+                android:textSize="12sp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/widget_vacio"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:text="@string/widget_vacio"
+        android:textColor="#E2E2E2"
+        android:textSize="13sp"
+        android:visibility="gone" />
+</FrameLayout>

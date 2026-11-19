@@ -29,3 +29,148 @@
     font-family: Helvetica;
     src: url(../src/assets/fonts/HelveticaNeueLTStd-BdCn.otf);
 }
+/* ---------- Mapas de estaciones (shared/marcador-mapa.ts) ---------- */
+/* Mapbox agrega popups y marcadores fuera de los componentes: los estilos van acá */
+
+.marcador-valor {
+  display: none;
+  text-transform: none;
+  position: absolute;
+  top: 50%;
+  left: calc(100% + 3px);
+  transform: translateY(-50%);
+
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+  text-shadow: 0 0 3px #000, 0 0 2px #000;
+  pointer-events: none;
+}
+
+.mapboxgl-map.ver-valores .marcador-valor {
+  display: block;
+}
+
+.mapboxgl-popup-content {
+  background: rgba(0, 0, 0, 0.82) !important;
+  color: #e8e8e8 !important;
+  border: 1px solid rgba(128, 227, 211, 0.35) !important;
+  border-radius: 12px !important;
+  padding: 10px 12px !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45) !important;
+}
+
+.mapboxgl-popup-anchor-bottom .mapboxgl-popup-tip,
+.mapboxgl-popup-anchor-bottom-left .mapboxgl-popup-tip,
+.mapboxgl-popup-anchor-bottom-right .mapboxgl-popup-tip {
+  border-top-color: rgba(0, 0, 0, 0.82) !important;
+}
+
+.mapboxgl-popup-anchor-top .mapboxgl-popup-tip,
+.mapboxgl-popup-anchor-top-left .mapboxgl-popup-tip,
+.mapboxgl-popup-anchor-top-right .mapboxgl-popup-tip {
+  border-bottom-color: rgba(0, 0, 0, 0.82) !important;
+}
+
+.mapboxgl-popup-anchor-left .mapboxgl-popup-tip {
+  border-right-color: rgba(0, 0, 0, 0.82) !important;
+}
+
+.mapboxgl-popup-anchor-right .mapboxgl-popup-tip {
+  border-left-color: rgba(0, 0, 0, 0.82) !important;
+}
+
+.mbxPopup {
+  text-transform: none;
+  font-size: 13px;
+  line-height: 1.3;
+}
+
+.mbxTitle {
+  margin-bottom: 4px;
+  font-weight: 800;
+  letter-spacing: .2px;
+}
+
+.mbxSep {
+  height: 1px;
+  margin: 6px 0;
+  background: rgba(128, 227, 211, 0.25);
+}
+
+.mbxNota {
+  color: #f5c36b;
+  font-weight: 700;
+}
+
+/* ---------- Estilo común (tokens en theme/variables.scss) ---------- */
+
+@font-face {
+  font-family: helveticaNR;
+  src: url('assets/fonts/helvetica-neue-lt-std-55-roman.otf');
+}
+
+@font-face {
+  font-family: helveticaNBC;
+  src: url('assets/fonts/HelveticaNeueLTStd-BdCn.otf');
+}
+
+/* Mismo fondo en todas las pantallas: <ion-content class="grad"> (Inicio usa su foto según el tiempo) */
+ion-content.grad {
+  --background: var(--fondo-base);
+}
+
+ion-content.grad::part(scroll) {
+  background: var(--fondo);
+}
+
+/* Títulos: condensada en mayúsculas; el texto corrido queda con la fuente del sistema */
+ion-title {
+  font-family: helveticaNBC;
+  letter-spacing: 1px;
+  color: var(--text);
+  text-transform: uppercase;
+}
+
+/* Barras de las páginas sobre el fondo común */
+ion-toolbar.topbar,
+ion-toolbar.segToolbar {
+  --background: rgba(0, 0, 0, 0.35);
+  --border-color: transparent;
+  backdrop-filter: blur(10px);
+}
+
+/* Tarjeta común */
+.ag-card {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: var(--radius);
+  background: var(--card);
+  border: 1px solid var(--border);
+}
+
+/* Compartir un gráfico o imagen como imagen (services/compartir.service.ts) */
+.botonCompartir {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  align-self: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--accent);
+  font-size: 1.1rem;
+}
+
+/* Títulos de tarjeta (Estación, Alertas, Comparar): misma condensada que los títulos de pantalla */
+.cardTitle {
+  font-family: helveticaNBC;
+  font-size: 1.05rem;
+  font-weight: normal;
+  letter-spacing: 0.4px;
+}

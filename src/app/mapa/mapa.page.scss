@@ -1,0 +1,167 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.segToolbar {
+  --background: rgba(0, 0, 0, 0.35);
+  --border-color: transparent;
+  --min-height: auto;
+  --padding-top: 0;
+  --padding-bottom: 6px;
+  backdrop-filter: blur(10px);
+}
+
+.capaClimaRow {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.25);
+
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
+}
+
+.capaChip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+
+  /* 36 px de alto para tocar con el dedo; texto y borde más claros para que se lean apagados */
+  min-height: 36px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  background: rgba(255, 255, 255, 0.08);
+
+  color: rgba(235, 235, 235, 0.92);
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+
+  ion-icon {
+    font-size: 0.95rem;
+  }
+
+  &--active {
+    color: rgb(128, 227, 211);
+    border-color: rgb(128, 227, 211);
+    background: rgba(128, 227, 211, 0.12);
+  }
+}
+
+/* Qué muestra el modo elegido (período), debajo del selector */
+.mapaDescripcion {
+  padding: 2px 12px 0;
+  color: rgba(235, 235, 235, 0.85);
+  font-size: 0.78rem;
+  text-align: center;
+}
+
+/* Modo Satélite: la imagen a lo ancho, con la hora y la fuente debajo */
+.satelite {
+  --background: transparent;
+  text-align: center;
+
+  ion-spinner {
+    margin-top: 40px;
+  }
+
+  img {
+    display: block;
+    width: 100%;
+    border-radius: 12px;
+  }
+}
+
+.sateliteImagen {
+  position: relative;
+  width: calc(100% - 24px);
+  max-width: 480px;
+  margin: 12px auto 0;
+}
+
+.sateliteImagen .botonCompartir {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+/* San Miguel de Tucumán: el recorte está centrado en la ciudad */
+.sateliteCentro {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px;
+  border: 2px solid rgb(255, 196, 0);
+  border-radius: 50%;
+}
+
+.sateliteEscala {
+  width: calc(100% - 24px);
+  max-width: 480px;
+  margin: 8px auto 0;
+
+  &__barra {
+    height: 8px;
+    border-radius: 4px;
+    background: linear-gradient(to right, #00007f, #0000ff, #00c8ff, #3cff96, #ffff00, #ff7f00, #ff0000, #7f0000);
+  }
+
+  &__extremos {
+    display: flex;
+    justify-content: space-between;
+    color: rgba(235, 235, 235, 0.85);
+    font-size: 0.72rem;
+  }
+
+  &__texto {
+    color: var(--muted);
+    font-size: 0.72rem;
+  }
+}
+
+.sateliteRayos {
+  padding: 6px 16px 0;
+  color: rgba(235, 235, 235, 0.85);
+  font-size: 0.75rem;
+
+  &__muestra {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    margin-right: 4px;
+    vertical-align: -1px;
+    background: rgb(255, 43, 214); /* COLOR_RAYOS de estaciones.service.ts */
+  }
+}
+
+.sateliteHora,
+.sateliteFuente,
+.sateliteVacio {
+  padding: 6px 16px 0;
+  color: rgba(235, 235, 235, 0.85);
+  font-size: 0.78rem;
+}
+
+.sateliteFuente {
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.sateliteVacio {
+  padding-top: 40px;
+
+  ion-button {
+    display: block;
+    width: fit-content;
+    margin: 12px auto 0;
+  }
+}

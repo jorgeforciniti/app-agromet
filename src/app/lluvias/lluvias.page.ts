@@ -1,5 +1,7 @@
 import { Router } from '@angular/router';
+import { decimal } from '../shared/formato';
 import { EstacionesService } from 'src/app/services/estaciones.service';
+import { CompartirService, fechaHoy } from 'src/app/services/compartir.service';
 import { ChartOptions, ChartType, ChartDataSets } from 'chart.js';
 import { Color, Label, BaseChartDirective } from 'ng2-charts';
 import { LoadingController } from '@ionic/angular';
@@ -71,6 +73,11 @@ export class LluviasPage implements OnInit, OnDestroy {
   campaniaEstadoClase = 'estado--sd';
   campaniaHastaTexto = '';
 
+  /** Una o dos líneas: lluvia del año y del mes frente a la normal de la estación hasta hoy */
+  comparacionNormal: string[] = [];
+  private lluviaNormal: (number | null)[] | null = null;
+  private lluviaNormalEstacion: number | null = null;
+
   @ViewChild(BaseChartDirective) chart?: BaseChartDirective;
 
   public barChartOptions: ChartOptions = {
@@ -120,7 +127,8 @@ export class LluviasPage implements OnInit, OnDestroy {
     private datosLluvias: EstacionesService,
     private router: Router,
     public loadingCtrl: LoadingController,
-    private alertCtrl: AlertController
+    private alertCtrl: AlertController,
+    private compartir: CompartirService
   ) {
     this.cargarDatos();
     this.cargarImagen();
@@ -128,6 +136,19 @@ export class LluviasPage implements OnInit, OnDestroy {
 
   ngAfterViewInit() {
     this.recrearCanvas();
+  }
+
+  /** Comparte el gráfico como imagen con la estación, la fecha y la fuente (WhatsApp, etc.) */
+  compartirGrafico() {
+    const canvas = this.chart?.chart?.canvas;
+    if (!canvas) return;
+    this.compartir.compartir({
+      titulo: `${this.chartTitle} · ${this.chartHint}`,
+      subtitulo: [this.dato?.nombre, fechaHoy()].filter(Boolean).join(' · '),
+      imagen: canvas,
+      notas: this.selectedRange === '3' ? ['Barras: lluvia de cada mes · Línea: lluvia normal', ...this.comparacionNormal] : [],
+      nombre: 'lluvia',
+    });
   }
 
   ionViewDidEnter() {
@@ -162,11 +183,8 @@ export class LluviasPage implements OnInit, OnDestroy {
       this.cargarDatos();
       this.cargarImagen();
 
-      if (this.selectedRange === '3') {
-        this.cargarCampaniaAnual();
-      } else {
-        this.traerRRMes();
-      }
+      // También con «Año»: las series de la estación nueva hacen falta para el resumen y la normal
+      this.traerRRMes();
     });
   }
 
@@ -207,27 +225,32 @@ export class LluviasPage implements OnInit, OnDestroy {
     this.dato.rr_15 = Number(this.dato.rr_15);
   }
 
-  async traerRRMes() {
+  async traerRRMes(onDone?: () => void, showLoading = true) {
     this.auxRR = [];
     this.auxD = [];
     this.isLoading = true;
 
-    const loading = await this.loadingCtrl.create({
-      spinner: 'bubbles',
-      translucent: true,
-      cssClass: 'custom-class custom-loading',
-      showBackdrop: false,
-      message: 'Espere por favor...',
-    });
-    await loading.present();
+    let loading: HTMLIonLoadingElement | undefined;
+    if (showLoading) {
+      loading = await this.loadingCtrl.create({
+        spinner: 'bubbles',
+        translucent: true,
+        cssClass: 'custom-class custom-loading',
+        showBackdrop: false,
+        message: 'Espere por favor...',
+      });
+      await loading.present();
+    }
 
     const estacion = Number(localStorage.getItem('estacion') ?? 0);
+    this.traerLluviaNormal(estacion);
 
     this.datosLluvias.getRRMes(estacion).subscribe({
       next: (posts: any[]) => {
         this.mensajes = posts?.[0] || [];
         this.mensajes2 = posts?.[1] || [];
         this.mensajes3 = posts?.[2] || [];
+        this.compararConNormal();
 
         if (this.selectedRange === '3') {
           this.cargarCampaniaAnual();
@@ -244,12 +267,29 @@ export class LluviasPage implements OnInit, OnDestroy {
       },
       error: () => {
         this.isLoading = false;
+        onDone?.();
       },
       complete: () => {
         this.isLoading = false;
-        loading.dismiss().catch(() => { });
+        loading?.dismiss().catch(() => { });
+        onDone?.();
       }
     });
+  }
+
+  refrescar(event: any) {
+    const onDone = () => event?.target?.complete?.();
+
+    this.cargarDatos();
+    this.cargarImagen();
+
+    if (this.selectedRange === '3') {
+      this.cargarCampaniaAnual(onDone);
+    } else {
+      this.traerRRMes(onDone, false);
+    }
+
+    setTimeout(onDone, 15000);
   }
 
   onRangeChange(ev: any) {
@@ -268,7 +308,7 @@ export class LluviasPage implements OnInit, OnDestroy {
   }
 
   onClickAhora() {
-    this.router.navigate(['tabs/mapa-rr']);
+    this.router.navigate(['/tabs/mapa'], { queryParams: { modo: 'mapa-rr' } });
   }
 
   traerRR(tipoR: '1' | '2' | '3') {
@@ -285,13 +325,10 @@ export class LluviasPage implements OnInit, OnDestroy {
       this.rrAyer = 0;
     }
 
-    const hoy = new Date();
-    const mm = hoy.getMonth();
-
-    try {
-      this.dato.rr_mes = Number(this.mensajes3?.[mm]?.lluvia);
-    } catch {
-      this.dato.rr_mes = Number(this.mensajes3?.[this.mensajes3.length - 1]?.lluvia || 0);
+    // mensajes3 va desde hace un año: el mes en curso se busca por año y mes, no por posición
+    const mesActual = this.totalDelMes(new Date().getFullYear(), new Date().getMonth() + 1);
+    if (this.dato && mesActual != null) {
+      this.dato.rr_mes = mesActual;
     }
 
     if (tipoR === '1') {
@@ -328,6 +365,75 @@ export class LluviasPage implements OnInit, OnDestroy {
     this.updateResumen(tipoR);
 
     this.recrearCanvas();
+  }
+
+  /** Total del mes en la serie mensual de la estación; null si el mes no está (o le falta algún día) */
+  private totalDelMes(anio: number, mes: number): number | null {
+    const fila = (this.mensajes3 || []).find(x => Number(x?.anio) === anio && Number(x?.mes) === mes);
+    const v = this.toNum(fila?.lluvia);
+    return Number.isFinite(v) ? v : null;
+  }
+
+  private traerLluviaNormal(estacion: number) {
+    if (this.lluviaNormalEstacion === estacion) return;
+
+    this.lluviaNormalEstacion = estacion;
+    this.lluviaNormal = null;
+    this.comparacionNormal = [];
+
+    this.datosLluvias.getLluviaNormal(estacion).subscribe(normal => {
+      if (this.lluviaNormalEstacion !== estacion) return;
+      this.lluviaNormal = normal;
+      this.compararConNormal();
+    });
+  }
+
+  /**
+   * Lluvia del año y del mes en curso frente a la normal hasta hoy: los meses cerrados con su normal
+   * completa y el mes en curso con la parte de la normal que corresponde a los días transcurridos.
+   * Sin normales o con meses incompletos, la línea no va.
+   */
+  private compararConNormal() {
+    this.comparacionNormal = [];
+    const normal = this.lluviaNormal;
+    if (!normal) return;
+
+    const hoy = new Date();
+    const anio = hoy.getFullYear();
+    const mes = hoy.getMonth() + 1;
+    const fraccion = hoy.getDate() / new Date(anio, mes, 0).getDate();
+
+    const delMes = this.totalDelMes(anio, mes) ?? this.toNum(this.dato?.rr_mes);
+    const normalMes = normal[mes - 1];
+    if (!Number.isFinite(delMes) || normalMes == null || normalMes <= 0) return;
+
+    let obsAnio = delMes;
+    let normalAnio = normalMes * fraccion;
+    for (let m = 1; m < mes; m++) {
+      const v = this.totalDelMes(anio, m);
+      if (v == null || normal[m - 1] == null) {
+        obsAnio = NaN;
+        break;
+      }
+      obsAnio += v;
+      normalAnio += normal[m - 1];
+    }
+
+    if (mes > 1 && Number.isFinite(obsAnio) && normalAnio > 0) {
+      this.comparacionNormal.push(`En ${anio} llevás ${this.fmtMm(obsAnio, 0)}, ${this.frenteANormal(obsAnio, normalAnio)}.`);
+    }
+
+    // Los primeros días del mes la comparación todavía no dice nada
+    if (hoy.getDate() >= 8) {
+      const nombre = hoy.toLocaleDateString('es-AR', { month: 'long' });
+      this.comparacionNormal.push(`En ${nombre}, ${this.fmtMm(delMes, 0)}: ${this.frenteANormal(delMes, normalMes * fraccion)}.`);
+    }
+  }
+
+  private frenteANormal(obs: number, normal: number): string {
+    const pct = (obs / normal - 1) * 100;
+    if (Math.abs(pct) < 10) return 'cerca de lo normal a esta fecha';
+    return `un ${pct.toFixed(0).replace('-', '')} % ${pct < 0 ? 'menos' : 'más'} que lo normal a esta fecha`;
   }
 
   cargarImagen() {
@@ -370,7 +476,7 @@ export class LluviasPage implements OnInit, OnDestroy {
   private fmtMm(v: any, digits = 1): string {
     const n = this.toNum(v);
     if (!Number.isFinite(n)) return 'S/D';
-    return `${n.toFixed(digits)} mm`;
+    return `${decimal(n, digits)} mm`;
   }
 
   private fmtPct(v: any): string {
@@ -520,7 +626,7 @@ export class LluviasPage implements OnInit, OnDestroy {
     return 'No se registraron lluvias en los meses cerrados del año seleccionado.';
   }
 
-  private cargarCampaniaAnual() {
+  private cargarCampaniaAnual(onDone?: () => void) {
     this.isLoading = true;
 
     this.datosLluvias.getDatosCampaniaLluvia(1, this.anioSeleccionado).subscribe({
@@ -543,9 +649,11 @@ export class LluviasPage implements OnInit, OnDestroy {
         this.campaniaDataset = [];
         this.armarGraficoCampania();
         this.updateResumenCampania();
+        onDone?.();
       },
       complete: () => {
         this.isLoading = false;
+        onDone?.();
       }
     });
   }
@@ -743,7 +851,7 @@ export class LluviasPage implements OnInit, OnDestroy {
     this.campaniaObsTexto = this.fmtMm(obs);
     this.campaniaNormalTexto = this.fmtMm(normal);
     this.campaniaPorcentajeTexto = this.fmtPct(pct);
-    this.campaniaDiferenciaTexto = `${diff >= 0 ? '+' : ''}${diff.toFixed(1)} mm`;
+    this.campaniaDiferenciaTexto = `${diff >= 0 ? '+' : ''}${decimal(diff, 1)} mm`;
     this.campaniaHastaTexto = ultimo ? `datos cerrados hasta ${ultimo.month}` : '';
 
     const estado = this.clasificarPorcentajeNormal(pct);
@@ -821,7 +929,7 @@ export class LluviasPage implements OnInit, OnDestroy {
         label: 'Serie usada',
         value: this.campaniaLocalidad?.name || 'S/D',
         hint: this.campaniaDistanciaKm != null
-          ? `${this.campaniaDistanciaKm.toFixed(1)} km de la estación automática`
+          ? `${decimal(this.campaniaDistanciaKm, 1)} km de la estación automática`
           : 'sin distancia calculada',
       },
       {

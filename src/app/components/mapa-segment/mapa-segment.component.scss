@@ -1,0 +1,14 @@
+.mapaSegment {
+  --background: rgba(0, 0, 0, 0.35);
+  margin: 8px 12px;
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+}
+
+ion-segment-button {
+  --color: rgba(215, 215, 215, 0.7);
+  --color-checked: rgb(128, 227, 211);
+  font-size: 0.7rem;
+  min-width: 64px; /* cinco botones entran a 375 px */
+  min-height: 42px;
+}

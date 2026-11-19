@@ -1,25 +1,3 @@
-ion-tab-bar.tab-bar {
-  --background: rgba(100, 100, 100, 0.1);
-  font-family: Helvetica;
-  --color: powderblue;
-}
-
-ion-tab-button {
-  --padding-start: 0px;
-  --padding-end: 0px;
-}
-
-.tab-completo {
-  width: 100%;
-  height: 100%;
-  background: rgb(0, 0, 0, 1);
-}
-
-ion-tab-button {
-  padding: 0px;
-  margin: 0px;
-}
-
 ion-img {
   width: auto !important;
   height: auto !important;
@@ -29,89 +7,15 @@ ion-img {
   background-position: center;
 }
 
-ion-tab-button.tab-selected {
-  color: dodgerblue;
-  font-weight: 600;
-}
-
-ion-tab-bar {
-  color: dodgerblue;
-}
-
-ion-tab-button {
-  color: var(--color);
-}
-
-ion-tab-bar {
-  --border: 0;
-}
-
-ion-tab-button ion-icon {
+ion-icon {
   font-size: 22px;
-}
-
-ion-tab-button ion-label {
-  font-size: 11px;
-}
-
-.exit-btn {
-  --border-radius: 999px;
-  --padding-start: 0;
-  --padding-end: 0;
-  width: 44px;
-  height: 44px;
-  min-width: 44px;
-
-  ion-icon {
-    font-size: 22px;
-  }
-
-  /* le baja un poco la agresividad visual */
-  opacity: 0.92;
-}
-
-.exit-btn:active {
-  transform: scale(0.98);
-  opacity: 1;
-}
-
-.main-tab-bar {
-  --background: rgba(14, 25, 35, 0.96);
-  --border: 1px solid rgba(255, 255, 255, 0.08);
-  --color: rgba(255, 255, 255, 0.62);
-  --color-selected: #ffffff;
-
-  height: calc(62px + env(safe-area-inset-bottom));
-  padding-bottom: env(safe-area-inset-bottom);
-  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.22);
-}
-
-ion-tab-button {
-  --background: transparent;
-  --background-focused: transparent;
-  --background-selected: transparent;
-  --ripple-color: rgba(255, 255, 255, 0.14);
-
-  font-size: 11px;
-  letter-spacing: 0.1px;
-}
-
-ion-tab-button ion-icon {
-  font-size: 21px;
-  margin-bottom: 2px;
-}
-
-ion-tab-button.tab-selected {
-  color: #ffffff;
-}
-
-ion-tab-button.tab-selected ion-icon {
-  filter: drop-shadow(0 2px 6px rgba(255, 255, 255, 0.22));
 }
 
 ion-label {
   font-weight: 500;
 }
+
+/* ---------- Franja superior: logo + notificaciones ---------- */
 
 .app-top-strip {
   position: fixed;
@@ -125,20 +29,6 @@ ion-label {
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
 }
 
-.ad-row {
-  width: 100%;
-  max-height: 34px;
-  overflow: hidden;
-  background: #ffffff;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.ad-row ion-img {
-  width: 100%;
-  max-height: 34px;
-  object-fit: cover;
-}
-
 .brand-row {
   display: grid;
   grid-template-columns: 44px 1fr 44px;
@@ -146,7 +36,7 @@ ion-label {
   gap: 8px;
 
   min-height: 48px;
-  padding: 4px 12px 6px;
+  padding: 2px 12px;
 }
 
 .brand-logo {
@@ -166,23 +56,57 @@ ion-label {
   align-items: center;
 }
 
+/* 44 px: tamaño mínimo recomendado para tocar con el dedo */
 .exit-btn {
   --padding-start: 0;
   --padding-end: 0;
-  width: 36px;
-  height: 36px;
-  min-width: 36px;
-
   --box-shadow: none;
   --border-radius: 50%;
+
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  margin: 0;
+
+  /* le baja un poco la agresividad visual */
+  opacity: 0.92;
+
+  ion-icon {
+    font-size: 22px;
+  }
 }
 
-ion-icon {
-  font-size: 22px;
+.exit-btn:active {
+  transform: scale(0.98);
+  opacity: 1;
 }
+
+/* ---------- Pestañas ---------- */
 
 .main-tabs {
-  padding-top: calc(84px + env(safe-area-inset-top));
+  /* Alto de .brand-row (48 px) */
+  padding-top: calc(48px + env(safe-area-inset-top));
+}
+
+/* Con la franja «Sin conexión» (24 px) debajo del logo */
+.main-tabs--aviso {
+  padding-top: calc(72px + env(safe-area-inset-top));
+}
+
+.sinConexion {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 24px;
+  background: rgba(255, 196, 0, 0.16);
+  color: #ffd534;
+  font-size: 0.75rem;
+  font-weight: 600;
+
+  ion-icon {
+    font-size: 15px;
+  }
 }
 
 .main-tab-bar {
@@ -197,11 +121,16 @@ ion-icon {
 }
 
 ion-tab-button {
+  --padding-start: 0px;
+  --padding-end: 0px;
   --background: transparent;
   --background-focused: transparent;
   --background-selected: transparent;
   --ripple-color: rgba(255, 255, 255, 0.14);
 
+  padding: 0px;
+  margin: 0px;
+  color: var(--color);
   font-size: 11px;
   letter-spacing: 0.1px;
 }
@@ -211,11 +140,15 @@ ion-tab-button ion-icon {
   margin-bottom: 2px;
 }
 
+ion-tab-button ion-label {
+  font-size: 11px;
+}
+
 ion-tab-button.tab-selected {
   color: #ffffff;
+  font-weight: 600;
 }
 
-ion-label {
-  font-weight: 500;
+ion-tab-button.tab-selected ion-icon {
+  filter: drop-shadow(0 2px 6px rgba(255, 255, 255, 0.22));
 }
-

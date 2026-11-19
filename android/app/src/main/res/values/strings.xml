@@ -4,4 +4,12 @@
     <string name="title_activity_main">agromet2</string>
     <string name="package_name">com.agromet.app</string>
     <string name="custom_url_scheme">com.agromet.app</string>
+    <string name="widget_nombre">Agromet: mis estaciones</string>
+    <string name="widget_descripcion">Temperatura y lluvia de hoy de tus estaciones favoritas (o de la elegida)</string>
+    <string name="widget_favoritas">Favoritas</string>
+    <string name="widget_temperatura">Temp.</string>
+    <string name="widget_lluvia_hoy">Lluvia mm</string>
+    <string name="widget_hora">Hora</string>
+    <string name="widget_sin_datos">Abrí Agromet para cargar los datos</string>
+    <string name="widget_vacio">Abrí Agromet para elegir la estación</string>
 </resources>

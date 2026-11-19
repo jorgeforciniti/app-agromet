@@ -1,20 +1,69 @@
-<ion-content [fullscreen]="true" class="contenido" style="--background: url({{imagen}})">
-  <app-header titulo="temperaturas {{ tipoT }}"></app-header>
-  
-  <ion-row>
-    <ion-col size="6" class="mapita">
-      <img src="{{mapas}}">
-      <span (click)="traeTemperaturas(true)" >
-          Máximas
-      </span>
-    </ion-col>
-    <ion-col size="6" class="mapita">
-      <img src="{{mapas}}">
-      <span (click)="traeTemperaturas(false)" >
-          Mínimas
-      </span>
-    </ion-col>
-  </ion-row>
+<ng-template #innerContent>
+  <app-header *ngIf="!embedded" titulo="temperaturas {{ tipoT }}"></app-header>
+
+  <!-- Mismo control que Día/Mes/Año del mapa de heladas (antes eran dos íconos de mapa con texto) -->
+  <div class="tipoBar">
+    <ion-segment class="seg" [value]="tipoT" (ionChange)="cambiarTipo($event.detail.value)">
+      <ion-segment-button value="máximas">
+        <ion-label>Máximas</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="mínimas">
+        <ion-label>Mínimas</ion-label>
+      </ion-segment-button>
+    </ion-segment>
+  </div>
 
   <div id="mapa"></div>
+
+  <div class="legend" [class.legend--collapsed]="!legendAbierta">
+    <button class="legendToggle" (click)="legendAbierta = !legendAbierta">
+      <span>Referencias</span>
+      <ion-icon [name]="legendAbierta ? 'chevron-down-outline' : 'chevron-up-outline'"></ion-icon>
+    </button>
+
+    <div class="legendBody" *ngIf="legendAbierta">
+      <div class="legendTitle">Criterio de estaciones (riesgo agronómico)</div>
+
+      <div class="legendRow">
+        <img class="dot" src="assets/icon/azul_oscuro.png">
+        <span>Helada severa o más (&le; -4 °C)</span>
+      </div>
+      <div class="legendRow">
+        <img class="dot" src="assets/icon/azul_medio_1.png">
+        <span>Helada moderada (-2 a -4 °C)</span>
+      </div>
+      <div class="legendRow">
+        <img class="dot" src="assets/icon/azul_claro.png">
+        <span>Helada suave (0 a -2 °C)</span>
+      </div>
+      <div class="legendRow">
+        <img class="dot" src="assets/icon/verde.png">
+        <span>Normal (0 a 30°C)</span>
+      </div>
+      <div class="legendRow">
+        <img class="dot" src="assets/icon/amarillo.png">
+        <span>Cálido (30 a 35°C)</span>
+      </div>
+      <div class="legendRow">
+        <img class="dot" src="assets/icon/naranja.png">
+        <span>Caluroso (35 a 40°C)</span>
+      </div>
+      <div class="legendRow">
+        <img class="dot" src="assets/icon/rojo.png">
+        <span>Muy caluroso (&ge; 40°C)</span>
+      </div>
+
+      <div class="legendHint">
+        Tocá un punto para ver detalle. Acercá el mapa para ver los valores.
+      </div>
+    </div>
+  </div>
+</ng-template>
+
+<ion-content *ngIf="!embedded" [fullscreen]="true" class="contenido" style="--background: url({{imagen}})">
+  <ng-container *ngTemplateOutlet="innerContent"></ng-container>
 </ion-content>
+
+<div *ngIf="embedded" class="mapEmbed contenido">
+  <ng-container *ngTemplateOutlet="innerContent"></ng-container>
+</div>

@@ -7,7 +7,13 @@ import {
     PushNotificationSchema,
     ActionPerformed,
 } from '@capacitor/push-notifications';
+import { BehaviorSubject } from 'rxjs';
 import { environment } from 'src/environments/environment';
+
+export interface PushNavigationIntent {
+    tipo: string;
+    estacionId: string | null;
+}
 
 export interface PushPreferencias {
     dispositivo_id?: number;
@@ -24,10 +30,69 @@ export interface PushPreferencias {
     smn_area_3375: number;
 }
 
+/** Alerta a medida (push-alertas.php) */
+export interface AlertaUsuario {
+    id: number;
+    identificacion: number;
+    estacion: string;
+    variable: string;
+    umbral: number;
+    texto: string;
+    unidad: string;
+    ultimo_envio: string | null;
+}
+
+/** Condiciones que se pueden elegir (las define el servidor, con su rango) */
+export interface OpcionAlerta {
+    variable: string;
+    texto: string;
+    unidad: string;
+    min: number;
+    max: number;
+}
+
+export interface RespuestaAlertas {
+    ok: boolean;
+    error?: string;
+    alertas?: AlertaUsuario[];
+    opciones?: OpcionAlerta[];
+    maximo?: number;
+}
+
 @Injectable({
     providedIn: 'root',
 })
 export class PushService {
+
+    /**
+     * Alertas a medida: listar, agregar ({ identificacion, variable, umbral }) o borrar ({ id }).
+     * Siempre devuelve la lista actualizada, o ok: false con el error del servidor.
+     */
+    async alertas(accion: 'listar' | 'agregar' | 'borrar', extra: any = {}): Promise<RespuestaAlertas> {
+        const endpoint = `${environment.pushApiBase}push-alertas.php`;
+        const token = localStorage.getItem('push_token') || '';
+        const dispositivo_id = localStorage.getItem('push_dispositivo_id') || '';
+
+        try {
+            return await this.http.post<RespuestaAlertas>(endpoint, { token, dispositivo_id, accion, ...extra })
+                .toPromise();
+        } catch (e: any) {
+            return { ok: false, error: e?.error?.error || 'No se pudo conectar con el servidor.' };
+        }
+    }
+
+    /**
+     * Intent de navegación pendiente al tocar una notificación.
+     * No navegamos directo desde el listener: app.component.ts recién lo
+     * consume una vez que terminó de cargar la lista de estaciones (evita
+     * la carrera típica de cold start entre initPush() y traeEstacionesYDatos()).
+     */
+    private pendingNavigationSubject = new BehaviorSubject<PushNavigationIntent | null>(null);
+    pendingNavigation$ = this.pendingNavigationSubject.asObservable();
+
+    clearPendingNavigation() {
+        this.pendingNavigationSubject.next(null);
+    }
 
     constructor(private http: HttpClient) { }
 
@@ -75,11 +140,17 @@ export class PushService {
                 console.log('[PUSH] Notificación tocada:', notification);
 
                 const data = notification?.notification?.data || {};
+                const tipo = data?.tipo ? String(data.tipo) : '';
+                const estacionIdRaw = data?.estacion_id ?? data?.estacionId ?? null;
 
-                if (data?.tipo === 'helada_inicio') {
-                    console.log('[PUSH] Abrir pantalla Heladas');
-                    // Después conectamos navegación a /tabs/heladas
+                if (!tipo && estacionIdRaw == null) {
+                    return;
                 }
+
+                this.pendingNavigationSubject.next({
+                    tipo,
+                    estacionId: estacionIdRaw != null ? String(estacionIdRaw) : null,
+                });
             }
         );
     }

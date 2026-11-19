@@ -8,6 +8,10 @@ import {
 import { AlertController, LoadingController, NavController } from '@ionic/angular';
 import { Router } from '@angular/router';
 import { EstacionesService } from 'src/app/services/estaciones.service';
+import { EvaluacionAplicacion, SprayAdvisorService } from 'src/app/services/spray-advisor.service';
+import { parseAlertasPorArea } from 'src/app/shared/smn-alertas.util';
+import { PronosticoHelada, PronosticoHeladasService } from 'src/app/services/pronostico-heladas.service';
+import { decimal } from 'src/app/shared/formato';
 import { Subject, timer, forkJoin, from, of, defer, merge } from 'rxjs';
 import {
   finalize,
@@ -60,6 +64,9 @@ export class HomePage implements OnInit, OnDestroy {
   alertas: Array<any> = [];
   maxAlertLevel: number = 0;
 
+  // ====== FAVORITAS ======
+  favoritas: Array<{ id: string; nombre: string }> = [];
+
   // ====== ESTIMACIONES (flags) ======
   estimated = {
     temp: false,
@@ -76,8 +83,13 @@ export class HomePage implements OnInit, OnDestroy {
     public loadingCtrl: LoadingController,
     public navCtrl: NavController,
     private cdr: ChangeDetectorRef,
-    private alertCtrl: AlertController
+    private alertCtrl: AlertController,
+    private advisor: SprayAdvisorService,
+    private pronosticoHeladas: PronosticoHeladasService
   ) { }
+
+  /** Sólo con riesgo de helada (si no, null y no se muestra nada) */
+  heladaPronostico: PronosticoHelada | null = null;
 
   ngOnInit() {
     merge(
@@ -95,6 +107,41 @@ export class HomePage implements OnInit, OnDestroy {
         switchMap(() => this.refreshAll())
       )
       .subscribe();
+
+    this.cargarFavoritas();
+
+    this.pronostico.favoritesChanged$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => this.cargarFavoritas());
+  }
+
+  private cargarFavoritas() {
+    const estaciones = this.safeParse(localStorage.getItem('estaciones'));
+    const lista = Array.isArray(estaciones) ? estaciones : [];
+
+    this.favoritas = this.pronostico.getFavorites()
+      .map(id => {
+        const est = lista.find((e: any) =>
+          String(e?.Identificacion ?? e?.identificacion ?? e?.id) === id
+        );
+        return est ? { id, nombre: est.nombre || id } : null;
+      })
+      .filter((x): x is { id: string; nombre: string } => !!x);
+
+    this.cdr.markForCheck();
+  }
+
+  get estacionActualId(): string | null {
+    return this.pronostico.getSelectedStation();
+  }
+
+  seleccionarFavorita(id: string) {
+    if (id === this.estacionActualId) return;
+    this.pronostico.setSelectedStation(id);
+  }
+
+  goComparar() {
+    this.router.navigate(['/comparar']);
   }
 
   ionViewDidEnter() {
@@ -219,7 +266,7 @@ export class HomePage implements OnInit, OnDestroy {
                   const nombreArea = esValles ? 'Valles Calchaquíes' : 'Tucumán';
                   const dataElegida = esValles ? alertasValles : alertasTuc;
 
-                  const listAll = dataElegida?.warnings?.length ? this.parseAlertasPorArea(nombreArea, dataElegida) : [];
+                  const listAll = dataElegida?.warnings?.length ? parseAlertasPorArea(nombreArea, dataElegida) : [];
                   const list = listAll.filter((a) => (a?.nivel ?? 0) >= 3);
 
                   this.alertas = list;
@@ -418,7 +465,7 @@ export class HomePage implements OnInit, OnDestroy {
     const mes = fechaI.substr(5, 2);
     this.anio = fechaI.substr(0, 4);
 
-    const dias = ['Domingo', 'Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado'];
+    const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
     const meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
 
     const dt = new Date(`${mes} ${this.dia}, ${this.anio}`);
@@ -434,6 +481,40 @@ export class HomePage implements OnInit, OnDestroy {
     this.dato.RR_dia = Math.round(parseInt(this.dato.RR_dia, 10));
     this.dato.rr_15 = parseFloat(this.dato.rr_15);
     this.dato.viento_max = Math.round(parseInt(this.dato.viento_max, 10));
+
+    this.cargarPronosticoHelada();
+  }
+
+  /** Aviso de helada para esta noche: sólo se muestra si hay riesgo (ver PronosticoHeladasService) */
+  private cargarPronosticoHelada() {
+    const lat = Number(this.dato?.lat);
+    const lon = Number(this.dato?.lon);
+    const id = String(this.dato?.Identificacion ?? '');
+    const estacion = (this.safeParse(localStorage.getItem('estaciones')) || [])
+      .find((e: any) => String(e?.Identificacion) === id);
+    const altura = this.dato?.alt ?? estacion?.alt ?? null;
+
+    this.pronosticoHeladas.obtener(lat, lon, altura).subscribe(p => {
+      this.heladaPronostico = p && p.riesgo !== 'sin-riesgo' ? p : null;
+      this.cdr.markForCheck();
+    });
+  }
+
+  get heladaPronosticoTitulo(): string {
+    const p = this.heladaPronostico;
+    if (!p) return '';
+    return p.riesgo === 'probable' ? `Helada probable ${p.periodo}` : `Posible helada en superficie ${p.periodo}`;
+  }
+
+  get heladaPronosticoDetalle(): string {
+    const p = this.heladaPronostico;
+    if (!p) return '';
+    const minima = `Mínima pronosticada ${decimal(p.minima, 1)} °C a las ${p.horaMinima} h`;
+    return p.despejadoYCalmo ? `${minima} · cielo despejado y poco viento` : minima;
+  }
+
+  verHeladas() {
+    this.router.navigate(['/tabs/heladas']);
   }
 
   onClick() {
@@ -504,11 +585,16 @@ export class HomePage implements OnInit, OnDestroy {
         Number(it?.main?.temp ?? 0).toFixed(0),
         Number(it?.main?.humidity ?? 0).toFixed(0),
         (Number(it?.wind?.speed ?? 0) * 3.6).toFixed(0),
-        it?.weather?.[0]?.description ?? '',
+        // OpenWeatherMap lo manda en minúsculas («muy nuboso»)
+        this.mayusculaInicial(it?.weather?.[0]?.description ?? ''),
       ]);
     }
 
     return out;
+  }
+
+  private mayusculaInicial(s: string): string {
+    return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
   }
 
   // Convierte dt (UTC epoch seconds) a "fecha local" usando timezone del forecast.
@@ -796,120 +882,56 @@ export class HomePage implements OnInit, OnDestroy {
     await al.present();
   }
 
-  private parseAlertasPorArea(area: string, data: any): any[] {
-    const out: any[] = [];
-    const warnings = Array.isArray(data?.warnings) ? data.warnings : [];
-    const reports = Array.isArray(data?.reports) ? data.reports : [];
-
-    for (const w of warnings) {
-      const moments = this.buildMomentsLabel(w);
-      const dateISO = String(w?.date ?? '');
-      const fecha = this.formatDateDDMMYYYY(dateISO);
-
-      const events = Array.isArray(w?.events) ? w.events : [];
-      const topEvent = events.reduce((best, cur) => {
-        const a = best?.max_level ?? 0;
-        const b = cur?.max_level ?? 0;
-        return b > a ? cur : best;
-      }, null);
-
-      const rep = reports.find((r: any) => String(r?.event_id) === String(topEvent?.id));
-      const level0 = rep?.levels?.[0] ?? null;
-
-      out.push({
-        area,
-        nivel: Number(w?.max_level ?? topEvent?.max_level ?? 0),
-        fecha: moments ? `${fecha} (${moments})` : fecha,
-        dateISO,
-        descripcion: level0?.description ?? '',
-        instruccion: level0?.instruction ?? '',
-      });
-    }
-
-    return out;
-  }
-
-  private buildMomentsLabel(warning: any): string {
-    const events = Array.isArray(warning?.events) ? warning.events : [];
-    const present = new Set<string>();
-
-    for (const ev of events) {
-      const lv = ev?.levels ?? {};
-      if (lv.early_morning != null && Number(lv.early_morning) > 0) present.add('madrugada');
-      if (lv.morning != null && Number(lv.morning) > 0) present.add('mañana');
-      if (lv.afternoon != null && Number(lv.afternoon) > 0) present.add('tarde');
-      if (lv.night != null && Number(lv.night) > 0) present.add('noche');
-    }
-
-    const order = ['madrugada', 'mañana', 'tarde', 'noche'];
-    return order.filter((x) => present.has(x)).join(', ');
-  }
-
-  private formatDateDDMMYYYY(dateISO: string): string {
-    if (!dateISO || dateISO.length < 10) return dateISO;
-    const y = dateISO.slice(0, 4);
-    const m = dateISO.slice(5, 7);
-    const d = dateISO.slice(8, 10);
-    return `${d}-${m}-${y}`;
-  }
-
   // ====== RECOMENDACIÓN AGRO ======
 
-  get motivosNoAplicar(): string[] {
+  /*
+    Resumen rápido con el mismo cálculo que «Aplicaciones» y la página web (SprayAdvisorService,
+    copiado de agromet-web), con los valores por defecto: mosquito, caña, prioridad equilibrada y gota
+    media. Antes tenía umbrales propios (30 °C, 55 % de humedad, 10 km/h) que no coincidían.
+  */
+  private evaluacionInicio: { clave: string; ev: EvaluacionAplicacion | null } | null = null;
+
+  private get evaluacionAplicacion(): EvaluacionAplicacion | null {
     const d = this.dato || {};
-    const out: string[] = [];
+    const lluvia = this.estimated?.rain ? 0 : d.rr_15;
+    const clave = [d.Identificacion, d.fecha_I, d.temp_af, d.hum_af, d.viento_medio, d.viento_max, lluvia].join('|');
+    if (this.evaluacionInicio?.clave === clave) return this.evaluacionInicio.ev;
 
-    const temp = Number(d.temp_af);
-    const hum = Number(d.hum_af);
-    const rr15 = Number(d.rr_15);
-    const vientoMedio = Number(d.viento_medio);
-    const vientoMax = Number(d.viento_max);
+    const num = (v: any): number | null => {
+      if (v == null || v === '') return null;
+      const n = Number(v);
+      return Number.isFinite(n) ? n : null;
+    };
+    const f = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/.exec(String(d.fecha_I ?? ''));
+    const instante = f && !this.debeUsarEstimacionTotal
+      ? new Date(Date.UTC(+f[1], +f[2] - 1, +f[3], +f[4] + 3, +f[5])) // hora local UTC−3
+      : new Date();
+    const r = this.advisor.evaluarRegistro({
+      instante,
+      lat: num(d.lat), lon: num(d.lon),
+      temperatura: num(d.temp_af), humedad: num(d.hum_af),
+      vientoMedio: num(d.viento_medio), rafaga: num(d.viento_max) ?? num(d.viento_medio),
+      lluvia: num(lluvia) ?? 0
+    }, { metodo: 'MOSQUITO', cultivo: 'CAÑA', prioridad: 'EQUILIBRADO' });
+    this.evaluacionInicio = { clave, ev: r.evaluacion };
+    return r.evaluacion;
+  }
 
-    if (Number.isFinite(temp) && temp >= 30) {
-      out.push('Temperatura alta');
-    }
+  /** Razones del cálculo sin la marca del semáforo: «Viento medio 2 km/h: calma» */
+  private get razonesAplicacion(): string[] {
+    return (this.evaluacionAplicacion?.razones ?? [])
+      .map(r => r.replace(/\s*\((VERDE|AMARILLO|ROJO)\)\.?$/, '').replace(/\.$/, ''))
+      .slice(0, 3);
+  }
 
-    if (Number.isFinite(hum) && hum <= 55) {
-      out.push('Humedad baja');
-    }
-
-    if (!this.estimated?.rain && Number.isFinite(rr15) && rr15 > 0) {
-      out.push('Lluvia reciente');
-    }
-
-    if (Number.isFinite(vientoMedio) && vientoMedio > 10) {
-      out.push('Viento fuerte');
-    } else if (Number.isFinite(vientoMax) && vientoMax > 10) {
-      out.push('Ráfagas fuertes');
-    }
-
-    return out;
+  get motivosNoAplicar(): string[] {
+    return this.evaluacionAplicacion?.semaforo === 'ROJO' ? this.razonesAplicacion : [];
   }
 
   get motivosPrecaucion(): string[] {
-    const d = this.dato || {};
-    const out: string[] = [];
-
-    const temp = Number(d.temp_af);
-    const hum = Number(d.hum_af);
-    const vientoMedio = Number(d.viento_medio);
-    const vientoMax = Number(d.viento_max);
-
-    if (Number.isFinite(temp) && temp >= 28 && temp < 30) {
-      out.push('Temperatura elevada');
-    }
-
-    if (Number.isFinite(hum) && hum > 55 && hum <= 65) {
-      out.push('Humedad algo baja');
-    }
-
-    if (Number.isFinite(vientoMedio) && vientoMedio >= 6 && vientoMedio <= 10) {
-      out.push('Viento moderado');
-    } else if (Number.isFinite(vientoMax) && vientoMax >= 8 && vientoMax <= 10) {
-      out.push('Ráfagas moderadas');
-    }
-
-    return out;
+    const ev = this.evaluacionAplicacion;
+    if (!ev) return ['Faltan datos para evaluar'];
+    return ev.semaforo === 'AMARILLO' ? this.razonesAplicacion : [];
   }
 
   get aplicacionEstado(): 'ok' | 'warn' | 'bad' {

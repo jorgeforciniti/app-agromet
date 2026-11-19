@@ -1,6 +1,6 @@
 {
   "name": "com.agromet.eeaoc",
-  "version": "2.3.5",
+  "version": "2.4.0",
   "author": "Ionic Framework",
   "homepage": "https://ionicframework.com/",
   "scripts": {
@@ -25,9 +25,12 @@
     "@capacitor/app": "^6.0.3",
     "@capacitor/assets": "^3.0.5",
     "@capacitor/core": "^6.2.1",
+    "@capacitor/filesystem": "^6.0.4",
     "@capacitor/geolocation": "^6.1.1",
     "@capacitor/ios": "^6.2.0",
     "@capacitor/push-notifications": "^6.0.5",
+    "@capacitor/share": "^6.0.4",
+    "@capgo/capacitor-social-login": "^6.0.1",
     "@ionic-native/core": "^5.0.7",
     "@ionic-native/in-app-browser": "^5.28.0",
     "@ionic-native/splash-screen": "^5.0.0",

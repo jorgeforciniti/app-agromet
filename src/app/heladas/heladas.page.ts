@@ -1,8 +1,10 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
+import { decimal } from '../shared/formato';
 import { LoadingController } from '@ionic/angular';
 import { Router } from '@angular/router';
 import { EstacionesService } from 'src/app/services/estaciones.service';
 import { Subscription } from 'rxjs';
+import { PronosticoHelada, PronosticoHeladasService } from 'src/app/services/pronostico-heladas.service';
 
 type ModoHeladas = 'dia' | 'mes' | 'anio';
 
@@ -62,7 +64,8 @@ export class HeladasPage implements OnInit, OnDestroy {
   constructor(
     private pronostico: EstacionesService,
     private loadingCtrl: LoadingController,
-    private router: Router
+    private router: Router,
+    private pronosticoHeladas: PronosticoHeladasService
   ) { }
 
   async ngOnInit() {
@@ -115,7 +118,15 @@ export class HeladasPage implements OnInit, OnDestroy {
   }
 
   onClickHoy() {
-    this.router.navigate(['tabs/mapaheladas']);
+    this.router.navigate(['/tabs/mapa'], { queryParams: { modo: 'mapaheladas' } });
+  }
+
+  async refrescar(event: any) {
+    try {
+      await this.cargarModo(this.modo, false);
+    } finally {
+      event?.target?.complete?.();
+    }
   }
 
   get rowsVisibles(): any[] {
@@ -131,9 +142,24 @@ export class HeladasPage implements OnInit, OnDestroy {
     return this.rowsVisibles.length > 0;
   }
 
+  /** «16 de noviembre de 2026» (hoy) o «noviembre de 2026» (mes). Antes salía un «DE» suelto. */
+  get fechaPeriodoTexto(): string {
+    const meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre',
+      'octubre', 'noviembre', 'diciembre'];
+    const hoy = new Date();
+    const mesAnio = `${meses[hoy.getMonth()]} de ${hoy.getFullYear()}`;
+    return this.modo === 'dia' ? `${hoy.getDate()} de ${mesAnio}` : mesAnio;
+  }
+
+  /** De noviembre a marzo no se esperan heladas en Tucumán: se avisa para leer el «sin heladas» */
+  get fueraDeTemporada(): boolean {
+    const mes = new Date().getMonth() + 1;
+    return mes >= 11 || mes <= 3;
+  }
+
   get tituloPeriodo(): string {
-    if (this.modo === 'dia') return 'Hoy';
-    if (this.modo === 'mes') return 'Mes';
+    if (this.modo === 'dia') return 'Hoy · mínima';
+    if (this.modo === 'mes') return 'Mes · mínima';
     return `Año ${this.anioActual} vs ${this.anioPrev}`;
   }
 
@@ -148,15 +174,40 @@ export class HeladasPage implements OnInit, OnDestroy {
 
   // --------- CARGA ---------
 
-  private async cargarModo(modo: ModoHeladas) {
-    const loading = await this.loadingCtrl.create({
-      spinner: 'bubbles',
-      translucent: true,
-      cssClass: 'custom-class custom-loading',
-      showBackdrop: false,
-      message: 'Cargando...',
-    });
-    await loading.present();
+  /** Mínima pronosticada para esta noche en la estación (Open-Meteo); sólo se muestra en «Hoy» */
+  pronosticoNoche: PronosticoHelada | null = null;
+
+  private cargarPronostico() {
+    const id = String(this.dato?.Identificacion ?? '');
+    const estacion = (this.safeParse(localStorage.getItem('estaciones')) || [])
+      .find((e: any) => String(e?.Identificacion) === id);
+    this.pronosticoHeladas
+      .obtener(Number(this.dato?.lat), Number(this.dato?.lon), this.dato?.alt ?? estacion?.alt ?? null)
+      .subscribe(p => this.pronosticoNoche = p);
+  }
+
+  get pronosticoNocheTexto(): string {
+    const p = this.pronosticoNoche;
+    if (!p) return '';
+    const riesgo = p.riesgo === 'probable' ? 'helada probable'
+      : p.riesgo === 'posible' ? 'posible helada en superficie' : 'sin riesgo de helada';
+    return `Pronóstico ${p.periodo}: mínima ${decimal(p.minima, 1)} °C, ${riesgo}.`;
+  }
+
+  private async cargarModo(modo: ModoHeladas, showLoading = true) {
+    this.cargarPronostico();
+
+    let loading: HTMLIonLoadingElement | undefined;
+    if (showLoading) {
+      loading = await this.loadingCtrl.create({
+        spinner: 'bubbles',
+        translucent: true,
+        cssClass: 'custom-class custom-loading',
+        showBackdrop: false,
+        message: 'Cargando...',
+      });
+      await loading.present();
+    }
 
     try {
       if (modo === 'dia') {
@@ -176,7 +227,7 @@ export class HeladasPage implements OnInit, OnDestroy {
       this.helAnioRows = [];
       this.resetResumen();
     } finally {
-      loading.dismiss().catch(() => { });
+      loading?.dismiss().catch(() => { });
     }
   }
 
@@ -326,7 +377,7 @@ export class HeladasPage implements OnInit, OnDestroy {
 
   fmtTemp(n: any): string {
     const v = this.toNum(n);
-    return Number.isFinite(v as any) ? (v as number).toFixed(1) : 'S/D';
+    return Number.isFinite(v as any) ? decimal(v as number, 1) : 'S/D';
   }
 
   fmtNum(n: any): string {
@@ -341,7 +392,7 @@ export class HeladasPage implements OnInit, OnDestroy {
       const y = str.slice(0, 4);
       const m = str.slice(5, 7);
       const d = str.slice(8, 10);
-      return `${d}-${m}-${y}`;
+      return `${d}/${m}/${y}`;
     }
     return str;
   }
@@ -387,7 +438,7 @@ export class HeladasPage implements OnInit, OnDestroy {
       return 'S/D';
     }
 
-    return `${(n as number).toFixed(1)} h`;
+    return `${decimal(n as number, 1)} h`;
   }
 
   private toNum(v: any): number | null {

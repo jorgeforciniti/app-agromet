@@ -1,0 +1,77 @@
+<ion-header translucent="true">
+  <ion-toolbar class="topbar">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/tabs/mas" text="" aria-label="Volver"></ion-back-button>
+    </ion-buttons>
+    <ion-title>CUENTA</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="contenido grad">
+
+  <!-- CON SESIÓN -->
+  <section class="ag-card" *ngIf="cuenta.sesion as s; else sinSesion">
+    <div class="usuario">
+      <ion-icon name="person-circle-outline"></ion-icon>
+      <div>
+        <div class="usuario__email">{{ s.email }}</div>
+        <div class="nota" *ngIf="estado$ | async as estado">{{ estadoTexto(estado) }}</div>
+      </div>
+    </div>
+    <p class="nota">
+      Es la misma cuenta del sitio web: las favoritas se ven también en agromet.eeaoc.gob.ar, y el
+      cuaderno de aplicaciones, en cualquier celular donde inicies sesión.
+    </p>
+    <div class="acciones">
+      <ion-button fill="clear" (click)="sincronizar()">Sincronizar</ion-button>
+      <ion-button fill="outline" (click)="salir()">Cerrar sesión</ion-button>
+    </div>
+    <p class="error" *ngIf="error" role="alert">{{ error }}</p>
+    <ion-button class="borrar" expand="block" fill="clear" color="danger" size="small" (click)="borrarCuenta()"
+      [disabled]="enviando">Borrar mi cuenta</ion-button>
+  </section>
+
+  <!-- SIN SESIÓN -->
+  <ng-template #sinSesion>
+    <section class="ag-card">
+      <p class="intro">
+        Con tu cuenta (la misma del sitio web) tus favoritas y el cuaderno de aplicaciones quedan
+        guardados y los ves en otro celular. Sin cuenta, la app funciona igual.
+      </p>
+
+      <ion-segment class="modo" [value]="modo" (ionChange)="cambiarModo($any($event.detail.value))">
+        <ion-segment-button value="ingresar"><ion-label>Ingresar</ion-label></ion-segment-button>
+        <ion-segment-button value="crear"><ion-label>Crear cuenta</ion-label></ion-segment-button>
+      </ion-segment>
+
+      <ion-item class="campo" lines="none">
+        <ion-label position="stacked">Correo electrónico</ion-label>
+        <ion-input type="email" [(ngModel)]="email" autocomplete="email" inputmode="email"></ion-input>
+      </ion-item>
+      <ion-item class="campo" lines="none">
+        <ion-label position="stacked">Contraseña</ion-label>
+        <ion-input type="password" [(ngModel)]="password" (keyup.enter)="enviar()"
+          [autocomplete]="modo === 'crear' ? 'new-password' : 'current-password'"></ion-input>
+      </ion-item>
+      <p class="nota" *ngIf="modo === 'crear'">Al menos 6 caracteres.</p>
+
+      <p class="error" *ngIf="error" role="alert">{{ error }}</p>
+      <p class="aviso" *ngIf="aviso" role="status">{{ aviso }}</p>
+
+      <ion-button expand="block" (click)="enviar()" [disabled]="enviando || !email || !password">
+        {{ modo === 'ingresar' ? 'Ingresar' : 'Crear cuenta' }}
+      </ion-button>
+      <ion-button expand="block" fill="clear" size="small" *ngIf="modo === 'ingresar'" (click)="recuperar()"
+        [disabled]="enviando">Olvidé mi contraseña</ion-button>
+
+      <ng-container *ngIf="google">
+        <div class="separador"><span>o</span></div>
+        <ion-button expand="block" fill="outline" (click)="conGoogle()" [disabled]="enviando">
+          <ion-icon name="logo-google" slot="start"></ion-icon>
+          Continuar con Google
+        </ion-button>
+      </ng-container>
+    </section>
+  </ng-template>
+
+</ion-content>

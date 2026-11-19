@@ -1,25 +1,43 @@
-<app-header titulo="Localidades"></app-header>
+<app-header titulo="Estaciones"></app-header>
 
-<ion-content padding="padding">
-    <ion-list>
-        <ion-radio-group>
-            <ion-item
-                *ngFor="let mensaje of mensajes"
-                (click)="onClick( mensaje )"  
-            >
-                <ion-radio
-                    slot="start"
-                    value="{{mensaje.Identificacion}}"
-                    color="success"
-                ></ion-radio>
+<ion-content class="contenido grad">
+  <ion-searchbar class="buscador" [(ngModel)]="filtro" placeholder="Buscar estación" inputmode="search"
+    [debounce]="150"></ion-searchbar>
 
-                <ion-label>
-                    <p style="font-weight: bold;">{{mensaje.nombre}}</p>
-                    <p>
-                        <small>Latitud: {{mensaje.lat}} - Longitud: {{mensaje.lon}} - Altura: {{mensaje.alt}} msnm</small>
-                    </p>
-                </ion-label>
-            </ion-item>
-        </ion-radio-group>
-    </ion-list>
+  <ng-container *ngIf="favoritas.length">
+    <div class="seccion">Favoritas</div>
+    <ng-container *ngTemplateOutlet="lista; context: { $implicit: favoritas }"></ng-container>
+  </ng-container>
+
+  <div class="seccion" *ngIf="favoritas.length && resto.length">Todas</div>
+  <ng-container *ngTemplateOutlet="lista; context: { $implicit: resto }"></ng-container>
+
+  <p class="vacio" *ngIf="!favoritas.length && !resto.length">
+    No hay estaciones que coincidan con «{{ filtro }}».
+  </p>
+
+  <!-- Tarjeta por estación: tocarla la elige; la estrella la marca como favorita -->
+  <ng-template #lista let-estaciones>
+    <div class="estacion" *ngFor="let e of estaciones" [class.estacion--actual]="esActual(e)">
+      <button type="button" class="estacion__elegir" (click)="onClick(e)"
+        [attr.aria-current]="esActual(e) ? 'true' : null">
+        <ion-icon class="estacion__marca" [name]="esActual(e) ? 'checkmark-circle' : 'location-outline'"
+          aria-hidden="true"></ion-icon>
+
+        <span class="estacion__texto">
+          <span class="estacion__nombre">{{ e.nombre }}</span>
+          <span class="estacion__detalle">
+            <ng-container *ngIf="esActual(e)">Estación activa · </ng-container>
+            <ng-container *ngIf="e.alt != null">{{ e.alt | number:'1.0-0' }} m s. n. m.</ng-container>
+          </span>
+        </span>
+      </button>
+
+      <button type="button" class="estacion__fav" [class.estacion__fav--si]="esFavorita(e)"
+        (click)="toggleFavorita(e, $event)"
+        [attr.aria-label]="esFavorita(e) ? 'Quitar de favoritas' : 'Marcar como favorita'">
+        <ion-icon [name]="esFavorita(e) ? 'star' : 'star-outline'"></ion-icon>
+      </button>
+    </div>
+  </ng-template>
 </ion-content>

@@ -1,21 +1,6 @@
 /* heladas.page.scss */
 
-@font-face {
-  font-family: helveticaNR;
-  src: url('../../assets/fonts/helvetica-neue-lt-std-55-roman.otf');
-}
-
-@font-face {
-  font-family: helveticaNBC;
-  src: url('../../assets/fonts/HelveticaNeueLTStd-BdCn.otf');
-}
-
 :host {
-  --accent: rgb(128, 227, 211);
-  --text: #d7d7d7;
-  --muted: rgba(215, 215, 215, 0.7);
-  --card: rgba(0, 0, 0, 0.35);
-  --border: rgba(128, 227, 211, 0.35);
   --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
 }
 
@@ -23,6 +8,15 @@
   font-family: helveticaNBC;
   letter-spacing: 1px;
   color: var(--text);
+}
+
+.segToolbar {
+  --background: var(--card);
+  --border-color: transparent;
+  --min-height: auto;
+  --padding-top: 0;
+  --padding-bottom: 6px;
+  backdrop-filter: blur(10px);
 }
 
 /* Fondo (opción C) */
@@ -103,7 +97,6 @@ ion-content.contenido.grad::part(scroll) {
   font-family: helveticaNR;
   color: var(--muted);
   font-size: 0.85rem;
-  text-transform: uppercase;
 }
 
 .metricGrid {
@@ -123,10 +116,14 @@ ion-content.contenido.grad::part(scroll) {
   font-size: 0.66rem;
   letter-spacing: 0.35px;
   text-transform: uppercase;
+  line-height: 1.2;
+}
 
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.fueraTemporada {
+  margin-top: 6px;
+  font-family: helveticaNR;
+  color: var(--muted);
+  font-size: 0.8rem;
 }
 
 .metric .v {
@@ -136,27 +133,12 @@ ion-content.contenido.grad::part(scroll) {
 }
 
 /* Botón mapa */
-.mapBtn {
-  width: 100%;
+.actionBtn {
+  --border-color: var(--border);
+  --color: var(--accent);
+  --border-radius: 10px;
   margin-top: 10px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  border-radius: 14px;
-  background: rgba(0, 0, 0, 0.22);
-  border: 1px solid var(--border);
-  color: var(--accent);
   font-family: helveticaNBC;
-}
-
-.mapBtn img {
-  width: 26px;
-  height: 26px;
-}
-
-.mapBtn span {
-  letter-spacing: 0.3px;
 }
 
 /* Segment */
@@ -202,7 +184,7 @@ ion-segment-button {
 }
 
 .chip.reddark {
-  background: rgba(85, 0, 0, 0.85);
+  background: rgb(140, 0, 0);
   color: #fff;
 }
 
@@ -351,7 +333,7 @@ ion-segment-button {
 
 /* Color por nivel (match con TS: nivelPorTemp) */
 .badge.reddark {
-  background: rgba(85, 0, 0, 0.85);
+  background: rgb(140, 0, 0);
   color: #fff;
 }
 
@@ -539,4 +521,35 @@ ion-segment-button {
 .periodSummaryItem.tone-warn {
   border-color: rgba(242, 201, 76, 0.34);
   background: rgba(242, 201, 76, 0.08);
+}
+/* Pronóstico de esta noche (una línea; resaltado sólo si hay riesgo) */
+.pronosticoNoche {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.3;
+
+  ion-icon {
+    flex: 0 0 auto;
+    margin-top: 1px;
+    color: var(--accent);
+    font-size: 1rem;
+  }
+
+  .fuente {
+    opacity: 0.7;
+    font-size: 0.75rem;
+  }
+
+  &--riesgo {
+    color: #bfdbfe;
+    font-weight: 700;
+
+    ion-icon {
+      color: #93c5fd;
+    }
+  }
 }

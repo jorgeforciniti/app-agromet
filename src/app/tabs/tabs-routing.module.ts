@@ -12,6 +12,10 @@ const routes: Routes = [
         loadChildren: () => import('../home/home.module').then(m => m.HomePageModule)
       },
       {
+        path: 'resumen',
+        loadChildren: () => import('../resumen/resumen.module').then(m => m.ResumenPageModule)
+      },
+      {
         path: 'temperatura',
         loadChildren: () => import('../temperatura/temperatura.module').then(m => m.TemperaturaPageModule)
       },
@@ -47,6 +51,30 @@ const routes: Routes = [
         path: 'notificaciones',
         loadChildren: () =>
           import('../notificaciones/notificaciones.module').then(m => m.NotificacionesPageModule)
+      },
+      {
+        path: 'mapa',
+        loadChildren: () => import('../mapa/mapa.module').then(m => m.MapaPageModule)
+      },
+      {
+        path: 'alertas',
+        loadChildren: () => import('../alertas/alertas.module').then(m => m.AlertasPageModule)
+      },
+      {
+        path: 'herramientas',
+        loadChildren: () => import('../herramientas/herramientas.module').then(m => m.HerramientasPageModule)
+      },
+      {
+        path: 'cuaderno',
+        loadChildren: () => import('../cuaderno/cuaderno.module').then(m => m.CuadernoPageModule)
+      },
+      {
+        path: 'cuenta',
+        loadChildren: () => import('../cuenta/cuenta.module').then(m => m.CuentaPageModule)
+      },
+      {
+        path: 'mas',
+        loadChildren: () => import('../mas/mas.module').then(m => m.MasPageModule)
       },
       //      {
       //        path: 'heat-waves',

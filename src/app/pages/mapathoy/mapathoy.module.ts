@@ -17,6 +17,7 @@ import { ComponentsModule } from 'src/app/components/components.module';
     MapathoyPageRoutingModule,
     ComponentsModule
   ],
-  declarations: [MapathoyPage]
+  declarations: [MapathoyPage],
+  exports: [MapathoyPage]
 })
 export class MapathoyPageModule {}

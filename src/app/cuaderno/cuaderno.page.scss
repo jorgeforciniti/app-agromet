@@ -1,0 +1,125 @@
+.contenido {
+  --padding-start: 12px;
+  --padding-end: 12px;
+  --padding-bottom: 24px;
+}
+
+.nota {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+/* Punto del semáforo de Aplicaciones */
+.semaforo {
+  flex: 0 0 auto;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+
+  &--VERDE { background: var(--ion-color-success); }
+  &--AMARILLO { background: var(--ion-color-warning); }
+  &--ROJO { background: var(--ion-color-danger); }
+}
+
+.formulario {
+  .condiciones {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-top: 10px;
+
+    .semaforo { margin-top: 4px; }
+
+    &__estado {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    &__detalle {
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+  }
+
+  .campo {
+    --background: transparent;
+    --padding-start: 0;
+    --inner-padding-end: 0;
+    margin-top: 8px;
+
+    ion-input,
+    ion-textarea {
+      --padding-start: 10px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+  }
+
+  .acciones {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 12px;
+  }
+}
+
+.registro {
+  &__cabecera {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  &__fecha {
+    flex: 1;
+    color: var(--muted);
+    font-size: 0.8rem;
+  }
+
+  &__sinSubir {
+    color: var(--muted);
+    font-size: 1rem;
+  }
+
+  &__borrar {
+    display: flex;
+    padding: 6px;
+    border: 0;
+    background: transparent;
+    color: var(--muted);
+    font-size: 1.1rem;
+  }
+
+  &__que {
+    margin-top: 4px;
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  &__condiciones,
+  &__notas {
+    margin-top: 4px;
+    color: var(--muted);
+    font-size: 0.8rem;
+  }
+
+  &__notas {
+    color: var(--text);
+  }
+}
+
+.vacio {
+  padding: 48px 16px 0;
+  text-align: center;
+  color: var(--text);
+
+  ion-icon {
+    color: var(--accent);
+    font-size: 2.4rem;
+  }
+}
+
+.pie {
+  text-align: center;
+}

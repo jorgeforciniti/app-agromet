@@ -1,0 +1,56 @@
+<ion-header translucent="true">
+  <ion-toolbar class="segToolbar">
+    <app-mapa-segment [value]="mode" (valueChange)="cambiarModo($event)"></app-mapa-segment>
+    <div class="mapaDescripcion">{{ descripcion }}</div>
+  </ion-toolbar>
+</ion-header>
+
+<div class="capaClimaRow" *ngIf="mostrarCapaClima">
+  <button *ngFor="let l of capasDisponibles" class="capaChip" [class.capaChip--active]="capaClima === l.key"
+    (click)="toggleCapaClima(l.key)">
+    <ion-icon [name]="l.icon"></ion-icon>
+    {{ l.label }}
+  </button>
+</div>
+
+<app-mapat *ngIf="mode === 'mapat'" [embedded]="true" [capaClima]="capaClima"></app-mapat>
+<app-mapathoy *ngIf="mode === 'mapathoy'" [embedded]="true"></app-mapathoy>
+<app-mapa-rr *ngIf="mode === 'mapa-rr'" [embedded]="true" [capaClima]="capaClima"></app-mapa-rr>
+<app-mapaheladas *ngIf="mode === 'mapaheladas'" [embedded]="true"></app-mapaheladas>
+
+<ion-content *ngIf="mode === 'satelite'" class="satelite">
+  <ion-spinner *ngIf="sateliteCargando && !satelite" name="bubbles"></ion-spinner>
+
+  <div class="sateliteVacio" *ngIf="sateliteError && !satelite">
+    La imagen satelital no está disponible en este momento.
+    <ion-button fill="outline" size="small" (click)="cargarSatelite()">Reintentar</ion-button>
+  </div>
+
+  <ng-container *ngIf="satelite">
+    <div class="sateliteImagen">
+      <img [src]="satelite.imagen" alt="Imagen satelital del NOA con San Miguel de Tucumán en el centro">
+      <span class="sateliteCentro"></span>
+      <button class="botonCompartir" type="button" (click)="compartirSatelite()"
+        aria-label="Compartir la imagen satelital">
+        <ion-icon name="share-social-outline"></ion-icon>
+      </button>
+    </div>
+    <div class="sateliteHora">{{ sateliteHora }} · San Miguel de Tucumán en el círculo amarillo</div>
+
+    <!-- De día: las nubes frías en colores (escala de EUMETSAT, aproximada) -->
+    <div class="sateliteEscala" *ngIf="satelite.producto === 'Sandwich'">
+      <div class="sateliteEscala__barra"></div>
+      <div class="sateliteEscala__extremos"><span>−33 °C</span><span>−73 °C</span></div>
+      <div class="sateliteEscala__texto">Temperatura aproximada del tope de las nubes: amarillo y rojo, tormentas fuertes</div>
+    </div>
+
+    <div class="sateliteRayos" *ngIf="satelite.rayos != null">
+      <ng-container *ngIf="satelite.rayos > 0; else sinRayos">
+        <span class="sateliteRayos__muestra"></span> Rayos detectados por el satélite
+      </ng-container>
+      <ng-template #sinRayos>Sin rayos detectados en la zona</ng-template>
+    </div>
+
+    <div class="sateliteFuente">Fuente: {{ sateliteFuente }}</div>
+  </ng-container>
+</ion-content>

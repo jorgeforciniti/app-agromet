@@ -1,0 +1,133 @@
+.topbar {
+  --background: rgba(0, 0, 0, 0.35);
+  --border-color: transparent;
+  backdrop-filter: blur(10px);
+}
+
+.title {
+  letter-spacing: 1px;
+}
+
+.segToolbar {
+  --background: rgba(0, 0, 0, 0.35);
+  --border-color: transparent;
+  --min-height: auto;
+  --padding-top: 0;
+  --padding-bottom: 6px;
+  backdrop-filter: blur(10px);
+}
+
+.contenido {
+}
+
+.loadingBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 40px 0;
+  color: var(--text);
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 6px;
+  padding: 60px 24px;
+  color: var(--text);
+
+  ion-icon {
+    font-size: 2.2rem;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+}
+
+.rango {
+  padding: 12px 16px 0;
+  color: var(--text);
+  opacity: 0.7;
+  font-size: 0.8rem;
+}
+
+.card {
+  margin: 12px;
+  padding: 14px;
+  border-radius: 14px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  font-weight: 800;
+
+  ion-icon {
+    color: var(--accent);
+  }
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.85rem;
+
+  span {
+    opacity: 0.65;
+    font-size: 0.75rem;
+  }
+}
+
+.tone-cold strong { color: #67c9ff; }
+.tone-hot strong { color: #ff8a5c; }
+
+.footnote {
+  padding: 4px 16px 24px;
+  opacity: 0.55;
+  font-size: 0.75rem;
+  color: var(--text);
+}
+
+.cardHeader--clickable {
+  cursor: pointer;
+
+  .chevron {
+    margin-left: auto;
+    opacity: 0.6;
+  }
+}
+
+.dailyTable {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 6px;
+}
+
+.dailyRow {
+  display: grid;
+  grid-template-columns: 1.1fr 1.2fr 1fr 1fr;
+  gap: 6px;
+  padding: 6px 4px;
+  font-size: 0.78rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.dailyRow--head {
+  opacity: 0.6;
+  font-weight: 700;
+  border-bottom: 1px solid var(--accent);
+}

@@ -1,0 +1,21 @@
+<ion-segment [value]="value" (ionChange)="onChange($event)" class="estacionSegment" mode="md">
+  <ion-segment-button value="resumen">
+    <ion-icon name="stats-chart-outline"></ion-icon>
+    <ion-label>Resumen</ion-label>
+  </ion-segment-button>
+
+  <ion-segment-button value="temperatura">
+    <ion-icon name="thermometer-outline"></ion-icon>
+    <ion-label>Temperatura</ion-label>
+  </ion-segment-button>
+
+  <ion-segment-button value="lluvias">
+    <ion-icon name="rainy-outline"></ion-icon>
+    <ion-label>Lluvia</ion-label>
+  </ion-segment-button>
+
+  <ion-segment-button value="heladas">
+    <ion-icon name="snow-outline"></ion-icon>
+    <ion-label>Heladas</ion-label>
+  </ion-segment-button>
+</ion-segment>

@@ -3,7 +3,7 @@
         <ion-buttons slot="start">
             <ion-button class="location-button" (click)="onClick()">
                 <ion-icon name="location-outline"></ion-icon>
-                <ion-label class="btn-label">Seleccionar localidad</ion-label>
+                <ion-label class="btn-label">Cambiar estación</ion-label>
             </ion-button>
         </ion-buttons>
         <ion-buttons slot="end">
@@ -36,23 +36,37 @@
             </div>
         </div>
 
+        <!-- Favoritas: acceso rápido -->
+        <div class="favoritas-row" *ngIf="favoritas.length">
+            <button *ngFor="let f of favoritas" class="fav-chip"
+                [class.fav-chip--active]="f.id === estacionActualId" (click)="seleccionarFavorita(f.id)">
+                <ion-icon name="star"></ion-icon>
+                {{ f.nombre }}
+            </button>
+
+            <button *ngIf="favoritas.length > 1" class="fav-chip fav-chip--compare" (click)="goComparar()">
+                <ion-icon name="git-compare-outline"></ion-icon>
+                Comparar
+            </button>
+        </div>
+
         <!-- Main card -->
         <div class="card hero">
             <div class="hero__row">
                 <div class="hero__temp">
                     <div class="temp">
                         {{ dato?.temp_af | number: '1.0-1' }}°C
-                        <span class="est-badge" *ngIf="estimated?.temp">• (e)</span>
+                        <sup class="est-badge" *ngIf="estimated?.temp" aria-label="estimado">*</sup>
                     </div>
 
                     <div class="date">
-                        {{ diaSemana | uppercase }} {{ dia }} DE {{ nombreMes | uppercase }} {{ anio }}
+                        {{ diaSemana }} {{ dia }} de {{ nombreMes }} de {{ anio }}
                     </div>
                     <button class="data-status" type="button" [ngClass]="estadoDatoActualClase"
                         (click)="verDetalleActualizacion()">
 
                         <ion-icon [name]="estadoDatoActualIcono"></ion-icon>
-                        <span>{{ estadoDatoActualTexto }}</span>
+                        <span><ng-container *ngIf="hora">Dato de las {{ hora }} · </ng-container>{{ estadoDatoActualTexto }}</span>
 
                     </button>
                 </div>
@@ -66,8 +80,7 @@
                 <div class="stat">
                     <ion-icon name="water-outline"></ion-icon>
                     <div class="stat__value">
-                        {{ dato?.hum_af }} %
-                        <span class="est-dot" *ngIf="estimated?.hum">• (e)</span>
+                        {{ dato?.hum_af }} %<sup class="est-dot" *ngIf="estimated?.hum" aria-label="estimado">*</sup>
                     </div>
                 </div>
 
@@ -83,10 +96,9 @@
                                 [style.transform]="vientoRotationDeg != null ? 'rotate(' + vientoRotationDeg + 'deg)' : null"
                                 aria-hidden="true"></ion-icon>
 
-                            <span class="wind__dir" *ngIf="vientoDirText">· {{ vientoDirText }}</span>
+                            <span class="wind__dir" *ngIf="vientoDirText">{{ vientoDirText }}</span><sup class="est-dot"
+                                *ngIf="estimated?.wind" aria-label="estimado">*</sup>
                         </span>
-
-                        <span class="est-dot" *ngIf="estimated?.wind">• (e)</span>
                     </div>
                 </div>
 
@@ -94,8 +106,7 @@
                 <div class="stat">
                     <ion-icon name="compass-outline"></ion-icon>
                     <div class="stat__value">
-                        {{ dato?.presion }} hPa
-                        <span class="est-dot" *ngIf="estimated?.pres">• (e)</span>
+                        {{ dato?.presion }} hPa<sup class="est-dot" *ngIf="estimated?.pres" aria-label="estimado">*</sup>
                     </div>
                 </div>
 
@@ -103,8 +114,7 @@
                 <div class="stat">
                     <ion-icon name="rainy-outline"></ion-icon>
                     <div class="stat__value">
-                        {{ dato?.RR_dia }} mm
-                        <span class="est-dot" *ngIf="estimated?.rain">• rev</span>
+                        {{ dato?.RR_dia }} mm<sup class="est-dot" *ngIf="estimated?.rain" aria-label="no actual">*</sup>
                     </div>
                 </div>
             </div>
@@ -114,14 +124,32 @@
                 *ngIf="estimated?.temp || estimated?.hum || estimated?.wind || estimated?.pres || estimated?.rain">
 
                 <span>
-                    •(e): valor estimado por dato faltante, dudoso o desactualizado.
+                    * Estimado: el dato falta, es dudoso o está atrasado.
                     <ng-container *ngIf="estimated?.rain">
-                        Lluvia marcada como revisada/no actual.
+                        La lluvia no es actual.
                     </ng-container>
                 </span>
 
             </div>
         </div>
+
+        <!-- Pronóstico de helada: aparece sólo si hay riesgo esta noche, para no sumar ruido el resto del año -->
+        <button class="card reco helada-aviso" type="button" *ngIf="heladaPronostico" (click)="verHeladas()"
+            [class.helada-aviso--probable]="heladaPronostico.riesgo === 'probable'">
+            <div class="reco__left">
+                <div class="reco__icon">
+                    <ion-icon name="snow-outline"></ion-icon>
+                </div>
+                <div class="reco__text">
+                    <div class="reco__kicker">Pronóstico</div>
+                    <div class="reco__title">{{ heladaPronosticoTitulo }}</div>
+                    <div class="reco__sub">{{ heladaPronosticoDetalle }}</div>
+                </div>
+            </div>
+            <div class="reco__right">
+                <ion-icon name="chevron-forward-outline"></ion-icon>
+            </div>
+        </button>
 
         <!-- Recommendation -->
         <button class="card reco" type="button" (click)="verDetalleAplicacion()" [ngClass]="{
@@ -148,9 +176,6 @@
             </div>
         </button>
 
-        <!-- Hour -->
-        <div class="clock">{{ hora }} HS</div>
-
         <!-- Alerts -->
         <div class="card section smn-section" [ngClass]="alertaSmnClase">
 
@@ -165,7 +190,7 @@
                 </div>
 
                 <button class="link" type="button" (click)="showAlertsAll = !showAlertsAll" *ngIf="tieneAlertasSmn">
-                    {{ showAlertsAll ? 'Ver menos' : 'Ver completo' }}
+                    {{ showAlertsAll ? 'Ver menos' : 'Ver más' }}
                     <ion-icon name="chevron-forward-outline"></ion-icon>
                 </button>
             </div>
@@ -233,7 +258,7 @@
                 </div>
 
                 <button class="link" (click)="toggleForecast()" type="button">
-                    {{ showForecastAll ? 'Ver menos' : 'Ver completo' }}
+                    {{ showForecastAll ? 'Ver menos' : 'Ver más' }}
                     <ion-icon name="chevron-forward-outline"></ion-icon>
                 </button>
             </div>

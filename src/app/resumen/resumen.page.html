@@ -1,0 +1,124 @@
+<ion-header translucent="true">
+  <ion-toolbar class="topbar">
+    <ion-title class="title">RESUMEN</ion-title>
+
+    <ion-buttons slot="end">
+      <ion-button fill="clear" (click)="goLocalidades()">
+        <ion-icon name="location-outline" slot="start"></ion-icon>
+        <span class="stationName">{{ estacionNombre || 'Localidad' }}</span>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+
+  <ion-toolbar class="segToolbar">
+    <app-estacion-segment value="resumen"></app-estacion-segment>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" class="contenido grad">
+
+  <ion-refresher slot="fixed" (ionRefresh)="refrescar($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <div class="loadingBox" *ngIf="cargando">
+    <ion-spinner name="crescent"></ion-spinner>
+    <div>Cargando resumen…</div>
+  </div>
+
+  <div class="empty" *ngIf="!cargando && sinDatos">
+    <ion-icon name="cloud-offline-outline"></ion-icon>
+    <p>No hay datos de resumen disponibles para el período.</p>
+  </div>
+
+  <ng-container *ngIf="!cargando && resumen">
+    <div class="rango">Últimos 7 días · {{ rangoTexto }}</div>
+
+    <div class="card">
+      <div class="cardHeader">
+        <ion-icon name="thermometer-outline"></ion-icon>
+        <span class="cardTitle">Temperatura</span>
+      </div>
+      <div class="grid">
+        <div class="item"><span>Máxima absoluta</span><strong>{{ resumen.TempMaxAbs | number:'1.0-1' }}°C</strong></div>
+        <div class="item"><span>Mínima absoluta</span><strong>{{ resumen.TempMinAbs | number:'1.0-1' }}°C</strong></div>
+        <div class="item"><span>Media máximas</span><strong>{{ resumen.tempMaxMedia | number:'1.0-1' }}°C</strong></div>
+        <div class="item"><span>Media mínimas</span><strong>{{ resumen.tempMinMedia | number:'1.0-1' }}°C</strong></div>
+        <div class="item"><span>Amplitud térmica</span><strong>{{ resumen.amplitudTermica | number:'1.0-1' }}°C</strong></div>
+        <div class="item" [class.tone-cold]="resumen.diasHelada > 0">
+          <span>Días con helada</span><strong>{{ resumen.diasHelada }}</strong>
+        </div>
+        <div class="item"><span>Horas bajo 18°C</span><strong>{{ resumen.horasTMenor18 | number:'1.0-1' }} h</strong></div>
+        <div class="item" [class.tone-hot]="resumen.horasTMayor32 > 0">
+          <span>Horas sobre 32°C</span><strong>{{ resumen.horasTMayor32 | number:'1.0-1' }} h</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="cardHeader">
+        <ion-icon name="water-outline"></ion-icon>
+        <span class="cardTitle">Humedad y lluvia</span>
+      </div>
+      <div class="grid">
+        <div class="item"><span>Humedad media (máx/mín)</span>
+          <strong>{{ resumen.humedadMaxMedia | number:'1.0-0' }}% / {{ resumen.humedadMinMedia | number:'1.0-0' }}%</strong>
+        </div>
+        <div class="item"><span>Lluvia acumulada</span><strong>{{ resumen.lluvia | number:'1.0-1' }} mm</strong></div>
+        <div class="item"><span>Máxima diaria</span><strong>{{ resumen.lluviaMaxDiaria | number:'1.0-1' }} mm</strong></div>
+        <div class="item"><span>Días con lluvia</span><strong>{{ resumen.diasLluvia }}</strong></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="cardHeader">
+        <ion-icon name="speedometer-outline"></ion-icon>
+        <span class="cardTitle">Viento y presión</span>
+      </div>
+      <div class="grid">
+        <div class="item"><span>Viento medio</span><strong>{{ resumen.vientoMedio | number:'1.0-1' }} km/h</strong></div>
+        <div class="item"><span>Ráfaga máxima</span><strong>{{ resumen.VientoMaximo | number:'1.0-1' }} km/h</strong></div>
+        <div class="item"><span>Presión media</span><strong>{{ resumen.presionMedia | number:'1.0-1' }} hPa</strong></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="cardHeader">
+        <ion-icon name="sunny-outline"></ion-icon>
+        <span class="cardTitle">Radiación y mojado foliar</span>
+      </div>
+      <div class="grid">
+        <div class="item"><span>Radiación media</span><strong>{{ resumen.radSolarMedia | number:'1.0-1' }} W/m²</strong></div>
+        <div class="item"><span>Evapotranspiración</span><strong>{{ resumen.evapotranspiracion | number:'1.0-1' }} mm</strong></div>
+        <div class="item"><span>Horas de hoja mojada</span><strong>{{ resumen.horasHumedadHoja | number:'1.0-1' }} h</strong></div>
+      </div>
+    </div>
+
+    <div class="footnote">Basado en {{ resumen.cantidadRegistros }} registros de la estación.</div>
+
+    <div class="card" *ngIf="diarios.length">
+      <div class="cardHeader cardHeader--clickable" (click)="toggleDetalleDiario()">
+        <ion-icon name="calendar-outline"></ion-icon>
+        <span class="cardTitle">Detalle diario</span>
+        <ion-icon class="chevron" [name]="mostrarDetalleDiario ? 'chevron-up-outline' : 'chevron-down-outline'">
+        </ion-icon>
+      </div>
+
+      <div class="dailyTable" *ngIf="mostrarDetalleDiario">
+        <div class="dailyRow dailyRow--head">
+          <span>Día</span>
+          <span>Máx/Mín</span>
+          <span>Lluvia</span>
+          <span>Viento</span>
+        </div>
+        <div class="dailyRow" *ngFor="let d of diarios">
+          <span>{{ fmtFechaCorta(d.fecha) }}</span>
+          <span>{{ d.temp_max | number:'1.0-1' }}° / {{ d.temp_min | number:'1.0-1' }}°</span>
+          <span>{{ d.rr_24 | number:'1.0-1' }} mm</span>
+          <span>{{ d.viento_max | number:'1.0-1' }} km/h</span>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+
+</ion-content>

@@ -1,0 +1,27 @@
+.topbar {
+  --background: rgba(0, 0, 0, 0.35);
+  --border-color: transparent;
+  backdrop-filter: blur(10px);
+}
+
+.title {
+  letter-spacing: 1px;
+}
+
+.menuList {
+  background: transparent;
+  padding-top: 8px;
+}
+
+ion-item {
+  --background: transparent;
+
+  ion-icon {
+    color: rgb(128, 227, 211);
+    font-size: 1.4rem;
+  }
+
+  p {
+    opacity: 0.7;
+  }
+}

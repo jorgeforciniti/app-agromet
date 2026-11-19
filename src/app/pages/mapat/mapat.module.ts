@@ -17,6 +17,7 @@ import { ComponentsModule } from 'src/app/components/components.module';
     MapatPageRoutingModule,
     ComponentsModule
   ],
-  declarations: [MapatPage]
+  declarations: [MapatPage],
+  exports: [MapatPage]
 })
 export class MapatPageModule {}

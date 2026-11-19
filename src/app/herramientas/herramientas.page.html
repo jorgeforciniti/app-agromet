@@ -1,0 +1,164 @@
+<ion-header translucent="true">
+  <ion-toolbar class="topbar">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/tabs/mas" text="" aria-label="Volver"></ion-back-button>
+    </ion-buttons>
+    <ion-title>HERRAMIENTAS</ion-title>
+    <ion-buttons slot="end">
+      <ion-button fill="clear" (click)="goEstaciones()">
+        <ion-icon name="location-outline" slot="start"></ion-icon>
+        <span class="stationName">{{ estacionNombre || 'Estación' }}</span>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<!-- Una tarjeta por herramienta, con el resultado arriba y un solo ajuste -->
+<ion-content class="contenido grad">
+
+  <!-- Desde cuándo se calculan la suma térmica y las horas de frío (hasta ayer), p. ej. la siembra -->
+  <div class="ag-card desde">
+    <span>Calcular desde</span>
+    <ion-datetime class="desde__fecha" [value]="desde" (ionChange)="cambiarDesde($event.detail.value)"
+      displayFormat="D/M/YYYY" pickerFormat="D MMM YYYY" [min]="minDesde" [max]="maxDesde"
+      [monthShortNames]="mesesCortos" doneText="Listo" cancelText="Cancelar" aria-label="Fecha de inicio">
+    </ion-datetime>
+    <span class="desde__hasta">hasta ayer</span>
+    <span class="desde__nota">Para suma térmica y horas de frío · hasta {{ DIAS_MAX }} días</span>
+  </div>
+
+  <!-- SUMA TÉRMICA -->
+  <section class="ag-card herramienta">
+    <div class="herramienta__titulo">
+      <ion-icon name="thermometer-outline" aria-hidden="true"></ion-icon>
+      <span class="cardTitle">Suma térmica</span>
+      <ion-select class="base" [(ngModel)]="baseSuma" (ionChange)="cargarSuma()" interface="action-sheet"
+        [selectedText]="'Base ' + baseTexto(baseSuma)" aria-label="Temperatura base">
+        <ion-select-option *ngFor="let b of basesSuma" [value]="b">Base {{ baseTexto(b) }}</ion-select-option>
+      </ion-select>
+    </div>
+
+
+    <div class="cargando" *ngIf="cargandoSuma"><ion-spinner name="dots"></ion-spinner></div>
+
+    <ng-container *ngIf="!cargandoSuma">
+      <ng-container *ngIf="suma; else sinSuma">
+        <div class="valor">{{ num(suma.total) }} <span class="unidad">grados-día</span></div>
+        <div class="lectura">{{ suma.diasValidos }} de {{ suma.diasTotales }} días con datos</div>
+      </ng-container>
+      <ng-template #sinSuma><div class="nota">No se pudieron obtener los datos.</div></ng-template>
+    </ng-container>
+
+    <div class="ayuda">Suma diaria de (máxima + mínima) / 2 − base, con la máxima limitada a 30 °C.</div>
+  </section>
+
+  <!-- HORAS DE FRÍO -->
+  <section class="ag-card herramienta">
+    <div class="herramienta__titulo">
+      <ion-icon name="snow-outline" aria-hidden="true"></ion-icon>
+      <span class="cardTitle">Horas de frío</span>
+      <ion-select class="base" [(ngModel)]="baseFrio" (ionChange)="cargarFrio()"
+        interface="action-sheet" [selectedText]="'≤ ' + baseTexto(baseFrio)" aria-label="Temperatura base">
+        <ion-select-option *ngFor="let b of basesFrio" [value]="b">≤ {{ baseTexto(b) }}</ion-select-option>
+      </ion-select>
+    </div>
+
+
+    <div class="cargando" *ngIf="cargandoFrio"><ion-spinner name="dots"></ion-spinner></div>
+
+    <ng-container *ngIf="!cargandoFrio">
+      <ng-container *ngIf="frio; else sinFrio">
+        <div class="valor">{{ num(frio.horas) }} <span class="unidad">horas</span></div>
+        <div class="lectura">{{ num(frio.utah) }} unidades Utah · {{ frio.diasValidos }} de
+          {{ frio.diasTotales }} días con datos</div>
+      </ng-container>
+      <ng-template #sinFrio><div class="nota">No se pudieron obtener los datos.</div></ng-template>
+    </ng-container>
+
+    <div class="ayuda">
+      Horas con temperatura igual o menor a la base y unidades Utah (Richardson). La temporada va de mayo a
+      septiembre.
+    </div>
+  </section>
+
+  <!-- AGUA EN EL SUELO -->
+  <section class="ag-card herramienta">
+    <div class="herramienta__titulo">
+      <ion-icon name="water-outline" aria-hidden="true"></ion-icon>
+      <span class="cardTitle">Agua en el suelo</span>
+    </div>
+
+    <div class="cargando" *ngIf="cargandoBalance"><ion-spinner name="dots"></ion-spinner></div>
+
+    <ng-container *ngIf="!cargandoBalance">
+      <ng-container *ngIf="balance?.ultima as u; else sinBalance">
+        <div class="valor">
+          {{ num(u.almacenaje) }} <span class="unidad">mm de {{ balance?.cad }}</span>
+        </div>
+        <div class="barra" role="img" [attr.aria-label]="porcentajeAgua + ' % del agua útil'">
+          <div class="barra__relleno" [style.width.%]="porcentajeAgua"></div>
+        </div>
+        <div class="lectura">{{ lecturaAgua }} ({{ porcentajeAgua }} % del agua útil) · década {{ u.etiqueta }}</div>
+        <div class="dato">
+          Déficit acumulado {{ textoCampania }}: <strong>{{ num(balance?.deficit) }} mm</strong>
+          <ng-container *ngIf="(balance?.exceso || 0) > 0"> · excedente <strong>{{ num(balance?.exceso) }} mm</strong></ng-container>
+        </div>
+        <div class="nota" *ngIf="balance?.corte">Cortado desde el {{ balance?.corte }} por falta de datos.</div>
+      </ng-container>
+      <ng-template #sinBalance>
+        <div class="nota">No hay datos suficientes de lluvia y evapotranspiración en esta estación.</div>
+      </ng-template>
+    </ng-container>
+
+    <div class="ayuda">
+      Balance decádico con 300 mm de agua útil (la web permite cambiarlo). Es una estimación teórica.
+    </div>
+  </section>
+
+  <!-- ENFERMEDADES: una enfermedad a la vez, últimos 7 días como cuadros de color -->
+  <section class="ag-card herramienta">
+    <div class="herramienta__titulo">
+      <ion-icon name="leaf-outline" aria-hidden="true"></ion-icon>
+      <span class="cardTitle">Enfermedades</span>
+    </div>
+
+    <ion-item lines="none" class="elegirEnfermedad">
+      <ion-select [(ngModel)]="codigoEnfermedad" (ionChange)="cargarEnfermedad()" interface="action-sheet"
+        [selectedText]="enfermedad.nombre + ' (' + enfermedad.cultivo + ')'" aria-label="Enfermedad">
+        <ion-select-option *ngFor="let e of enfermedades" [value]="e.codigo">{{ e.nombre }} · {{ e.cultivo }}</ion-select-option>
+      </ion-select>
+    </ion-item>
+
+    <div class="nota" *ngIf="sinSensorHoja">
+      Esta estación no tiene sensor de hoja mojada, que hace falta para evaluar esta enfermedad.
+    </div>
+
+    <div class="cargando" *ngIf="cargandoEnfermedad"><ion-spinner name="dots"></ion-spinner></div>
+
+    <ng-container *ngIf="!cargandoEnfermedad && !sinSensorHoja">
+      <ng-container *ngIf="dias; else sinEnfermedad">
+        <div class="semana" role="group" aria-label="Últimos 7 días">
+          <button type="button" class="dia" *ngFor="let d of dias" [class.dia--elegido]="d === diaElegido"
+            (click)="diaElegido = d" [attr.aria-label]="nombreDia(d.fecha) + ': ' + d.clasificacion">
+            <span class="dia__cuadro" [ngClass]="'tono-' + d.tono"></span>
+            <span class="dia__letra">{{ nombreDia(d.fecha, true) }}</span>
+          </button>
+        </div>
+
+        <div class="lectura" *ngIf="diaElegido">
+          <strong>{{ nombreDia(diaElegido.fecha) }}:</strong> {{ diaElegido.clasificacion }}
+          <span class="incompleto" *ngIf="diaElegido.incompleto">(día con datos incompletos)</span>
+        </div>
+        <div class="dato">
+          {{ diasFavorables === 0 ? 'Sin condiciones favorables' : diasFavorables + (diasFavorables === 1 ? ' día' : ' días') + ' con condiciones favorables' }}
+          en los últimos 7 días.
+        </div>
+      </ng-container>
+      <ng-template #sinEnfermedad><div class="nota">No se pudieron obtener los datos.</div></ng-template>
+    </ng-container>
+
+    <div class="ayuda">{{ enfermedad.ayuda }} Indica condiciones del ambiente, no la presencia de la enfermedad.</div>
+  </section>
+
+  <p class="pie">Para elegir fechas, ver el detalle día por día y otras herramientas, usá «Sitio web» en Más.</p>
+</ion-content>

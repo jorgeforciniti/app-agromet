@@ -1,0 +1,13 @@
+.estacionSegment {
+  --background: rgba(0, 0, 0, 0.22);
+  margin: 0 12px 8px 12px;
+  width: calc(100% - 24px);
+  border-radius: 12px;
+}
+
+ion-segment-button {
+  --color: rgba(215, 215, 215, 0.7);
+  --color-checked: rgb(128, 227, 211);
+  font-size: 0.72rem;
+  min-height: 42px;
+}

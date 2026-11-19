@@ -17,6 +17,7 @@ import { ComponentsModule } from 'src/app/components/components.module';
     MapaheladasPageRoutingModule,
     ComponentsModule
   ],
-  declarations: [MapaheladasPage]
+  declarations: [MapaheladasPage],
+  exports: [MapaheladasPage]
 })
 export class MapaheladasPageModule {}

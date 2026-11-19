@@ -4,13 +4,13 @@
   "webDir": "www",
 
   "android": {
-    "versionName": "2.3.5",
-    "versionCode": 20305
+    "versionName": "2.4.0",
+    "versionCode": 20400
   },
 
   "ios": {
-    "version": "2.3.5",
-    "buildNumber": "20305"
+    "version": "2.4.0",
+    "buildNumber": "20400"
   },
 
   "plugins": {

@@ -1,4 +1,48 @@
-<ion-content [fullscreen]="true" class="contenido" style="--background: url({{imagen}})">
-  <app-header titulo="Mapa de lluvias"></app-header>
-    <div id="maprr"></div>
+<ng-template #innerContent>
+  <app-header *ngIf="!embedded" titulo="Mapa de lluvias"></app-header>
+  <div id="maprr"></div>
+
+  <div class="legend" [class.legend--collapsed]="!legendAbierta">
+    <button class="legendToggle" (click)="legendAbierta = !legendAbierta">
+      <span>Referencias</span>
+      <ion-icon [name]="legendAbierta ? 'chevron-down-outline' : 'chevron-up-outline'"></ion-icon>
+    </button>
+
+    <div class="legendBody" *ngIf="legendAbierta">
+      <div class="legendTitle">Criterio (lluvia)</div>
+
+      <div class="legendRow">
+        <img class="dot" src="assets/icon/gris_negro.png">
+        <span>Sin lluvia (0 mm)</span>
+      </div>
+      <div class="legendRow">
+        <img class="dot" src="assets/icon/verde_amarillo.png">
+        <span>Llovizna o rocío (0 a 0,5 mm)</span>
+      </div>
+      <div class="legendRow">
+        <img class="dot" src="assets/icon/azul_claro.png">
+        <span>Lluvia leve (0,5 a 10 mm)</span>
+      </div>
+      <div class="legendRow">
+        <img class="dot" src="assets/icon/azul_medio_1.png">
+        <span>Lluvia moderada (10 a 50 mm)</span>
+      </div>
+      <div class="legendRow">
+        <img class="dot" src="assets/icon/azul_oscuro.png">
+        <span>Lluvia intensa (&gt; 50 mm)</span>
+      </div>
+
+      <div class="legendHint">
+        Tocá un punto para ver detalle. Acercá el mapa para ver los valores.
+      </div>
+    </div>
+  </div>
+</ng-template>
+
+<ion-content *ngIf="!embedded" [fullscreen]="true" class="contenido" style="--background: url({{imagen}})">
+  <ng-container *ngTemplateOutlet="innerContent"></ng-container>
 </ion-content>
+
+<div *ngIf="embedded" class="mapEmbed contenido">
+  <ng-container *ngTemplateOutlet="innerContent"></ng-container>
+</div>

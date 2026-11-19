@@ -1,8 +1,11 @@
 <ion-header class="ion-no-border">
-  <ion-toolbar>
-    <ion-title>Aplicaciones</ion-title>
+  <ion-toolbar class="topbar">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/tabs/mas" text="" aria-label="Volver"></ion-back-button>
+    </ion-buttons>
+    <ion-title>APLICACIONES</ion-title>
     <ion-buttons slot="end">
-      <ion-button (click)="tomarUbicacion()" [disabled]="usandoGps">
+      <ion-button (click)="tomarUbicacion()" [disabled]="usandoGps" aria-label="Usar la ubicación del celular">
         <ion-icon name="locate-outline" slot="icon-only"></ion-icon>
       </ion-button>
     </ion-buttons>
@@ -10,15 +13,237 @@
 </ion-header>
 
 <ion-content [fullscreen]="true" class="aplicaciones contenido grad">
-  <div class="bg" [ngStyle]="{ 'background-image': 'url(' + imagen + ')' }"></div>
-  <div class="bg-overlay"></div>
 
+  <!-- Orden: primero la respuesta (Ahora y próximas horas) y al final la configuración, plegada -->
   <div class="content">
 
-    <ion-card class="glass">
+    <!-- ===== AHORA ===== -->
+    <ion-card class="glass" *ngIf="evalActual">
       <ion-card-header>
-        <ion-card-title>Ubicación</ion-card-title>
-        <ion-card-subtitle *ngIf="lat!=null && lon!=null">
+        <ion-card-title>
+          <div class="status-strip" [ngClass]="colorFor(evalActual.semaforo)">
+            <span>Ahora</span>
+
+            <ion-chip class="chip" [color]="colorFor(evalActual.semaforo)">
+              <ion-label>{{ evalActual.semaforo }}</ion-label>
+              <ion-button fill="clear" size="small" (click)="openPorQueAhora()" title="¿Por qué se recomienda esto?">
+                <ion-icon name="help-circle-outline"></ion-icon>
+              </ion-button>
+            </ion-chip>
+          </div>
+        </ion-card-title>
+
+        <ion-card-subtitle *ngIf="ahora">
+          <div class="meteo-line">
+            <span class="place">{{ origenUbicacion === 'ESTACION' && estacionNombre ? estacionNombre : climaActual?.name }}</span>
+
+            <span class="meteo-pill">
+              <ion-icon name="thermometer-outline"></ion-icon>
+              {{ ahora.tC | number:'1.0-0' }}°C<span class="estimado" *ngIf="ahora.estimado.temp">*</span>
+            </span>
+
+            <span class="meteo-pill">
+              <ion-icon name="water-outline"></ion-icon>
+              HR {{ ahora.rh | number:'1.0-0' }}%<span class="estimado" *ngIf="ahora.estimado.hum">*</span>
+            </span>
+
+            <span class="meteo-pill wind">
+              <ion-icon class="wind-arrow" name="navigate-outline"
+                [style.transform]="'rotate(' + windIconRotate(ahora.deg) + 'deg)'">
+              </ion-icon>
+              {{ ahora.medioKmh | number:'1.0-0' }} km/h<span class="estimado" *ngIf="ahora.estimado.viento">*</span>
+              <span class="wind-dir" *ngIf="ahora.deg != null">
+                · {{ windDirLabel(ahora.deg) }}
+              </span>
+            </span>
+          </div>
+          <div class="nota-estimado" *ngIf="ahora.estimado.temp || ahora.estimado.hum || ahora.estimado.viento">
+            * Estimado con OpenWeatherMap: {{ origenUbicacion === 'ESTACION'
+              ? 'la estación no tiene ese dato (falta o el sensor está dado de baja) o su último registro tiene más de una hora'
+              : 'ubicación del celular, sin estación' }}.
+          </div>
+        </ion-card-subtitle>
+      </ion-card-header>
+
+      <ion-card-content>
+
+        <!-- Por qué: lo primero que se lee debajo del semáforo -->
+        <ion-list lines="none" class="list-compact motivos">
+          <ion-item class="advice-item" *ngFor="let r of evalActual.razones">
+            <ion-icon name="alert-circle-outline" slot="start"></ion-icon>
+            <ion-label class="ion-text-wrap advice-label">{{ r }}</ion-label>
+          </ion-item>
+          <ion-item class="advice-item" *ngIf="!evalActual.razones?.length">
+            <ion-icon name="checkmark-circle-outline" slot="start"></ion-icon>
+            <ion-label class="ion-text-wrap advice-label">Sin restricciones importantes para aplicar.</ion-label>
+          </ion-item>
+        </ion-list>
+
+        <ion-grid>
+          <ion-row>
+            <ion-col size="6">
+              <div class="metric">
+                <div class="metric-label">
+                  <ion-icon name="contrast-outline"></ion-icon>
+                  ΔT
+                  <ion-icon class="info-icon" name="information-circle-outline"
+                    (click)="openInfo('DELTA_T')"></ion-icon>
+                </div>
+                <div class="metric-value">{{ evalActual.deltaT | number:'1.1-1' }} °C</div>
+              </div>
+            </ion-col>
+
+            <ion-col size="6">
+              <div class="metric">
+                <div class="metric-label">
+                  <ion-icon name="layers-outline"></ion-icon>
+                  Inversión
+                  <ion-icon class="info-icon" name="information-circle-outline"
+                    (click)="openInfo('INVERSION')"></ion-icon>
+                </div>
+                <div class="metric-value">{{ evalActual.inversionProbable ? 'Probable' : 'No' }}</div>
+              </div>
+            </ion-col>
+          </ion-row>
+          <ion-row>
+            <ion-col size="6">
+              <div class="metric">
+                <div class="metric-label">
+                  Riesgo de deriva
+                  <ion-icon class="info-icon" name="information-circle-outline"
+                    (click)="openInfo('SCORES'); $event.stopPropagation()">
+                  </ion-icon>
+                </div>
+                <div class="metric-value">
+                  {{ nivelRiesgo(evalActual.scoreDeriva) }}
+                  <span class="metric-escala">{{ evalActual.scoreDeriva }}/100</span>
+                </div>
+              </div>
+            </ion-col>
+
+            <ion-col size="6">
+              <div class="metric">
+                <div class="metric-label">
+                  Riesgo para la eficacia
+                  <ion-icon class="info-icon" name="information-circle-outline"
+                    (click)="openInfo('SCORES'); $event.stopPropagation()">
+                  </ion-icon>
+                </div>
+                <div class="metric-value">
+                  {{ nivelRiesgo(evalActual.scoreEficacia) }}
+                  <span class="metric-escala">{{ evalActual.scoreEficacia }}/100</span>
+                </div>
+              </div>
+            </ion-col>
+          </ion-row>
+        </ion-grid>
+
+        <ion-list lines="none" class="list-compact">
+          <ion-item class="advice-item" *ngFor="let r of evalActual.recomendaciones">
+            <ion-icon name="bulb-outline" slot="start"></ion-icon>
+            <ion-label class="ion-text-wrap advice-label">{{ r }}</ion-label>
+          </ion-item>
+        </ion-list>
+
+        <!-- Guarda en el Cuaderno lo que se aplicó, con estas condiciones -->
+        <ion-button class="anotar" expand="block" fill="outline" (click)="anotarAplicacion()">
+          <ion-icon name="create-outline" slot="start"></ion-icon>
+          Anotar esta aplicación
+        </ion-button>
+
+      </ion-card-content>
+    </ion-card>
+
+    <!-- ===== PRONÓSTICO ===== -->
+    <ion-card class="glass" *ngIf="evalPronostico?.length">
+      <ion-card-header>
+        <ion-card-title>
+          Próximas horas (pronóstico)
+          <ion-icon class="info-icon-inline" name="information-circle-outline"
+            (click)="openInfo('FORECAST_HELP'); $event.stopPropagation()"></ion-icon>
+        </ion-card-title>
+        <ion-card-subtitle>OpenWeatherMap (pasos de 3 h)</ion-card-subtitle>
+      </ion-card-header>
+
+      <ion-card-content>
+        <!-- Resumen de la lista: el mejor tramo, para no tener que leer fila por fila -->
+        <div class="mejorMomento" [ngClass]="mejorMomento ? colorFor(mejorMomento.semaforo) : 'danger'">
+          <ion-icon [name]="mejorMomento?.semaforo === 'VERDE' ? 'checkmark-circle-outline' : mejorMomento ? 'time-outline' : 'close-circle-outline'"
+            aria-hidden="true"></ion-icon>
+          <span *ngIf="mejorMomento as m">
+            <strong>Mejor momento:</strong> {{ m.texto }}
+            <ng-container *ngIf="m.semaforo === 'AMARILLO'"> (con precaución: no hay horas en verde)</ng-container>
+          </span>
+          <span *ngIf="!mejorMomento">Sin momentos aptos en las próximas 36 horas.</span>
+        </div>
+
+        <ion-list lines="none" class="forecast">
+
+          <ion-item class="forecast-item" *ngFor="let it of evalPronostico" [ngClass]="colorFor(it.eval.semaforo)">
+            <ion-label class="ion-text-wrap">
+              <div class="forecast-row">
+                <div class="forecast-time">{{ it.dtTxt }}</div>
+
+                <div class="forecast-main">
+                  <span class="meteo-pill">
+                    <ion-icon name="thermometer-outline"></ion-icon>
+                    {{ it.tC | number:'1.0-0' }}°C
+                  </span>
+
+                  <span class="meteo-pill">
+                    <ion-icon name="water-outline"></ion-icon>
+                    HR {{ it.rh }}%
+                  </span>
+
+                  <span class="meteo-pill">
+                    <ion-icon name="navigate-outline"></ion-icon>
+                    {{ formatWindMsToKmh(it.windMs) }}
+                  </span>
+
+                  <span class="meteo-pill">
+                    <ion-icon name="rainy-outline"></ion-icon>
+                    {{ (it.pop*100) | number:'1.0-0' }}%
+                  </span>
+                </div>
+
+                <!-- El motivo principal: sin esto un «ROJO» con poco viento no se entiende -->
+                <div class="forecast-motivo" *ngIf="it.eval.semaforo !== 'VERDE' && it.eval.razones?.length">
+                  {{ motivoPrincipal(it.eval) }}
+                </div>
+              </div>
+            </ion-label>
+
+            <ion-badge slot="end" [color]="colorFor(it.eval.semaforo)">{{ it.eval.semaforo }}</ion-badge>
+
+            <!-- ✅ NUEVO: botón "¿por qué?" por cada fila (requiere openPorQueForecast(it) en el TS)
+            <ion-button fill="clear" size="small" (click)="openPorQueForecast(it)" title="¿Por qué?">
+              <ion-icon name="help-circle-outline"></ion-icon>
+            </ion-button> -->
+
+          </ion-item>
+
+        </ion-list>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- ===== UBICACIÓN Y CONFIGURACIÓN (plegada; abierta si no hay ubicación) ===== -->
+    <ion-card class="glass">
+      <button type="button" class="config-head" (click)="configAbierta = !configAbierta"
+        [attr.aria-expanded]="configAbierta || lat == null || lon == null">
+        <div class="config-head__texto">
+          <div class="config-head__titulo">Ubicación y configuración</div>
+          <div class="config-head__resumen">{{ resumenConfig }}</div>
+        </div>
+        <span class="config-head__accion">
+          {{ configAbierta ? 'Cerrar' : 'Editar' }}
+          <ion-icon [name]="configAbierta ? 'chevron-up-outline' : 'chevron-down-outline'"></ion-icon>
+        </span>
+      </button>
+
+      <ion-card-content *ngIf="configAbierta || lat == null || lon == null">
+
+        <div class="config-sub">Ubicación</div>
+        <p class="config-ubicacion" *ngIf="lat!=null && lon!=null">
           <ng-container *ngIf="origenUbicacion==='ESTACION'">
             Estación seleccionada{{ estacionNombre ? (': ' + estacionNombre) : '' }}
           </ng-container>
@@ -28,13 +253,11 @@
           </ng-container>
 
           · Lat {{ lat | number:'1.2-2' }} · Lon {{ lon | number:'1.2-2' }}
-        </ion-card-subtitle>
-        <ion-card-subtitle *ngIf="lat==null || lon==null">
+        </p>
+        <p class="config-ubicacion" *ngIf="lat==null || lon==null">
           No se pudo obtener la ubicación de la estación. Podés usar el GPS.
-        </ion-card-subtitle>
-      </ion-card-header>
+        </p>
 
-      <ion-card-content>
         <ion-button expand="block" color="primary" (click)="tomarUbicacion()">
           <ion-icon name="locate-outline" slot="start"></ion-icon>
           Tomar ubicación del celular
@@ -43,19 +266,13 @@
         <ion-button expand="block" fill="outline" (click)="cargarTodo()" [disabled]="lat==null || lon==null">
           Actualizar condiciones
         </ion-button>
-      </ion-card-content>
-    </ion-card>
 
-    <ion-card class="glass">
-      <ion-card-header>
-        <ion-card-title>Configuración</ion-card-title>
-      </ion-card-header>
-
-      <ion-card-content>
+        <div class="config-sub">Aplicación</div>
 
         <ion-item lines="none">
-          <ion-label>Tipo de aplicación</ion-label>
-          <ion-select [(ngModel)]="metodo" (ionChange)="onMetodoChanged()" interface="alert">
+          <ion-label>Aplicación</ion-label>
+          <ion-select [(ngModel)]="metodo" (ionChange)="onMetodoChanged()" interface="alert"
+            [selectedText]="metodoCorto">
             <ion-select-option value="MANUAL">Manual</ion-select-option>
             <ion-select-option value="MOSQUITO">Mosquito (terrestre)</ion-select-option>
             <ion-select-option value="AIRBLAST">Airblast (citrus)</ion-select-option>
@@ -67,7 +284,7 @@
         <ion-item lines="none">
           <ion-label>Cultivo</ion-label>
           <ion-select [(ngModel)]="cultivo" (ionChange)="onParamsChanged()" interface="alert">
-            <ion-select-option value="CANA">Caña</ion-select-option>
+            <ion-select-option value="CAÑA">Caña</ion-select-option>
             <ion-select-option value="CITRUS">Citrus</ion-select-option>
             <ion-select-option value="GRANOS">Granos</ion-select-option>
           </ion-select>
@@ -122,8 +339,8 @@
           </ion-button>
         </ion-item>
 
-        <!-- GNSS -->
-        <ion-item lines="none">
+        <!-- GNSS: sólo cuenta en la decisión para dron y avión (usarGnssEnDecision) -->
+        <ion-item lines="none" *ngIf="metodo === 'DRON' || metodo === 'AVION'">
           <ion-label>Satélites (GNSS)</ion-label>
 
           <ion-button slot="end" fill="clear" size="small" class="info-btn"
@@ -136,180 +353,11 @@
         </ion-item>
 
         <ion-note>
-          Kp se obtiene desde el feed oficial de NOAA SWPC. Satélites sirve como alerta de navegación (dron) cuando la
-          precisión GNSS se degrada.
+          Kp se obtiene desde el feed oficial de NOAA SWPC.
+          <ng-container *ngIf="metodo === 'DRON' || metodo === 'AVION'">
+            Satélites sirve como alerta de navegación cuando la precisión GNSS se degrada.
+          </ng-container>
         </ion-note>
-      </ion-card-content>
-    </ion-card>
-
-    <!-- ===== AHORA ===== -->
-    <ion-card class="glass" *ngIf="evalActual">
-      <ion-card-header>
-        <ion-card-title>
-          <div class="status-strip" [ngClass]="colorFor(evalActual.semaforo)">
-            <span>Ahora</span>
-
-            <ion-chip class="chip" [color]="colorFor(evalActual.semaforo)">
-              <ion-label>{{ evalActual.semaforo }}</ion-label>
-              <ion-button fill="clear" size="small" (click)="openPorQueAhora()" title="¿Por qué se recomienda esto?">
-                <ion-icon name="help-circle-outline"></ion-icon>
-              </ion-button>
-            </ion-chip>
-          </div>
-        </ion-card-title>
-
-        <ion-card-subtitle *ngIf="climaActual">
-          <div class="meteo-line">
-            <span class="place">{{ climaActual?.name }}</span>
-
-            <span class="meteo-pill">
-              <ion-icon name="thermometer-outline"></ion-icon>
-              {{ climaActual?.main?.temp | number:'1.0-0' }}°C
-            </span>
-
-            <span class="meteo-pill">
-              <ion-icon name="water-outline"></ion-icon>
-              HR {{ climaActual?.main?.humidity }}%
-            </span>
-
-            <span class="meteo-pill wind">
-              <ion-icon class="wind-arrow" name="navigate-outline"
-                [style.transform]="'rotate(' + windIconRotate(climaActual?.wind?.deg) + 'deg)'">
-              </ion-icon>
-              {{ formatWindMsToKmh(climaActual?.wind?.speed) }}
-              <span class="wind-dir" *ngIf="climaActual?.wind?.deg != null">
-                · {{ windDirLabel(climaActual?.wind?.deg) }}
-              </span>
-            </span>
-          </div>
-        </ion-card-subtitle>
-      </ion-card-header>
-
-      <ion-card-content>
-
-        <ion-grid>
-          <ion-row>
-            <ion-col size="6">
-              <div class="metric">
-                <div class="metric-label">
-                  <ion-icon name="contrast-outline"></ion-icon>
-                  ΔT
-                  <ion-icon class="info-icon" name="information-circle-outline"
-                    (click)="openInfo('DELTA_T')"></ion-icon>
-                </div>
-                <div class="metric-value">{{ evalActual.deltaT | number:'1.1-1' }} °C</div>
-              </div>
-            </ion-col>
-
-            <ion-col size="6">
-              <div class="metric">
-                <div class="metric-label">
-                  <ion-icon name="layers-outline"></ion-icon>
-                  Inversión
-                  <ion-icon class="info-icon" name="information-circle-outline"
-                    (click)="openInfo('INVERSION')"></ion-icon>
-                </div>
-                <div class="metric-value">{{ evalActual.inversionProbable ? 'Probable' : 'No' }}</div>
-              </div>
-            </ion-col>
-          </ion-row>
-          <ion-row>
-            <ion-col size="6">
-              <div class="metric">
-                <div class="metric-label">
-                  Deriva (score)
-                  <ion-icon class="info-icon" name="information-circle-outline"
-                    (click)="openInfo('SCORES'); $event.stopPropagation()">
-                  </ion-icon>
-                </div>
-                <div class="metric-value">{{ evalActual.scoreDeriva }}</div>
-              </div>
-            </ion-col>
-
-            <ion-col size="6">
-              <div class="metric">
-                <div class="metric-label">
-                  Eficacia (score)
-                  <ion-icon class="info-icon" name="information-circle-outline"
-                    (click)="openInfo('SCORES'); $event.stopPropagation()">
-                  </ion-icon>
-                </div>
-                <div class="metric-value">{{ evalActual.scoreEficacia }}</div>
-              </div>
-            </ion-col>
-          </ion-row>
-        </ion-grid>
-
-        <ion-list lines="none" class="list-compact">
-          <ion-item class="advice-item" *ngFor="let r of evalActual.razones">
-            <ion-icon name="alert-circle-outline" slot="start"></ion-icon>
-            <ion-label class="ion-text-wrap advice-label">{{ r }}</ion-label>
-          </ion-item>
-        </ion-list>
-
-        <ion-list lines="none" class="list-compact">
-          <ion-item class="advice-item" *ngFor="let r of evalActual.recomendaciones">
-            <ion-icon name="bulb-outline" slot="start"></ion-icon>
-            <ion-label class="ion-text-wrap advice-label">{{ r }}</ion-label>
-          </ion-item>
-        </ion-list>
-
-      </ion-card-content>
-    </ion-card>
-
-    <!-- ===== PRONÓSTICO ===== -->
-    <ion-card class="glass" *ngIf="evalPronostico?.length">
-      <ion-card-header>
-        <ion-card-title>
-          Próximas horas (pronóstico)
-          <ion-icon class="info-icon-inline" name="information-circle-outline"
-            (click)="openInfo('FORECAST_HELP'); $event.stopPropagation()"></ion-icon>
-        </ion-card-title>
-        <ion-card-subtitle>OpenWeatherMap (pasos de 3h)</ion-card-subtitle>
-      </ion-card-header>
-
-      <ion-card-content>
-        <ion-list lines="none" class="forecast">
-
-          <ion-item class="forecast-item" *ngFor="let it of evalPronostico" [ngClass]="colorFor(it.eval.semaforo)">
-            <ion-label>
-              <div class="forecast-row">
-                <div class="forecast-time">{{ it.dtTxt }}</div>
-
-                <div class="forecast-main">
-                  <span class="meteo-pill">
-                    <ion-icon name="thermometer-outline"></ion-icon>
-                    {{ it.tC | number:'1.0-0' }}°C
-                  </span>
-
-                  <span class="meteo-pill">
-                    <ion-icon name="water-outline"></ion-icon>
-                    HR {{ it.rh }}%
-                  </span>
-
-                  <span class="meteo-pill">
-                    <ion-icon name="navigate-outline"></ion-icon>
-                    {{ formatWindMsToKmh(it.windMs) }}
-                  </span>
-
-                  <span class="meteo-pill">
-                    <ion-icon name="rainy-outline"></ion-icon>
-                    {{ (it.pop*100) | number:'1.0-0' }}%
-                  </span>
-                </div>
-              </div>
-            </ion-label>
-
-            <ion-badge [color]="colorFor(it.eval.semaforo)">{{ it.eval.semaforo }}</ion-badge>
-
-            <!-- ✅ NUEVO: botón "¿por qué?" por cada fila (requiere openPorQueForecast(it) en el TS) 
-            <ion-button fill="clear" size="small" (click)="openPorQueForecast(it)" title="¿Por qué?">
-              <ion-icon name="help-circle-outline"></ion-icon>
-            </ion-button> -->
-
-          </ion-item>
-
-        </ion-list>
       </ion-card-content>
     </ion-card>
 

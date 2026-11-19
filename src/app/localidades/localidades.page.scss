@@ -1,0 +1,96 @@
+.contenido {
+  --padding-start: 12px;
+  --padding-end: 12px;
+  --padding-bottom: 24px;
+}
+
+.buscador {
+  --background: var(--card);
+  --color: var(--text);
+  --placeholder-color: var(--muted);
+  --icon-color: var(--accent);
+  --border-radius: var(--radius);
+  padding: 10px 0 4px;
+}
+
+.seccion {
+  margin: 14px 4px 6px;
+  color: var(--muted);
+  font-family: helveticaNBC;
+  font-size: 0.8rem;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+
+/* Tarjeta común (como .ag-card), en fila con la estrella a la derecha */
+.estacion {
+  display: flex;
+  align-items: center;
+  margin-top: 8px;
+  border-radius: var(--radius);
+  background: var(--card);
+  border: 1px solid var(--border);
+
+  &--actual {
+    border-color: var(--accent);
+    background: rgba(var(--accent-rgb), 0.10);
+  }
+}
+
+.estacion__elegir {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 10px 4px 10px 14px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+}
+
+.estacion__marca {
+  flex: 0 0 auto;
+  color: var(--accent);
+  font-size: 22px;
+}
+
+.estacion__texto {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.estacion__nombre {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.estacion__detalle {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.estacion__fav {
+  flex: 0 0 auto;
+  width: 48px;
+  height: 48px;
+  margin-right: 4px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 22px;
+
+  &--si {
+    color: #ffc409;
+  }
+}
+
+.vacio {
+  margin: 24px 8px;
+  color: var(--muted);
+  text-align: center;
+}

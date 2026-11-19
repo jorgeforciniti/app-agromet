@@ -1,9 +1,12 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, AfterViewInit, OnChanges, SimpleChanges, Input } from '@angular/core';
+import { decimal } from '../../shared/formato';
+import { agregarValor, mostrarValoresSegunZoom } from 'src/app/shared/marcador-mapa';
 import { EstacionesService } from 'src/app/services/estaciones.service';
 import { Router } from '@angular/router';
 import { LoadingController } from '@ionic/angular';
 import swal from 'sweetalert2';
 import { environment } from 'src/environments/environment';
+import { OwmLayerKey, setOwmLayer, capaNecesitaEstiloCalles, esperarEstiloListo, esperarMapaIdle } from 'src/app/shared/owm-weather-layer.util';
 
 declare var mapboxgl: any;
 
@@ -14,9 +17,17 @@ type Modo = 'dia' | 'mes' | 'anio';
   templateUrl: './mapaheladas.page.html',
   styleUrls: ['./mapaheladas.page.scss'],
 })
-export class MapaheladasPage implements OnInit {
+export class MapaheladasPage implements OnInit, AfterViewInit, OnChanges {
+  /** true cuando se lo embebe dentro de MapaPage (sin su propio ion-content). */
+  @Input() embedded = false;
+
+  /** Capa raster climática opcional (precipitación/nubes/viento/temp) superpuesta al mapa. */
+  @Input() capaClima: OwmLayerKey | null = null;
 
   modo: Modo = 'dia';
+
+  /** Referencias/leyenda colapsada por defecto para no tapar el mapa. */
+  legendAbierta = false;
 
   anioActual = new Date().getFullYear();
   anioAnterior = this.anioActual - 1;
@@ -24,6 +35,11 @@ export class MapaheladasPage implements OnInit {
 
   private map: any;
   private markers: any[] = [];
+  private estiloEsCalles = false;
+  private cambiandoEstilo = false;
+
+  private readonly ESTILO_SATELITAL = 'mapbox://styles/mapbox/satellite-streets-v12';
+  private readonly ESTILO_CALLES = 'mapbox://styles/mapbox/streets-v12';
 
   // cache para no re-consultar si solo cambiás el selector de año
   private heladasAnioRaw: any[] = [];
@@ -34,7 +50,9 @@ export class MapaheladasPage implements OnInit {
     public loadingCtrl: LoadingController
   ) { }
 
-  ngOnInit() {
+  ngOnInit() { }
+
+  ngAfterViewInit() {
     this.initMap();
     this.cargarModo('dia');
   }
@@ -47,16 +65,70 @@ export class MapaheladasPage implements OnInit {
   private initMap() {
     mapboxgl.accessToken = environment.mapboxAccessToken;
     this.map = new mapboxgl.Map({
-      container: 'map',
-      style: 'mapbox://styles/mapbox/satellite-streets-v12',
-      center: [-65.25, -26.85],
-      zoom: 7.2,
+      container: 'mapHeladas',
+      // Misma base, encuadre y controles que los otros tres mapas
+      style: 'mapbox://styles/mapbox/satellite-streets-v11',
+      center: [-65.3, -27.2],
+      zoom: 7.1,
       pitch: 0,
       attributionControl: false,
     });
-    this.map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right');
-    this.addTucumanOutline();
+    this.map.addControl(new mapboxgl.NavigationControl());
+    this.map.addControl(new mapboxgl.FullscreenControl());
+    this.map.addControl(new mapboxgl.GeolocateControl({
+      positionOptions: { enableHighAccuracy: true },
+      trackUserLocation: true
+    }));
+    mostrarValoresSegunZoom(this.map);
 
+    this.map.on('load', () => {
+      // Antes se agregaba sin esperar el estilo: fallaba en silencio y el límite provincial no aparecía
+      this.addTucumanOutline();
+      this.aplicarCapaClima();
+    });
+  }
+
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes.capaClima && this.map) {
+      this.aplicarCapaClima();
+    }
+  }
+
+  /**
+   * Precipitación y viento se ven con poco contraste sobre imagen satelital,
+   * así que para esas dos capas cambiamos el mapa de fondo a estilo calles.
+   *
+   * Si ya hay un cambio de estilo en curso (por un click anterior), no hacemos
+   * nada ahora: cuando ese cambio termine, se vuelve a llamar a este mismo
+   * método, que relee this.capaClima y aplica lo más reciente. Así, clicks
+   * rápidos y sucesivos convergen solos sin perderse ni quedar esperando algo
+   * que capaz no llega (ver esperarEstiloListo).
+   */
+  private aplicarCapaClima() {
+    if (!this.map || this.cambiandoEstilo) return;
+
+    // Nunca tocamos sources/layers sin confirmar antes que el mapa ya
+    // terminó de cargar su estilo (inicial o el de un cambio anterior).
+    esperarEstiloListo(this.map, () => this.aplicarCapaClimaListo());
+  }
+
+  private aplicarCapaClimaListo() {
+    const necesitaCalles = capaNecesitaEstiloCalles(this.capaClima);
+
+    if (necesitaCalles !== this.estiloEsCalles) {
+      this.estiloEsCalles = necesitaCalles;
+      this.cambiandoEstilo = true;
+      this.map.setStyle(necesitaCalles ? this.ESTILO_CALLES : this.ESTILO_SATELITAL);
+
+      esperarMapaIdle(this.map, () => {
+        this.cambiandoEstilo = false;
+        this.addTucumanOutline();
+        this.aplicarCapaClima();
+      });
+      return;
+    }
+
+    setOwmLayer(this.map, this.capaClima);
   }
 
   onModoChange() {
@@ -151,13 +223,15 @@ export class MapaheladasPage implements OnInit {
       const t = it?.temperatura == null ? null : Number(it.temperatura);
       const color = this.getColorByTemp(t);
 
+      // Aro de color como los marcadores de los otros mapas
       const el = document.createElement('div');
-      el.style.width = '18px';
-      el.style.height = '18px';
+      el.style.width = '20px';
+      el.style.height = '20px';
+      el.style.boxSizing = 'border-box';
       el.style.borderRadius = '999px';
-      el.style.background = color;
-      el.style.border = '2px solid rgba(255,255,255,0.85)';
-      el.style.boxShadow = '0 0 14px rgba(0,0,0,0.35)';
+      el.style.background = 'rgba(0,0,0,0.25)';
+      el.style.border = `4px solid ${color}`;
+      el.style.boxShadow = '0 0 8px rgba(0,0,0,0.45)';
 
       const nombre = String(it?.nombre ?? 'Estación');
       const alt = it?.alt != null ? `${it.alt} m` : '—';
@@ -167,7 +241,8 @@ export class MapaheladasPage implements OnInit {
       const fuh = it?.fuh ?? '—';
       const registros = it?.registros ?? '—';
 
-      const tText = (t == null || !Number.isFinite(t)) ? 'S/D' : `${t.toFixed(1)} °C`;
+      const tText = (t == null || !Number.isFinite(t)) ? 'S/D' : `${decimal(t, 1)} °C`;
+      if (t != null && Number.isFinite(t)) agregarValor(el, `${decimal(t, 1)}°`);
 
       const popupHtml = `
         <div class="mbxPopup">
@@ -205,25 +280,23 @@ export class MapaheladasPage implements OnInit {
     this.markers = [];
   }
 
-  // Ajustá umbrales a tu criterio real
+  // Misma escala y colores que la pantalla Heladas (nivelPorTemp y .chip de heladas.page.scss)
   private getColorByTemp(t: number | null): string {
-    if (t == null || !Number.isFinite(t)) return 'rgba(150,150,150,0.65)'; // sin dato
+    if (t == null || !Number.isFinite(t)) return 'rgb(150, 150, 150)'; // sin dato
 
-    if (t > 0) return 'rgba(173, 255, 153, 0.70)';   // sin helada
-    if (t > -2) return 'rgba(253, 253, 3, 0.70)';   // sin helada
-    if (t > -4) return 'rgba(255, 145, 0, 0.80)';   // riesgo
-    if (t > -6) return 'rgba(255, 0, 0, 0.85)';  // helada
-    return 'rgba(85, 0, 0, 0.88)';              // severa
+    if (t > 0) return 'rgb(120, 255, 170)';   // sin helada
+    if (t > -2) return 'rgb(255, 255, 153)';  // suave
+    if (t > -4) return 'rgb(255, 153, 0)';    // moderada
+    if (t > -6) return 'rgb(255, 0, 0)';      // severa
+    return 'rgb(140, 0, 0)';                  // muy severa
   }
 
   private async addTucumanOutline() {
   const sourceId = 'tucuman-limites';
   const lineLayerId = 'tucuman-outline-line';
-  const fillLayerId = 'tucuman-outline-fill';
 
   // Si ya existe, no lo vuelvas a agregar (evita duplicados al refrescar)
   if (this.map.getLayer(lineLayerId)) this.map.removeLayer(lineLayerId);
-  if (this.map.getLayer(fillLayerId)) this.map.removeLayer(fillLayerId);
   if (this.map.getSource(sourceId)) this.map.removeSource(sourceId);
 
   const url = new URL('../../assets/icon/limites.geojson', window.location.href).toString();
@@ -234,18 +307,7 @@ export class MapaheladasPage implements OnInit {
     data: geojson,
   });
 
-  // RELLENO (muy tenue) - opcional pero recomendado para ubicar la provincia
-  this.map.addLayer({
-    id: fillLayerId,
-    type: 'fill',
-    source: sourceId,
-    paint: {
-      'fill-color': '#00f6ed',     // tu acento
-      'fill-opacity': 0.06,        // muy suave
-    },
-  });
-
-  // CONTORNO (lo principal)
+  // Solo contorno, sin relleno (consistente con el resto de los mapas).
   this.map.addLayer({
     id: lineLayerId,
     type: 'line',

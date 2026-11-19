@@ -8,6 +8,8 @@ import { Component, OnInit, Input } from '@angular/core';
 export class HeaderComponent implements OnInit {
 
   @Input() titulo: string;
+  /** Adónde vuelve si no hay pantalla anterior (por ejemplo, al entrar desde una notificación) */
+  @Input() volverA = '/tabs/home';
 
   constructor() { }
 

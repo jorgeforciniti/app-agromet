@@ -1,9 +1,8 @@
 import { Component } from '@angular/core';
-import { AlertController, Platform } from '@ionic/angular';
-import { Capacitor } from '@capacitor/core';
-import { App } from '@capacitor/app';
 import { Router } from '@angular/router';
-import { environment } from 'src/environments/environment';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { SinConexionService } from '../services/sin-conexion.interceptor';
 
 @Component({
   selector: 'app-tabs',
@@ -12,56 +11,20 @@ import { environment } from 'src/environments/environment';
 })
 export class TabsPage {
 
-  publicidad: string;
   logo: string;
 
-  constructor(
-    private alertCtrl: AlertController,
-    private platform: Platform,
-    private router: Router
-  ) {
-    this.publicidad = environment.publicidadUrl;
+  /** «Sin conexión · datos guardados a las 10:30» (o «el 18/11 a las 10:30»); null con conexión */
+  sinConexion$: Observable<string | null>;
+
+  constructor(private router: Router, sinConexion: SinConexionService) {
     this.logo = 'assets/logo-agromet.png';
-  }
-
-  async confirmSalir() {
-    const alert = await this.alertCtrl.create({
-      header: 'Salir',
-      message: '¿Querés cerrar la aplicación?',
-      buttons: [
-        {
-          text: 'Cancelar',
-          role: 'cancel'
-        },
-        {
-          text: 'Salir',
-          role: 'destructive',
-          handler: () => this.salir()
-        }
-      ]
-    });
-
-    await alert.present();
-  }
-
-  async salir() {
-    if (!Capacitor.isNativePlatform()) {
-      window.close();
-      return;
-    }
-
-    if (this.platform.is('android')) {
-      App.exitApp();
-      return;
-    }
-
-    const alert = await this.alertCtrl.create({
-      header: 'iOS',
-      message: 'En iPhone/iPad no se puede cerrar la app desde un botón. Usá el gesto Home o el selector de apps.',
-      buttons: ['OK']
-    });
-
-    await alert.present();
+    this.sinConexion$ = sinConexion.guardadoDesde$.pipe(map(desde => {
+      if (!desde) return null;
+      const hora = desde.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' } as Intl.DateTimeFormatOptions);
+      const hoy = desde.toDateString() === new Date().toDateString();
+      const dia = desde.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' });
+      return `Sin conexión · datos guardados ${hoy ? `a las ${hora}` : `el ${dia} a las ${hora}`}`;
+    }));
   }
 
   goNotificaciones() {

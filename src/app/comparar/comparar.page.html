@@ -1,0 +1,44 @@
+<app-header titulo="Comparar favoritas"></app-header>
+
+<ion-content class="contenido grad">
+
+  <div class="loadingBox" *ngIf="cargando">
+    <ion-spinner name="crescent"></ion-spinner>
+    <div>Cargando estaciones…</div>
+  </div>
+
+  <div class="empty" *ngIf="!cargando && !filas.length">
+    <ion-icon name="star-outline"></ion-icon>
+    <p>Todavía no marcaste estaciones favoritas.</p>
+    <p class="hint">Tocá la estrella junto a una estación en «Estaciones» para agregarla acá.</p>
+  </div>
+
+  <div class="card" *ngFor="let f of filas" [class.card--activa]="f.esActual" (click)="seleccionar(f.id)">
+    <div class="cardHeader">
+      <span class="nombre">{{ f.nombre }}</span>
+      <ion-badge *ngIf="f.esActual" color="success">activa</ion-badge>
+    </div>
+
+    <div class="grid">
+      <div class="item">
+        <span>Temp.</span>
+        <strong>{{ f.temp !== null ? (f.temp | number:'1.0-1') + '°C' : 'S/D' }}</strong>
+      </div>
+      <div class="item">
+        <span>Humedad</span>
+        <strong>{{ f.humedad !== null ? f.humedad + '%' : 'S/D' }}</strong>
+      </div>
+      <div class="item">
+        <span>Viento</span>
+        <strong>{{ f.viento !== null ? f.viento + ' km/h' : 'S/D' }}</strong>
+      </div>
+      <div class="item">
+        <span>Lluvia hoy</span>
+        <strong>{{ f.lluviaHoy !== null ? (f.lluviaHoy | number:'1.0-1') + ' mm' : 'S/D' }}</strong>
+      </div>
+    </div>
+
+    <div class="tapHint" *ngIf="!f.esActual">Tocá para activar esta estación →</div>
+  </div>
+
+</ion-content>

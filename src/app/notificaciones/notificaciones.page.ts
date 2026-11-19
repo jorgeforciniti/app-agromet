@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { LoadingController, ToastController } from '@ionic/angular';
-import { PushPreferencias, PushService } from '../services/push.service';
+import { AlertaUsuario, OpcionAlerta, PushPreferencias, PushService } from '../services/push.service';
 
 @Component({
   selector: 'app-notificaciones',
@@ -57,6 +57,8 @@ export class NotificacionesPage implements OnInit {
 
       const pref = await this.pushService.obtenerPreferencias();
 
+      this.cargarAlertas();
+
       if (pref) {
         this.pref = {
           ...this.pref,
@@ -109,5 +111,73 @@ export class NotificacionesPage implements OnInit {
     } else {
       this.pref.smn_activo = 1;
     }
+  }
+
+  // ---------- Mis alertas (a medida, push-alertas.php) ----------
+
+  alertas: AlertaUsuario[] = [];
+  opciones: OpcionAlerta[] = [];
+  maximoAlertas = 5;
+  /** El formulario para agregar va cerrado: la sección muestra sólo la lista */
+  agregando = false;
+  estaciones: Array<{ id: string; nombre: string }> = [];
+  nueva = { identificacion: '', variable: '', umbral: null as number | null };
+
+  get opcionNueva(): OpcionAlerta | undefined {
+    return this.opciones.find(o => o.variable === this.nueva.variable);
+  }
+
+  private async cargarAlertas() {
+    const r = await this.pushService.alertas('listar');
+    if (r.ok) this.aplicar(r);
+  }
+
+  abrirFormulario() {
+    this.estaciones = (JSON.parse(localStorage.getItem('estaciones') || '[]') as any[])
+      .map(e => ({ id: String(e.Identificacion), nombre: String(e.nombre) }));
+    const primera = this.opciones[0];
+    this.nueva = {
+      identificacion: localStorage.getItem('estacion') || this.estaciones[0]?.id || '',
+      variable: primera?.variable || '',
+      umbral: null,
+    };
+    this.agregando = true;
+  }
+
+  async agregarAlerta() {
+    const r = await this.pushService.alertas('agregar', {
+      identificacion: Number(this.nueva.identificacion),
+      variable: this.nueva.variable,
+      umbral: Number(this.nueva.umbral),
+    });
+    if (r.ok) {
+      this.aplicar(r);
+      this.agregando = false;
+    }
+    await this.avisar(r.ok ? 'Alerta agregada.' : (r.error || 'No se pudo agregar la alerta.'), r.ok);
+  }
+
+  async borrarAlerta(a: AlertaUsuario) {
+    const r = await this.pushService.alertas('borrar', { id: a.id });
+    if (r.ok) this.aplicar(r);
+    await this.avisar(r.ok ? 'Alerta borrada.' : (r.error || 'No se pudo borrar la alerta.'), r.ok);
+  }
+
+  /** «Temperatura por debajo de 2 °C» */
+  textoAlerta(a: AlertaUsuario): string {
+    return `${a.texto} ${String(a.umbral).replace('.', ',')} ${a.unidad}`;
+  }
+
+  private aplicar(r: { alertas?: AlertaUsuario[]; opciones?: OpcionAlerta[]; maximo?: number }) {
+    this.alertas = r.alertas || [];
+    this.opciones = r.opciones || this.opciones;
+    this.maximoAlertas = r.maximo || this.maximoAlertas;
+  }
+
+  private async avisar(message: string, ok: boolean) {
+    const toast = await this.toastCtrl.create({
+      message, duration: 2200, position: 'bottom', color: ok ? 'success' : 'danger',
+    });
+    await toast.present();
   }
 }

@@ -5,6 +5,7 @@ const routes: Routes = [
   { path: '', loadChildren: () => import('./tabs/tabs.module').then(m => m.TabsPageModule) },
   { path: 'home', loadChildren: () => import('./tabs/tabs.module').then(m => m.TabsPageModule) },
   { path: 'localidades', loadChildren: () => import('./localidades/localidades.module').then( m => m.LocalidadesPageModule) },
+  { path: 'comparar', loadChildren: () => import('./comparar/comparar.module').then( m => m.CompararPageModule) },
   {
     path: 'mapathoy',
     loadChildren: () => import('./pages/mapathoy/mapathoy.module').then( m => m.MapathoyPageModule)
