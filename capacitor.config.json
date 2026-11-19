@@ -10,7 +10,14 @@
 
   "ios": {
     "version": "2.4.0",
-    "buildNumber": "20400"
+    "buildNumber": "20400",
+    "includePlugins": [
+      "@capacitor/app",
+      "@capacitor/filesystem",
+      "@capacitor/geolocation",
+      "@capacitor/push-notifications",
+      "@capacitor/share"
+    ]
   },
 
   "plugins": {
