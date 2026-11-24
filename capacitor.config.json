@@ -5,12 +5,12 @@
 
   "android": {
     "versionName": "2.4.1",
-    "versionCode": 20402
+    "versionCode": 20403
   },
 
   "ios": {
     "version": "2.4.1",
-    "buildNumber": "20401",
+    "buildNumber": "20402",
     "includePlugins": [
       "@capacitor/app",
       "@capacitor/filesystem",
