@@ -468,7 +468,7 @@ export class HomePage implements OnInit, OnDestroy {
     const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
     const meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
 
-    const dt = new Date(`${mes} ${this.dia}, ${this.anio}`);
+    const dt = new Date(Date.UTC(+this.anio, +mes - 1, +this.dia)); // «MM DD, AAAA» no lo entiende Safari (iOS)
     this.diaSemana = dias[dt.getUTCDay()];
     this.nombreMes = meses[parseInt(mes, 10) - 1];
 

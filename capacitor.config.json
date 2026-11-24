@@ -10,7 +10,7 @@
 
   "ios": {
     "version": "2.4.1",
-    "buildNumber": "20402",
+    "buildNumber": "20403",
     "includePlugins": [
       "@capacitor/app",
       "@capacitor/filesystem",

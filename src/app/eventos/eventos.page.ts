@@ -48,7 +48,7 @@ export class EventosPage implements OnInit {
           const anio = this.mensajes[i].fecha.substr(0, 4);
           const dias = ['Domingo', 'Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado'];
           const meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
-          const dt = new Date(mes + ' ' + dia + ', ' + anio);
+          const dt = new Date(Date.UTC(+anio, +mes - 1, +dia)); // «MM DD, AAAA» no lo entiende Safari (iOS)
           const diaSemana = dias[dt.getUTCDay()];
           const nombreMes = meses[parseInt(mes, 10) - 1];
           this.mensajes[i].fecha = diaSemana + ', ' + dia + ' de ' + nombreMes + ' de ' + anio;
