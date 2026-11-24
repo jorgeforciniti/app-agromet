@@ -476,9 +476,17 @@ export class HomePage implements OnInit, OnDestroy {
 
     // normaliza números
     this.dato.temp_af = Number(this.dato.temp_af);
-    this.dato.hum_af = Math.round(parseInt(this.dato.hum_af, 10));
-    this.dato.presion = Math.round(parseInt(this.dato.presion, 10));
-    this.dato.RR_dia = Math.round(parseInt(this.dato.RR_dia, 10));
+    // Sin el valor (sensor dado de baja o que la estación no tiene) queda null y se muestra «S/D», no «NaN»
+    const numero = (v: any): number | null => {
+      const n = parseFloat(v);
+      return Number.isFinite(n) ? n : null;
+    };
+    const hum = numero(this.dato.hum_af);
+    const presion = numero(this.dato.presion);
+    this.dato.hum_af = hum == null ? null : Math.round(hum);
+    this.dato.presion = presion == null ? null : Math.round(presion);
+    // Con un decimal: redondeada a entero, 0,5 mm se veía «0 mm»
+    this.dato.RR_dia = numero(this.dato.RR_dia);
     this.dato.rr_15 = parseFloat(this.dato.rr_15);
     this.dato.viento_max = Math.round(parseInt(this.dato.viento_max, 10));
 

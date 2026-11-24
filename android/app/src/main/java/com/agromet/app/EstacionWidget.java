@@ -60,6 +60,12 @@ public class EstacionWidget extends AppWidgetProvider {
     private static final int[] HORAS = { R.id.fila1_hora, R.id.fila2_hora, R.id.fila3_hora, R.id.fila4_hora,
             R.id.fila5_hora, R.id.fila6_hora, R.id.fila7_hora, R.id.fila8_hora };
 
+    /** Más minutos que esto sin registro: dato atrasado (ver atrasado()) */
+    private static final int MINUTOS_ATRASADO = 45;
+    private static final String SIN_DATO = "—";
+    /** Ámbar de los avisos de la app (--ion-color-warning) */
+    private static final int COLOR_ATRASADO = 0xFFFFD534;
+
     /** Alto (dp) de cada fila y de lo fijo (márgenes, encabezado de columnas y pie), para ver cuántas entran */
     private static final int ALTO_FILA = 24;
     private static final int ALTO_FIJO = 46;
@@ -115,7 +121,6 @@ public class EstacionWidget extends AppWidgetProvider {
         if (estaciones.isEmpty()) return true;
         try {
             Map<String, JSONObject> datos = pedir(estaciones);
-            if (datos.isEmpty()) return false;
             JSONArray guardar = new JSONArray();
             for (JSONObject d : datos.values()) guardar.put(d);
             prefs(context).edit()
@@ -198,11 +203,14 @@ public class EstacionWidget extends AppWidgetProvider {
         vista.setViewVisibility(R.id.widget_vacio, hayDato ? View.GONE : View.VISIBLE);
         if (hayDato) {
             JSONObject dato = lista.get(0);
+            String fechaI = dato.optString("fecha_I", "");
+            boolean atrasado = atrasado(fechaI);
             vista.setTextViewText(R.id.widget_estacion, dato.optString("nombre", ""));
-            vista.setTextViewText(R.id.widget_temperatura, numero(dato, "temp_af", 1, "°"));
-            vista.setTextViewText(R.id.widget_humedad, "Humedad " + numero(dato, "hum_af", 0, " %"));
-            vista.setTextViewText(R.id.widget_lluvia, "Lluvia hoy " + numero(dato, "RR_dia", 1, " mm"));
-            vista.setTextViewText(R.id.widget_hora, hora(dato.optString("fecha_I", "")));
+            vista.setTextViewText(R.id.widget_temperatura, atrasado ? SIN_DATO : numero(dato, "temp_af", 1, "°"));
+            vista.setTextViewText(R.id.widget_humedad, "Humedad " + (atrasado ? SIN_DATO : numero(dato, "hum_af", 0, " %")));
+            vista.setTextViewText(R.id.widget_lluvia, "Lluvia hoy " + (atrasado ? SIN_DATO : numero(dato, "RR_dia", 1, " mm")));
+            vista.setTextViewText(R.id.widget_hora, atrasado ? "Sin datos desde " + hora(fechaI) : hora(fechaI));
+            if (atrasado) vista.setTextColor(R.id.widget_hora, COLOR_ATRASADO);
         }
         return vista;
     }
@@ -216,12 +224,30 @@ public class EstacionWidget extends AppWidgetProvider {
             vista.setViewVisibility(FILAS[i], hay ? View.VISIBLE : View.GONE);
             if (!hay) continue;
             JSONObject dato = lista.get(i);
+            String fechaI = dato.optString("fecha_I", "");
+            boolean atrasado = atrasado(fechaI);
             vista.setTextViewText(NOMBRES[i], dato.optString("nombre", ""));
-            vista.setTextViewText(TEMPERATURAS[i], numero(dato, "temp_af", 1, "°"));
-            vista.setTextViewText(LLUVIAS[i], numero(dato, "RR_dia", 1, ""));
-            vista.setTextViewText(HORAS[i], horaCorta(dato.optString("fecha_I", "")));
+            vista.setTextViewText(TEMPERATURAS[i], atrasado ? SIN_DATO : numero(dato, "temp_af", 1, "°"));
+            vista.setTextViewText(LLUVIAS[i], atrasado ? SIN_DATO : numero(dato, "RR_dia", 1, ""));
+            vista.setTextViewText(HORAS[i], horaCorta(fechaI));
+            if (atrasado) vista.setTextColor(HORAS[i], COLOR_ATRASADO);
         }
         return vista;
+    }
+
+    /**
+     * El último registro tiene más de 45 minutos (el mismo criterio que Inicio): en vez de mostrar
+     * valores viejos como si fueran actuales van «—» y la hora (o la fecha) del registro en ámbar.
+     * No se estima con OpenWeatherMap para no gastar su cuota; la app sí muestra la estimación.
+     */
+    private static boolean atrasado(String fechaI) {
+        if (fechaI.length() < 16) return true;
+        try {
+            Date registro = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US).parse(fechaI.substring(0, 16));
+            return registro == null || System.currentTimeMillis() - registro.getTime() > MINUTOS_ATRASADO * 60000L;
+        } catch (Exception e) {
+            return true;
+        }
     }
 
     /** «20,8°»; «S/D» si falta el valor (sensor dado de baja) */
@@ -260,7 +286,9 @@ public class EstacionWidget extends AppWidgetProvider {
             StringBuilder texto = new StringBuilder();
             String linea;
             while ((linea = lector.readLine()) != null) texto.append(linea);
-            Map<String, JSONObject> datos = porEstacion(new JSONArray(texto.toString()));
+            JSONArray lista = new JSONArray(texto.toString());
+            if (lista.length() == 0) throw new Exception("Respuesta vacía");
+            Map<String, JSONObject> datos = porEstacion(lista);
             datos.keySet().retainAll(estaciones);
             return datos;
         } finally {
@@ -272,7 +300,8 @@ public class EstacionWidget extends AppWidgetProvider {
         Map<String, JSONObject> datos = new HashMap<>();
         for (int i = 0; i < lista.length(); i++) {
             JSONObject e = lista.optJSONObject(i);
-            if (e != null) datos.put(e.optString("Identificacion"), e);
+            // Deshabilitada: con una sola favorita ?estacion= la devuelve igual, con su último dato (viejo)
+            if (e != null && !"0".equals(e.optString("habilitada"))) datos.put(e.optString("Identificacion"), e);
         }
         return datos;
     }

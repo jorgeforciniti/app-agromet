@@ -171,6 +171,29 @@ export class EstacionesService {
     this.avisarWidget();
   }
 
+  /**
+   * Quita de las favoritas (del celular y de la copia de la cuenta) las estaciones que ya no están
+   * habilitadas: no aparecen en la lista de Estaciones, así que no se podían desmarcar. Sólo con una
+   * lista razonable (al menos 10 estaciones), para no borrar favoritas por una respuesta incompleta.
+   * Si cambian las de la cuenta, el aviso de edición hace que CuentaSyncService las guarde.
+   */
+  private quitarFavoritasDeshabilitadas(habilitadas: any[]) {
+    if (habilitadas.length < 10) return;
+    const ids = new Set(habilitadas.map(e => String(e?.Identificacion)));
+    ['estacionesFavoritas', 'estacionesFavoritasCuenta'].forEach(clave => {
+      let lista: string[];
+      try { lista = JSON.parse(localStorage.getItem(clave) || 'null'); } catch { return; }
+      if (!Array.isArray(lista)) return;
+      const validas = lista.map(String).filter(id => ids.has(id));
+      if (validas.length === lista.length) return;
+      localStorage.setItem(clave, JSON.stringify(validas));
+      if (clave === this.claveFavoritas) {
+        this.favoritesSubject.next(validas);
+        this.favoritasEditadasSubject.next(validas);
+      }
+    });
+  }
+
   /** Las favoritas del celular, aunque haya sesión (para ofrecer agregarlas a la cuenta) */
   favoritasDelCelular(): string[] {
     try {
@@ -253,7 +276,11 @@ export class EstacionesService {
   getPosts() {
     return this.http.get<any[]>(`${this.servicesBase}estaciones.php?habilitada=1`).pipe(
       map(res => (Array.isArray(res) ? res : []).map(e => this.estacionActual(e))),
-      tap(lista => { if (lista.length) this.avisarWidget(lista); }),
+      tap(lista => {
+        if (!lista.length) return;
+        this.quitarFavoritasDeshabilitadas(lista);
+        this.avisarWidget(lista);
+      }),
       catchError(err => {
         console.error('[SERVICE] getPosts() ERROR:', err);
         return of([]);

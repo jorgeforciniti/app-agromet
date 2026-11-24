@@ -78,7 +78,7 @@
                 <div class="stat">
                     <ion-icon name="water-outline"></ion-icon>
                     <div class="stat__value">
-                        {{ dato?.hum_af }} %<sup class="est-dot" *ngIf="estimated?.hum" aria-label="estimado">*</sup>
+                        {{ dato?.hum_af ?? 'S/D' }}<ng-container *ngIf="dato?.hum_af != null"> %</ng-container><sup class="est-dot" *ngIf="estimated?.hum" aria-label="estimado">*</sup>
                     </div>
                 </div>
 
@@ -104,7 +104,7 @@
                 <div class="stat">
                     <ion-icon name="compass-outline"></ion-icon>
                     <div class="stat__value">
-                        {{ dato?.presion }} hPa<sup class="est-dot" *ngIf="estimated?.pres" aria-label="estimado">*</sup>
+                        {{ dato?.presion ?? 'S/D' }}<ng-container *ngIf="dato?.presion != null"> hPa</ng-container><sup class="est-dot" *ngIf="estimated?.pres" aria-label="estimado">*</sup>
                     </div>
                 </div>
 
@@ -112,7 +112,7 @@
                 <div class="stat">
                     <ion-icon name="rainy-outline"></ion-icon>
                     <div class="stat__value">
-                        {{ dato?.RR_dia }} mm<sup class="est-dot" *ngIf="estimated?.rain" aria-label="no actual">*</sup>
+                        <ng-container *ngIf="dato?.RR_dia != null; else rrSinDato">{{ dato.RR_dia | number: '1.0-1' }} mm</ng-container><ng-template #rrSinDato>S/D</ng-template><sup class="est-dot" *ngIf="estimated?.rain" aria-label="no actual">*</sup>
                     </div>
                 </div>
             </div>
