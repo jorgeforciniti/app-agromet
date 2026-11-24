@@ -515,12 +515,24 @@ export class EstacionesService {
       );
   }
 
+  /**
+   * Tiempo actual y pronóstico de OpenWeatherMap a través de /services/now.php y forecast.php, que
+   * guardan la respuesta (10 y 30 minutos) y la comparten con el sitio: pedirle directo desde cada
+   * celular agotó la cuota de la cuenta en noviembre de 2026. Responden el mismo JSON. Si el servidor
+   * no responde, se le pide directo a OpenWeatherMap como antes.
+   */
   getClimaActual(lat: number, lon: number): Observable<any> {
-    return this.http.get(`${environment.openWeatherBase}weather?lat=${lat}&lon=${lon}&lang=es&units=metric&appid=${this.apiKey}`);
+    return this.openWeather('now.php', 'weather', lat, lon);
   }
 
   getPronostico(lat: number, lon: number): Observable<any> {
-    return this.http.get(`${environment.openWeatherBase}forecast?lat=${lat}&lon=${lon}&lang=es&units=metric&appid=${this.apiKey}`);
+    return this.openWeather('forecast.php', 'forecast', lat, lon);
+  }
+
+  private openWeather(servicio: string, endpoint: string, lat: number, lon: number): Observable<any> {
+    const directo = this.http.get(
+      `${environment.openWeatherBase}${endpoint}?lat=${lat}&lon=${lon}&lang=es&units=metric&appid=${this.apiKey}`);
+    return this.servicio(servicio, { lat, lon }).pipe(catchError(() => directo));
   }
 
   getTemperatura24(estacion: string | number): Observable<any> {
