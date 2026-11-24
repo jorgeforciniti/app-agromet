@@ -7,6 +7,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Bundle;
 import android.view.View;
 import android.widget.RemoteViews;
 
@@ -26,51 +27,112 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * Widget de la pantalla de inicio. Con estaciones favoritas muestra hasta cuatro (temperatura, lluvia
- * de hoy en mm y hora del registro); sin favoritas, la estación elegida en la app en grande (además con la
+ * Widget de la pantalla de inicio. Con estaciones favoritas muestra las que entran en su alto, hasta 8
+ * (temperatura, lluvia de hoy en mm y hora del registro); sin favoritas, la estación elegida en la app en grande (además con la
  * humedad). Toma las estaciones y su último registro de la app (WidgetPlugin) y cada 30 minutos los
- * pide de nuevo a /services/estaciones.php (la misma API que la app). Sin red queda lo último, con su
- * hora. Al tocarlo se abre la app.
+ * pide de nuevo a /services/estaciones.php (la misma API que la app) con ActualizarWidgetWorker, aunque
+ * no se abra la app. Abajo dice «Agromet · EEAOC» y a qué hora se actualizó; el botón ↻ lo actualiza en
+ * el momento. Sin red queda lo último, con su hora. Al tocarlo se abre la app.
  */
 public class EstacionWidget extends AppWidgetProvider {
 
     static final String PREFS = "agromet_widget";
     static final String CLAVE_ESTACIONES = "estaciones";
     static final String CLAVE_DATOS = "datos";
+    /** Hora (ms) de la última vez que se trajeron los datos, para el pie del widget */
+    static final String CLAVE_ACTUALIZADO = "actualizado";
+
+    /** El botón ↻ del widget */
+    private static final String ACCION_ACTUALIZAR = "com.agromet.app.ACTUALIZAR_WIDGET";
 
     private static final String API = "https://agromet.eeaoc.gob.ar/services/estaciones.php";
     private static final Locale ES_AR = new Locale("es", "AR");
 
-    /** Filas de la lista de favoritas (widget_favoritos.xml) */
-    private static final int[] FILAS = { R.id.fila1, R.id.fila2, R.id.fila3, R.id.fila4 };
-    private static final int[] NOMBRES = { R.id.fila1_nombre, R.id.fila2_nombre, R.id.fila3_nombre, R.id.fila4_nombre };
-    private static final int[] TEMPERATURAS = { R.id.fila1_temperatura, R.id.fila2_temperatura, R.id.fila3_temperatura, R.id.fila4_temperatura };
-    private static final int[] LLUVIAS = { R.id.fila1_lluvia, R.id.fila2_lluvia, R.id.fila3_lluvia, R.id.fila4_lluvia };
-    private static final int[] HORAS = { R.id.fila1_hora, R.id.fila2_hora, R.id.fila3_hora, R.id.fila4_hora };
+    /** Filas de la lista de favoritas (widget_favoritos.xml): hasta 8, el máximo de favoritas de la cuenta */
+    private static final int[] FILAS = { R.id.fila1, R.id.fila2, R.id.fila3, R.id.fila4,
+            R.id.fila5, R.id.fila6, R.id.fila7, R.id.fila8 };
+    private static final int[] NOMBRES = { R.id.fila1_nombre, R.id.fila2_nombre, R.id.fila3_nombre, R.id.fila4_nombre,
+            R.id.fila5_nombre, R.id.fila6_nombre, R.id.fila7_nombre, R.id.fila8_nombre };
+    private static final int[] TEMPERATURAS = { R.id.fila1_temperatura, R.id.fila2_temperatura, R.id.fila3_temperatura,
+            R.id.fila4_temperatura, R.id.fila5_temperatura, R.id.fila6_temperatura, R.id.fila7_temperatura, R.id.fila8_temperatura };
+    private static final int[] LLUVIAS = { R.id.fila1_lluvia, R.id.fila2_lluvia, R.id.fila3_lluvia, R.id.fila4_lluvia,
+            R.id.fila5_lluvia, R.id.fila6_lluvia, R.id.fila7_lluvia, R.id.fila8_lluvia };
+    private static final int[] HORAS = { R.id.fila1_hora, R.id.fila2_hora, R.id.fila3_hora, R.id.fila4_hora,
+            R.id.fila5_hora, R.id.fila6_hora, R.id.fila7_hora, R.id.fila8_hora };
+
+    /** Alto (dp) de cada fila y de lo fijo (márgenes, encabezado de columnas y pie), para ver cuántas entran */
+    private static final int ALTO_FILA = 24;
+    private static final int ALTO_FIJO = 46;
+
+    @Override
+    public void onEnabled(Context context) {
+        ActualizarWidgetWorker.programar(context);
+    }
+
+    @Override
+    public void onDisabled(Context context) {
+        ActualizarWidgetWorker.cancelar(context);
+    }
 
     @Override
     public void onUpdate(Context context, AppWidgetManager manager, int[] ids) {
-        List<String> estaciones = estaciones(context);
-        mostrar(context, manager, ids, estaciones, datosGuardados(context));
-        if (estaciones.isEmpty()) return;
+        mostrar(context, manager, ids, estaciones(context), datosGuardados(context));
+        // También acá: los widgets agregados antes de esta versión no pasaron por onEnabled
+        ActualizarWidgetWorker.programar(context);
+        actualizarEnSegundoPlano(context);
+    }
 
-        // La red no puede ir en el hilo principal; goAsync da unos segundos para terminar
+    /** Al agrandar o achicar el widget: muestra las favoritas que entran en el nuevo tamaño */
+    @Override
+    public void onAppWidgetOptionsChanged(Context context, AppWidgetManager manager, int id, Bundle opciones) {
+        mostrar(context, manager, new int[] { id }, estaciones(context), datosGuardados(context));
+    }
+
+    @Override
+    public void onReceive(Context context, Intent intent) {
+        super.onReceive(context, intent);
+        if (ACCION_ACTUALIZAR.equals(intent.getAction())) actualizarEnSegundoPlano(context);
+    }
+
+    /** La red no puede ir en el hilo principal; goAsync da unos segundos para terminar */
+    private void actualizarEnSegundoPlano(Context context) {
         final PendingResult pendiente = goAsync();
         new Thread(() -> {
             try {
-                Map<String, JSONObject> datos = pedir(estaciones);
-                if (!datos.isEmpty()) {
-                    JSONArray guardar = new JSONArray();
-                    for (JSONObject d : datos.values()) guardar.put(d);
-                    prefs(context).edit().putString(CLAVE_DATOS, guardar.toString()).apply();
-                    mostrar(context, manager, ids, estaciones, datos);
-                }
-            } catch (Exception ignorada) {
-                // Sin red: queda lo último guardado
+                actualizarDesdeServidor(context);
             } finally {
                 pendiente.finish();
             }
         }).start();
+    }
+
+    /**
+     * Pide los datos de las estaciones del widget, los guarda y redibuja. false si no se pudo (sin red,
+     * servidor caído): queda lo último guardado. Lo usan el ↻, onUpdate y ActualizarWidgetWorker.
+     */
+    static boolean actualizarDesdeServidor(Context context) {
+        List<String> estaciones = estaciones(context);
+        if (estaciones.isEmpty()) return true;
+        try {
+            Map<String, JSONObject> datos = pedir(estaciones);
+            if (datos.isEmpty()) return false;
+            JSONArray guardar = new JSONArray();
+            for (JSONObject d : datos.values()) guardar.put(d);
+            prefs(context).edit()
+                    .putString(CLAVE_DATOS, guardar.toString())
+                    .putLong(CLAVE_ACTUALIZADO, System.currentTimeMillis())
+                    .apply();
+            mostrarGuardado(context);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /** Hay al menos un widget en la pantalla de inicio */
+    static boolean hayWidgets(Context context) {
+        return AppWidgetManager.getInstance(context)
+                .getAppWidgetIds(new ComponentName(context, EstacionWidget.class)).length > 0;
     }
 
     /** Redibuja todos los widgets con lo guardado (lo llama la app al tener registros nuevos) */
@@ -88,12 +150,44 @@ public class EstacionWidget extends AppWidgetProvider {
             if (dato != null && lista.size() < FILAS.length) lista.add(dato);
         }
 
-        RemoteViews vista = estaciones.size() > 1 ? favoritas(context, lista) : unaEstacion(context, lista);
         Intent abrir = new Intent(context, MainActivity.class);
         abrir.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        vista.setOnClickPendingIntent(R.id.widget_raiz, PendingIntent.getActivity(context, 0, abrir,
-                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
-        manager.updateAppWidget(ids, vista);
+        PendingIntent alAbrir = PendingIntent.getActivity(context, 0, abrir,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        Intent actualizar = new Intent(context, EstacionWidget.class).setAction(ACCION_ACTUALIZAR);
+        PendingIntent alActualizar = PendingIntent.getBroadcast(context, 0, actualizar,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        long actualizado = prefs(context).getLong(CLAVE_ACTUALIZADO, 0);
+
+        // Uno por uno: cada widget puede tener otro tamaño y mostrar otra cantidad de favoritas
+        for (int id : ids) {
+            RemoteViews vista = estaciones.size() > 1
+                    ? favoritas(context, lista, filasQueEntran(manager, id))
+                    : unaEstacion(context, lista);
+            vista.setOnClickPendingIntent(R.id.widget_raiz, alAbrir);
+            // Pie: de quién son los datos y cuándo se actualizó el widget; ↻ lo actualiza en el momento
+            vista.setTextViewText(R.id.pie_actualizado, actualizado > 0 ? "Act. " + momento(actualizado) : "");
+            vista.setOnClickPendingIntent(R.id.pie_actualizar, alActualizar);
+            manager.updateAppWidget(id, vista);
+        }
+    }
+
+    /**
+     * Cuántas filas de favoritas entran en el alto del widget. En el celular vertical el alto real es
+     * OPTION_APPWIDGET_MAX_HEIGHT (dp); sin ese dato se muestran 4, el tamaño inicial.
+     */
+    private static int filasQueEntran(AppWidgetManager manager, int id) {
+        int alto = manager.getAppWidgetOptions(id).getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, 0);
+        if (alto <= 0) return 4;
+        return Math.max(1, Math.min(FILAS.length, (alto - ALTO_FIJO) / ALTO_FILA));
+    }
+
+    /** «10:40» si es de hoy; si no, «23/11 10:40» */
+    private static String momento(long ms) {
+        Date fecha = new Date(ms);
+        boolean hoy = new SimpleDateFormat("yyyyMMdd", Locale.US).format(fecha)
+                .equals(new SimpleDateFormat("yyyyMMdd", Locale.US).format(new Date()));
+        return new SimpleDateFormat(hoy ? "HH:mm" : "dd/MM HH:mm", ES_AR).format(fecha);
     }
 
     /** Sin favoritas (o con una sola): la estación en grande */
@@ -113,12 +207,12 @@ public class EstacionWidget extends AppWidgetProvider {
         return vista;
     }
 
-    /** Favoritas: una fila por estación, hasta cuatro */
-    private static RemoteViews favoritas(Context context, List<JSONObject> lista) {
+    /** Favoritas: una fila por estación, hasta las que entran (`maximo`) */
+    private static RemoteViews favoritas(Context context, List<JSONObject> lista, int maximo) {
         RemoteViews vista = new RemoteViews(context.getPackageName(), R.layout.widget_favoritos);
         vista.setViewVisibility(R.id.widget_vacio, lista.isEmpty() ? View.VISIBLE : View.GONE);
         for (int i = 0; i < FILAS.length; i++) {
-            boolean hay = i < lista.size();
+            boolean hay = i < lista.size() && i < maximo;
             vista.setViewVisibility(FILAS[i], hay ? View.VISIBLE : View.GONE);
             if (!hay) continue;
             JSONObject dato = lista.get(i);

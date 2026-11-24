@@ -1,17 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Widget con las estaciones favoritas (EstacionWidget.java): hasta cuatro filas.
      Los textos fijos son la muestra de la lista de widgets; al agregarlo se reemplazan por los datos. -->
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget_raiz"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/widget_fondo"
-    android:padding="12dp">
+    android:orientation="vertical"
+    android:paddingStart="12dp"
+    android:paddingTop="8dp"
+    android:paddingEnd="8dp"
+    android:paddingBottom="2dp">
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_vertical"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="top"
+        android:paddingEnd="4dp"
         android:orientation="vertical">
 
         <!-- Encabezado de las columnas -->
@@ -59,8 +65,8 @@
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
             android:orientation="horizontal"
-            android:paddingTop="3dp"
-            android:paddingBottom="3dp">
+            android:paddingTop="1dp"
+            android:paddingBottom="1dp">
 
             <TextView
                 android:id="@+id/fila1_nombre"
@@ -80,7 +86,7 @@
                 android:gravity="end"
                 android:text="20,8°"
                 android:textColor="#80E3D3"
-                android:textSize="18sp" />
+                android:textSize="16sp" />
 
             <TextView
                 android:id="@+id/fila1_lluvia"
@@ -107,8 +113,8 @@
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
             android:orientation="horizontal"
-            android:paddingTop="3dp"
-            android:paddingBottom="3dp">
+            android:paddingTop="1dp"
+            android:paddingBottom="1dp">
 
             <TextView
                 android:id="@+id/fila2_nombre"
@@ -128,7 +134,7 @@
                 android:gravity="end"
                 android:text="22,1°"
                 android:textColor="#80E3D3"
-                android:textSize="18sp" />
+                android:textSize="16sp" />
 
             <TextView
                 android:id="@+id/fila2_lluvia"
@@ -155,8 +161,8 @@
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
             android:orientation="horizontal"
-            android:paddingTop="3dp"
-            android:paddingBottom="3dp">
+            android:paddingTop="1dp"
+            android:paddingBottom="1dp">
 
             <TextView
                 android:id="@+id/fila3_nombre"
@@ -176,7 +182,7 @@
                 android:gravity="end"
                 android:text="21,4°"
                 android:textColor="#80E3D3"
-                android:textSize="18sp" />
+                android:textSize="16sp" />
 
             <TextView
                 android:id="@+id/fila3_lluvia"
@@ -203,8 +209,8 @@
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
             android:orientation="horizontal"
-            android:paddingTop="3dp"
-            android:paddingBottom="3dp">
+            android:paddingTop="1dp"
+            android:paddingBottom="1dp">
 
             <TextView
                 android:id="@+id/fila4_nombre"
@@ -224,7 +230,7 @@
                 android:gravity="end"
                 android:text="23,0°"
                 android:textColor="#80E3D3"
-                android:textSize="18sp" />
+                android:textSize="16sp" />
 
             <TextView
                 android:id="@+id/fila4_lluvia"
@@ -245,6 +251,186 @@
                 android:textSize="12sp" />
         </LinearLayout>
 
+        <LinearLayout
+            android:id="@+id/fila5"
+            android:visibility="gone"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingTop="1dp"
+            android:paddingBottom="1dp">
+
+            <TextView
+                android:id="@+id/fila5_nombre"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:maxLines="1"
+                                android:textColor="#E2E2E2"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/fila5_temperatura"
+                android:layout_width="52dp"
+                android:layout_height="wrap_content"
+                android:gravity="end"
+                                android:textColor="#80E3D3"
+                android:textSize="16sp" />
+
+            <TextView
+                android:id="@+id/fila5_lluvia"
+                android:layout_width="60dp"
+                android:layout_height="wrap_content"
+                android:gravity="end"
+                                android:textColor="#E2E2E2"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/fila5_hora"
+                android:layout_width="42dp"
+                android:layout_height="wrap_content"
+                android:gravity="end"
+                                android:textColor="#B8E2E2E2"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/fila6"
+            android:visibility="gone"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingTop="1dp"
+            android:paddingBottom="1dp">
+
+            <TextView
+                android:id="@+id/fila6_nombre"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:maxLines="1"
+                                android:textColor="#E2E2E2"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/fila6_temperatura"
+                android:layout_width="52dp"
+                android:layout_height="wrap_content"
+                android:gravity="end"
+                                android:textColor="#80E3D3"
+                android:textSize="16sp" />
+
+            <TextView
+                android:id="@+id/fila6_lluvia"
+                android:layout_width="60dp"
+                android:layout_height="wrap_content"
+                android:gravity="end"
+                                android:textColor="#E2E2E2"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/fila6_hora"
+                android:layout_width="42dp"
+                android:layout_height="wrap_content"
+                android:gravity="end"
+                                android:textColor="#B8E2E2E2"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/fila7"
+            android:visibility="gone"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingTop="1dp"
+            android:paddingBottom="1dp">
+
+            <TextView
+                android:id="@+id/fila7_nombre"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:maxLines="1"
+                                android:textColor="#E2E2E2"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/fila7_temperatura"
+                android:layout_width="52dp"
+                android:layout_height="wrap_content"
+                android:gravity="end"
+                                android:textColor="#80E3D3"
+                android:textSize="16sp" />
+
+            <TextView
+                android:id="@+id/fila7_lluvia"
+                android:layout_width="60dp"
+                android:layout_height="wrap_content"
+                android:gravity="end"
+                                android:textColor="#E2E2E2"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/fila7_hora"
+                android:layout_width="42dp"
+                android:layout_height="wrap_content"
+                android:gravity="end"
+                                android:textColor="#B8E2E2E2"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/fila8"
+            android:visibility="gone"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingTop="1dp"
+            android:paddingBottom="1dp">
+
+            <TextView
+                android:id="@+id/fila8_nombre"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:maxLines="1"
+                                android:textColor="#E2E2E2"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/fila8_temperatura"
+                android:layout_width="52dp"
+                android:layout_height="wrap_content"
+                android:gravity="end"
+                                android:textColor="#80E3D3"
+                android:textSize="16sp" />
+
+            <TextView
+                android:id="@+id/fila8_lluvia"
+                android:layout_width="60dp"
+                android:layout_height="wrap_content"
+                android:gravity="end"
+                                android:textColor="#E2E2E2"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/fila8_hora"
+                android:layout_width="42dp"
+                android:layout_height="wrap_content"
+                android:gravity="end"
+                                android:textColor="#B8E2E2E2"
+                android:textSize="12sp" />
+        </LinearLayout>
+
         <TextView
             android:id="@+id/widget_vacio"
             android:layout_width="match_parent"
@@ -256,4 +442,6 @@
             android:textSize="13sp"
             android:visibility="gone" />
     </LinearLayout>
-</FrameLayout>
+
+    <include layout="@layout/widget_pie" />
+</LinearLayout>

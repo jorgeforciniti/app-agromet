@@ -1220,6 +1220,34 @@ export class HomePage implements OnInit, OnDestroy {
     }
   }
 
+  /**
+   * Con el dato atrasado los valores de la tarjeta son estimados para ahora (OpenWeatherMap), no los
+   * del último registro: la fecha es la de hoy y el texto dice de cuándo es el último dato.
+   */
+  private get muestraEstimacion(): boolean {
+    const min = this.minutosDesdeDatoActual;
+    return min != null && min > this.MINUTOS_USAR_ESTIMACION_TOTAL;
+  }
+
+  /** «Lunes 24 de noviembre de 2026»: la del registro, o la de hoy si los valores son estimados */
+  get fechaEncabezado(): string {
+    if (!this.muestraEstimacion) return `${this.diaSemana} ${this.dia} de ${this.nombreMes} de ${this.anio}`;
+    const hoy = new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    // «lunes, 24 de noviembre de 2026» → «Lunes 24 de noviembre de 2026»
+    return hoy.charAt(0).toUpperCase() + hoy.slice(1).replace(',', '');
+  }
+
+  /** «Dato de las 09:45 · Actualizado hace 5 min», o con el dato atrasado de cuándo es el último */
+  get textoEstadoDato(): string {
+    const dt = this.fechaDatoActual;
+    if (!this.muestraEstimacion || !dt) {
+      return (this.hora ? `Dato de las ${this.hora} · ` : '') + this.estadoDatoActualTexto;
+    }
+    const esHoy = dt.toDateString() === new Date().toDateString();
+    const cuando = esHoy ? `a las ${this.hora}` : `${this.dia}/${String(dt.getMonth() + 1).padStart(2, '0')} a las ${this.hora}`;
+    return `Último dato de la estación: ${cuando} · valores estimados para ahora`;
+  }
+
   get estadoDatoActualTexto(): string {
     const min = this.minutosDesdeDatoActual;
 

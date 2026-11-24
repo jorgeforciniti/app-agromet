@@ -11,5 +11,7 @@
     <string name="widget_lluvia_hoy">Lluvia mm</string>
     <string name="widget_hora">Hora</string>
     <string name="widget_sin_datos">Abrí Agromet para cargar los datos</string>
+    <string name="widget_fuente">Agromet · EEAOC</string>
+    <string name="widget_actualizar">Actualizar</string>
     <string name="widget_vacio">Abrí Agromet para elegir la estación</string>
 </resources>

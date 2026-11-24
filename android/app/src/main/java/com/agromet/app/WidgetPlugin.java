@@ -26,7 +26,10 @@ public class WidgetPlugin extends Plugin {
         getContext().getSharedPreferences(EstacionWidget.PREFS, Context.MODE_PRIVATE).edit()
                 .putString(EstacionWidget.CLAVE_ESTACIONES, estaciones.toString())
                 .putString(EstacionWidget.CLAVE_DATOS, datos.toString())
+                .putLong(EstacionWidget.CLAVE_ACTUALIZADO, System.currentTimeMillis())
                 .apply();
+        // Si el widget ya estaba de antes de esta versión, que empiece a actualizarse solo
+        if (EstacionWidget.hayWidgets(getContext())) ActualizarWidgetWorker.programar(getContext());
         EstacionWidget.mostrarGuardado(getContext());
         call.resolve();
     }

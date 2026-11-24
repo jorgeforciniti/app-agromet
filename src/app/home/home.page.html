@@ -59,14 +59,12 @@
                         <sup class="est-badge" *ngIf="estimated?.temp" aria-label="estimado">*</sup>
                     </div>
 
-                    <div class="date">
-                        {{ diaSemana }} {{ dia }} de {{ nombreMes }} de {{ anio }}
-                    </div>
+                    <div class="date">{{ fechaEncabezado }}</div>
                     <button class="data-status" type="button" [ngClass]="estadoDatoActualClase"
                         (click)="verDetalleActualizacion()">
 
                         <ion-icon [name]="estadoDatoActualIcono"></ion-icon>
-                        <span><ng-container *ngIf="hora">Dato de las {{ hora }} · </ng-container>{{ estadoDatoActualTexto }}</span>
+                        <span>{{ textoEstadoDato }}</span>
 
                     </button>
                 </div>
